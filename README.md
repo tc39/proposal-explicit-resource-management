@@ -94,7 +94,7 @@ UsingStatement :
   `using` `(` Expression `)` Block
 ```
 
-When `using` is parsed with an _Expression_, an implicit block-scoped binding is created for the result of the expression. When the `using` block is exited, whether by an abrupt or normal completion, a `[Symbol.dispose]()` method is called on the local binding as long as it is neither `null` nor `undefined`.
+When `using` is parsed with an _Expression_, an implicit block-scoped binding is created for the result of the expression. When the `using` block is exited, whether by an abrupt or normal completion, `[Symbol.dispose]()` is called on the local binding as long as it is neither `null` nor `undefined`.
 
 ```js
 using (expr) {
@@ -134,7 +134,17 @@ using (let x = expr1, y = expr2) {
 }
 ```
 
-These implicit bindings are again used to perform resource disposal when the _Block_ exits, however in this case the `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their declaration. This can be best illustrated through the following transposed representation:
+These implicit bindings are again used to perform resource disposal when the _Block_ exits, however in this case `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their declaration. This is equivalent to the following:
+
+```js
+using (let x = expr1) {
+  using (let y = expr2) {
+    ...
+  }
+}
+```
+
+Both of the above cases would have the same runtime semantics as the following transposed representation:
 
 ```js
 {
@@ -166,7 +176,6 @@ The `using` statement always creates implicit local bindings for the _Initialize
 
 ```js
 using (let { y } = expr) {
-  ...
 }
 ```
 
@@ -237,20 +246,20 @@ The following is a high-level list of tasks to progress through each stage of th
 
 
 
-# References
+<!-- # References -->
 
 <!-- Links to other specifications, etc. -->
 
 
-* [Title](url)
+<!-- * [Title](url) -->
 
 
-# Prior Discussion
+<!-- # Prior Discussion -->
 
 <!-- Links to prior discussion topics on https://esdiscuss.org -->
 
 
-* [Subject](https://esdiscuss.org)
+<!-- * [Subject](https://esdiscuss.org) -->
 
 
 <!-- The following are shared links used throughout the README: -->
