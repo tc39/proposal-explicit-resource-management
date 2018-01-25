@@ -1,0 +1,27 @@
+{
+  "generator-ecmascript-proposal": {
+    "promptValues": {
+      "authorName": "Ron Buckton",
+      "authorEmail": "ron.buckton@microsoft.com",
+      "authorGithub": "rbuckton",
+      "hasChampion": true,
+      "githubAccount": "rbuckton",
+      "spec": "https://rbuckton.github.io/proposal-using",
+      "stage": "0",
+      "sections": [
+        "syntax",
+        "examples",
+        "todo",
+        "semantics",
+        "examples",
+        "api",
+        "grammar",
+        "todo",
+        "references",
+        "prior-discussion"
+      ],
+      "championName": "Ron Buckton",
+      "championGithub": "rbuckton"
+    }
+  }
+}
