@@ -284,22 +284,97 @@ Both of the above cases would have the same runtime semantics as the following t
 
 Since we must always ensure that we properly release resources, we must ensure that any abrupt completion that might occur during binding initialization results in evaluation of the cleanup step. This also means that when there are multiple declarations in the list we must create a new `try/finally`-like protected region for each declaration. As a result, we must release resources in reverse order.
 
-### `using` with binding patterns
+## `using` with binding patterns
 
 The `using` statement always creates implicit local bindings for the _Initializer_ of the _VariableDeclaration_ or _LexicalBinding_. For binding patterns this means that we store the value of `expr` in the example below, rather than `y`:
 
 ```js
-using (let { y } = expr) {
+using (let { x, y } = expr) {
 }
 ```
 
 This aligns with how destructuring would work in the same scenario, as the completion value for a destructuring assignment is always the right-hand value:
 
 ```js
-let y;
-using ({ y } = expr) {
+let x, y;
+using ({ x, y } = expr) {
 }
 ```
+
+This behavior also avoids possible refactoring hazards as you might switch between 
+various forms of semantically equivalent code. For example, consider the following
+changes as they might occur over time:
+
+```js
+// before:
+let obj = expr, x, y;
+using (obj) {
+  x = obj.x;
+  y = obj.y;
+  ...
+}
+
+
+// after refactor into binding pattern:
+let obj = expr;
+using (obj) {
+  let { x, y } = obj; // `obj` is otherwise unused
+  ...
+}
+
+
+// after inline `obj` declaration into `using` statement:
+using (let obj = expr) {
+  let { x, y } = obj; // `obj` is otherwise unused
+  ...
+}
+
+
+// after refactor away single use of `obj`:
+using (let { x, y } = expr) {
+  ...
+}
+```
+
+In the above example, in all four cases the value of `expr` is what is disposed.
+
+The same result could also be achieved through other refactorings in which each
+step also results in semantically equivalent code:
+
+```js
+// before:
+let obj = expr, x, y;
+using (obj) {
+  x = obj.x;
+  y = obj.y;
+  ...
+}
+
+
+// after refactor into assignment pattern:
+let obj = expr, x, y;
+using (obj) {
+  ({ x, y } = obj);
+  ...
+}
+
+
+// after move assignment pattern into head of `using`:
+let obj = expr, x, y;
+using ({ x, y } = obj) {
+  ...
+}
+
+
+// after refactor away single use of `obj`:
+let x, y;
+using ({ x, y } = expr) {
+  ...
+}
+```
+
+As with the first set of refactorings, in all four cases it is the value of `expr`
+that is disposed.
 
 ## `using` on `null` or `undefined` values
 
