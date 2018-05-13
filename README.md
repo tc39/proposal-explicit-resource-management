@@ -1,53 +1,160 @@
-<!--
-Welcome to your new proposal repository. This document will serve as the introduction and 
- strawman for your proposal.
-
-The repository is broken down into the following layout:
-
-  /README.md        # intro/strawman (this file)
-  /LICENSE          # ECMA compatible license (BSD-3 Clause)
-  /src              # ecmarkup sources for the specification
-  /docs             # ecmarkup output
-
-To build the specification, run:
-
-  npm run compile
-
-To preview the specification, run:
-
-  npm run start
-
-It is recommended that you configure GitHub Pages in your GitHub repository to point to the
-'/docs' directory after you push these changes to 'master'. That way the specification text
-will be updated automatically when you publish.
-
--->
-
 # ECMAScript explicit resource management
 
-<!-- Replace this with a summary or introduction for your proposal -->
+This proposal intends to address a common pattern in software development regarding
+the lifetime and management of various resources (memory, I/O, etc.). This pattern
+generally includes the allocation of a resource and the ability to explicitly 
+release critical resources.
+
+For example, ECMAScript Generator Functions expose this pattern through the
+`return` method, as a means to explicitly evaluate `finally` blocks to ensure
+user-defined cleanup logic is preserved:
+
+```js
+function * g() {
+  const handle = acquireFileHandle(); // critical resource
+  try {
+    ...
+  }
+  finally {
+    handle.release(); // cleanup
+  }
+}
+
+const obj = g();
+try {
+  const r = obj.next();
+  ...
+}
+finally {
+  obj.return(); // calls finally blocks in `g`
+}
+```
+
+As such, we propose the adoption of a syntax to simplify this common pattern:
+
+```js
+function * g() {
+  using (const handle = acquireFileHandle()) { // critical resource
+    ...
+  } // cleanup
+}
+
+using (const obj = g()) {
+  const r = obj.next();
+  ...
+} // calls finally blocks in `g`
+```
 
 ## Status
 
 **Stage:** 0  
-**Champion:** _None identified_
+**Champion:** Ron Buckton (@rbuckton)
 
 _For more information see the [TC39 proposal process](https://tc39.github.io/process-document/)._
 
-<!-- ## Authors -->
+## Authors
 
-<!-- * Name (@name) -->
+- Ron Buckton (@rbuckton)
 
-<!-- # Motivations -->
+# Motivations
 
-<!-- Motivations and use cases for the proposal --->
+This proposal is motivated by a number of cases:
+
+- Inconsistent patterns for resource management:
+  - ECMAScript Iterators: `iterator.return()`
+  - WHATWG Stream Readers: `reader.releaseLock()`
+  - NodeJS FileHandles: `handle.close()`
+- Avoiding common footguns when managing resources:
+  ```js
+  const reader = stream.getReader();
+  ...
+  reader.releaseLock(); // Oops, should have been in a try/finally
+  ```
+- Scoping resources:
+  ```js
+  const handle = ...;
+  try {
+    ... // ok to use `handle`
+  }
+  finally {
+    handle.close();
+  }
+  // not ok to use `handle`, but still in scope
+  ```
+- Avoiding common footguns when managing multiple resources:
+  ```js
+  const a = ...;
+  const b = ...;
+  try {
+    ...
+  }
+  finally {
+    a.close(); // Oops, issue if `b.close()` depends on `a`.
+    b.close(); // Oops, `b` never reached if `a.close()` throws.
+  }
+  ```
+- Avoiding lengthy code when managing multiple resources correctly:
+  ```js
+  { // block avoids leaking `a` or `b` to outer scope
+    const a = ...;
+    try {
+      const b = ...;
+      try {
+        ...
+      }
+      finally {
+        b.close(); // ensure `b` is closed before `a` in case `b`
+                   // depends on `a`
+      }
+    }
+    finally {
+      a.close(); // ensure `a` is closed even if `b.close()` throws
+    }
+  }
+  // both `a` and `b` are out of scope
+  ```
+  Compared to:
+  ```js
+  // avoids leaking `a` or `b` to outer scope
+  // ensures `b` is disposed before `a` in case `b` depends on `a`
+  // ensures `a` is disposed even if disposing `b` throws
+  using (const a = ..., b = ...) { 
+    ...
+  }
+  ```
+- Non memory/IO applications:
+  ```js
+  import { ReaderWriterLock } from "prex";
+  const lock = new ReaderWriterLock(); 
+  
+  export async function readData() {
+    // wait for outstanding writer and take a read lock
+    using (await lock.read()) { 
+      ... // any number of readers
+      await ...; 
+      ... // still in read lock after `await`
+    } // release the read lock
+  }
+  
+  export async function writeData(data) {
+    // wait for all readers and take a write lock
+    using (await lock.write()) { 
+      ... // only one writer
+      await ...;
+      ... // still in write lock after `await`
+    } // release the write lock
+  }
+  ```
+
+
 
 # Prior Art
 
 <!-- Links to similar concepts in existing languages, prior proposals, etc. -->
 
-* C#: [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
-* Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)
+- C#: [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
+- Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)  
+- Pyton: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement) 
 
 # Syntax
 
@@ -82,12 +189,19 @@ UsingStatement[Yield, Await, Return] :
 
 **Notes:**
 
-- We define `using` as requiring _Block_ rather than _Statement_ to avoid backwards compatibility issues due to ASI, since `using` is not a reserved word.
-- We may opt to instead augment _TryStatement_ syntax in a fashion similar to Java's `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, however the oddity of the implied `finally` might be a source of confusion for users. 
+- We define `using` as requiring _Block_ rather than _Statement_ to avoid
+backwards compatibility issues due to ASI, since `using` is not a reserved word.
+- We may opt to instead augment _TryStatement_ syntax in a fashion similar to 
+Java's `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, 
+however the oddity of the implied `finally` might be a source of confusion for 
+users.
+- We allow `var` declarations for consistency with other control-flow statements
+  that support binding declarations in a parenthesized head, such as `for`, 
+  `for..in`, and `for..of`.
 
 # Semantics
 
-## `using` for existing resources
+## `using` existing resources
 
 ```grammarkdown
 UsingStatement : 
@@ -189,30 +303,105 @@ using ({ y } = expr) {
 
 ## `using` on `null` or `undefined` values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the `using` statement. This is primarily to align with the behavior of `using` in languages like C# that also allow `null`.
+This proposal has opted to ignore `null` and `undefined` values provided to the
+`using` statement. This is similar to the behavior of `using` in languages like C#
+that also allow `null`. One primary reason for this behavior is to simplify a 
+common case where a resource might be optional, without requiring duplication of
+work:
+
+```js
+using (const resource = isResourceAvailable() ? getResource() : undefined) {
+  ... // (1) do some work with or without resource
+  if (resource) resource.doSomething();
+  ... // (2) do some other work with or without resource
+}
+```
+
+Compared to:
+```js
+if (isResourceAvailable()) {
+  using (const resource = getResource()) {
+    ... // (1) above
+    resource.doSomething()
+    ... // (2) above
+  }
+}
+else {
+  ... // (1) above
+  ... // (2) above
+}
+```
 
 ## `using` on values without `[Symbol.dispose]`
 
 If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown **at the end** of the _Block_ when the member would be invoked.
 
-<!-- # Examples -->
+## `using` in AsyncFunction or AsyncGeneratorFunction
 
-<!-- Examples of the proposal -->
+In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `using` block
+we first look for a `[Symbol.asyncDispose]` method before looking for a 
+`[Symbol.dispose]` method. If we found a `[Symbol.asyncDispose]` method, we Await
+the result of calling it.
 
+# Examples
 
-<!--
+**WHATWG Streams API**
 ```js
+using (const reader = stream.getReader()) {
+  const { value, done } = reader.read();
+  ...
+}
 ```
--->
 
+**NodeJS FileHandle**
+```js
+using (const f1 = fs.promises.open(f1, constants.O_RDONLY), 
+             f2 = fs.promises.open(f2, constants.O_WRONLY)) {
+  const buffer = Buffer.alloc(4092);
+  const { bytesRead } = await f1.read(buffer);
+  await f2.write(buffer, 0, bytesRead);
+}
+```
+
+**Transactional Consistency (ACID)**
+```js
+// roll back transaction if either action fails
+using (const tx = transactionManager.startTransaction(account1, account2)) {
+  await account1.debit(amount);
+  await account2.credit(amount);
+
+  // mark transaction success
+  tx.succeeded = true;
+}
+```
+
+**Other uses**
+```js
+// audit privileged function call entry and exit
+function privilegedActivity() {
+  using (auditLog.startActivity("privilegedActivity")) {
+    ...
+  }
+}
+```
 
 # API
+
+This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` 
+constructor whose values are the @@dispose and @@asyncDispose internal symbols, 
+respectively:
 
 ```ts
 interface SymbolConstructor {
   readonly dispose: symbol;
+  readonly asyncDispose: symbol;
 }
 ```
+
+In addition, the methods `[Symbol.dispose]` and `[Symbol.asyncDispose]` methods
+would be added to %GeneratorPrototype% and %AsyncGeneratorPrototype%, 
+respectively. Each method, when called, calls the `return` method on those
+ prototypes.
 
 # TODO
 
