@@ -182,19 +182,20 @@ using (const x = expr1, y = expr2) {
 
 ```grammarkdown
 UsingStatement[Yield, Await, Return] :
-    `using` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
-    `using` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
-    `using` `(` LexicalDeclaration[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
+    `using` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
+    `using` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
+    `using` `(` LexicalDeclaration[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
 ```
 
 **Notes:**
 
-- We define `using` as requiring _Block_ rather than _Statement_ to avoid
-backwards compatibility issues due to ASI, since `using` is not a reserved word.
-- We may opt to instead augment _TryStatement_ syntax in a fashion similar to 
-Java's `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, 
-however the oddity of the implied `finally` might be a source of confusion for 
-users.
+- We define `using` as requiring a `[no LineTerminator here]` restriction to avoid backwards 
+  compatibility issues due to ASI, as `using` is not a reserved word.
+- In addition `using` requires a _Block_ rather than allowing _Statement_, as it has more in common
+  with `try`, `catch`, or `finally` than statements with a similar grammar.
+- We may opt to instead augment _TryStatement_ syntax in a fashion similar to Java's 
+  `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, however the oddity of the 
+  implied `finally` might be a source of confusion for users.
 - We allow `var` declarations for consistency with other control-flow statements
   that support binding declarations in a parenthesized head, such as `for`, 
   `for..in`, and `for..of`.
@@ -208,7 +209,10 @@ UsingStatement :
   `using` `(` Expression `)` Block
 ```
 
-When `using` is parsed with an _Expression_, an implicit block-scoped binding is created for the result of the expression. When the `using` block is exited, whether by an abrupt or normal completion, `[Symbol.dispose]()` is called on the local binding as long as it is neither `null` nor `undefined`.
+When `using` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
+result of the expression. When the `using` block is exited, whether by an abrupt or normal 
+completion, `[Symbol.dispose]()` is called on the local binding as long as it is neither `null` 
+nor `undefined`.
 
 ```js
 using (expr) {
@@ -216,7 +220,8 @@ using (expr) {
 }
 ```
 
-The above example has the same approximate runtime semantics as the following transposed representation:
+The above example has the same approximate runtime semantics as the following transposed 
+representation:
 
 ```js
 { 
@@ -230,7 +235,8 @@ The above example has the same approximate runtime semantics as the following tr
 }
 ```
 
-The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close the resource we are explicitly tracking.
+The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close 
+the resource we are explicitly tracking.
 
 ## `using` with explicit local bindings
 
@@ -240,7 +246,9 @@ UsingStatement:
   `using` `(` LexicalDeclaration `)` Block
 ```
 
-When `using` is parsed with either a _VariableDeclarationList_ or a _LexicalDeclaration_, we again create implicit block-scoped bindings for the initializers of each _VariableDeclaration_ or _LexicalBinding_. 
+When `using` is parsed with either a _VariableDeclarationList_ or a _LexicalDeclaration_, we again 
+create implicit block-scoped bindings for the initializers of each _VariableDeclaration_ or 
+_LexicalBinding_:
 
 ```js
 using (let x = expr1, y = expr2) {
@@ -248,7 +256,9 @@ using (let x = expr1, y = expr2) {
 }
 ```
 
-These implicit bindings are again used to perform resource disposal when the _Block_ exits, however in this case `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their declaration. This is equivalent to the following:
+These implicit bindings are again used to perform resource disposal when the _Block_ exits, however
+in this case `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their
+declaration. This is equivalent to the following:
 
 ```js
 using (let x = expr1) {
@@ -258,7 +268,8 @@ using (let x = expr1) {
 }
 ```
 
-Both of the above cases would have the same runtime semantics as the following transposed representation:
+Both of the above cases would have the same runtime semantics as the following transposed
+representation:
 
 ```js
 {
@@ -282,18 +293,25 @@ Both of the above cases would have the same runtime semantics as the following t
 }
 ```
 
-Since we must always ensure that we properly release resources, we must ensure that any abrupt completion that might occur during binding initialization results in evaluation of the cleanup step. This also means that when there are multiple declarations in the list we must create a new `try/finally`-like protected region for each declaration. As a result, we must release resources in reverse order.
+Since we must always ensure that we properly release resources, we must ensure that any abrupt 
+completion that might occur during binding initialization results in evaluation of the cleanup 
+step. This also means that when there are multiple declarations in the list we must create a 
+new `try/finally`-like protected region for each declaration. As a result, we must release 
+resources in reverse order.
 
 ## `using` with binding patterns
 
-The `using` statement always creates implicit local bindings for the _Initializer_ of the _VariableDeclaration_ or _LexicalBinding_. For binding patterns this means that we store the value of `expr` in the example below, rather than `y`:
+The `using` statement always creates implicit local bindings for the _Initializer_ of the 
+_VariableDeclaration_ or _LexicalBinding_. For binding patterns this means that we store the value 
+of `expr` in the example below, rather than `y`:
 
 ```js
 using (let { x, y } = expr) {
 }
 ```
 
-This aligns with how destructuring would work in the same scenario, as the completion value for a destructuring assignment is always the right-hand value:
+This aligns with how destructuring would work in the same scenario, as the completion value for a 
+destructuring assignment is always the right-hand value:
 
 ```js
 let x, y;
@@ -301,9 +319,9 @@ using ({ x, y } = expr) {
 }
 ```
 
-This behavior also avoids possible refactoring hazards as you might switch between 
-various forms of semantically equivalent code. For example, consider the following
-changes as they might occur over time:
+This behavior also avoids possible refactoring hazards as you might switch between various forms of 
+semantically equivalent code. For example, consider the following changes as they might occur over 
+time:
 
 ```js
 // before:
@@ -338,8 +356,8 @@ using (let { x, y } = expr) {
 
 In the above example, in all four cases the value of `expr` is what is disposed.
 
-The same result could also be achieved through other refactorings in which each
-step also results in semantically equivalent code:
+The same result could also be achieved through other refactorings in which each step also results 
+in semantically equivalent code:
 
 ```js
 // before:
@@ -373,16 +391,15 @@ using ({ x, y } = expr) {
 }
 ```
 
-As with the first set of refactorings, in all four cases it is the value of `expr`
-that is disposed.
+As with the first set of refactorings, in all four cases it is the value of `expr` that is 
+disposed.
 
 ## `using` on `null` or `undefined` values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the
-`using` statement. This is similar to the behavior of `using` in languages like C#
-that also allow `null`. One primary reason for this behavior is to simplify a 
-common case where a resource might be optional, without requiring duplication of
-work:
+This proposal has opted to ignore `null` and `undefined` values provided to the `using` statement. 
+This is similar to the behavior of `using` in languages like C# that also allow `null`. One primary 
+reason for this behavior is to simplify a common case where a resource might be optional, without 
+requiring duplication of work:
 
 ```js
 using (const resource = isResourceAvailable() ? getResource() : undefined) {
@@ -409,14 +426,14 @@ else {
 
 ## `using` on values without `[Symbol.dispose]`
 
-If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown **at the end** of the _Block_ when the member would be invoked.
+If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown 
+**at the end** of the _Block_ when the member would be invoked.
 
 ## `using` in AsyncFunction or AsyncGeneratorFunction
 
-In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `using` block
-we first look for a `[Symbol.asyncDispose]` method before looking for a 
-`[Symbol.dispose]` method. If we found a `[Symbol.asyncDispose]` method, we Await
-the result of calling it.
+In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `using` block we first look 
+for a `[Symbol.asyncDispose]` method before looking for a `[Symbol.dispose]` method. If we found a 
+`[Symbol.asyncDispose]` method, we Await the result of calling it.
 
 # Examples
 
@@ -462,9 +479,8 @@ function privilegedActivity() {
 
 # API
 
-This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` 
-constructor whose values are the @@dispose and @@asyncDispose internal symbols, 
-respectively:
+This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose 
+values are the @@dispose and @@asyncDispose internal symbols, respectively:
 
 ```ts
 interface SymbolConstructor {
@@ -473,10 +489,9 @@ interface SymbolConstructor {
 }
 ```
 
-In addition, the methods `[Symbol.dispose]` and `[Symbol.asyncDispose]` methods
-would be added to %GeneratorPrototype% and %AsyncGeneratorPrototype%, 
-respectively. Each method, when called, calls the `return` method on those
- prototypes.
+In addition, the methods `[Symbol.dispose]` and `[Symbol.asyncDispose]` methods would be added to 
+%GeneratorPrototype% and %AsyncGeneratorPrototype%, respectively. Each method, when called, calls 
+the `return` method on those prototypes.
 
 # TODO
 
