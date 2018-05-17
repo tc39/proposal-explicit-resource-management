@@ -182,9 +182,11 @@ using (const x = expr1, y = expr2) {
 
 ```grammarkdown
 UsingStatement[Yield, Await, Return] :
+    // NOTE: This will require a cover grammar to handle ambiguity between a call to a 
+    // function named `using` and a UsingStatement head.
     `using` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
     `using` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
-    `using` `(` LexicalDeclaration[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
+    `using` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
 ```
 
 **Notes:**
@@ -193,6 +195,7 @@ UsingStatement[Yield, Await, Return] :
   compatibility issues due to ASI, as `using` is not a reserved word.
 - In addition `using` requires a _Block_ rather than allowing _Statement_, as it has more in common
   with `try`, `catch`, or `finally` than statements with a similar grammar.
+- To avoid ambiguity with _CallExpression_, a cover grammar would be needed.
 - We may opt to instead augment _TryStatement_ syntax in a fashion similar to Java's 
   `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, however the oddity of the 
   implied `finally` might be a source of confusion for users.
