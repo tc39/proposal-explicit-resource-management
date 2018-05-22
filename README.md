@@ -45,6 +45,8 @@ using (const obj = g()) {
 } // calls finally blocks in `g`
 ```
 
+* [Stage 0 Presentation](https://docs.google.com/presentation/d/1OmkXFMizf5iYME9ClERZ3C1dwUAhh7-r2YMD-rTzY-Y/edit?usp=sharing)
+
 ## Status
 
 **Stage:** 0  
