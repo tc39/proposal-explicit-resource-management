@@ -156,7 +156,7 @@ This proposal is motivated by a number of cases:
 
 - C#: [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
 - Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)  
-- Pyton: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement) 
+- Python: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement) 
 
 # Syntax
 
