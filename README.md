@@ -552,7 +552,7 @@ The following is a high-level list of tasks to progress through each stage of th
 [Prose]: #motivations
 [Examples]: #examples
 [API]: #api
-[Specification]: https://rbuckton.github.io/proposal-using
+[Specification]: https://tc39.github.io/proposal-using-statement
 [Transpiler]: #todo
 [Stage3ReviewerSignOff]: #todo
 [Stage3EditorSignOff]: #todo
