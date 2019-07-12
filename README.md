@@ -34,12 +34,12 @@ As such, we propose the adoption of a syntax to simplify this common pattern:
 
 ```js
 function * g() {
-  using (const handle = acquireFileHandle()) { // critical resource
+  try (const handle = acquireFileHandle()) { // critical resource
     ...
   } // cleanup
 }
 
-using (const obj = g()) {
+try (const obj = g()) {
   const r = obj.next();
   ...
 } // calls finally blocks in `g`
@@ -49,7 +49,7 @@ using (const obj = g()) {
 
 ## Status
 
-**Stage:** 0  
+**Stage:** 1  
 **Champion:** Ron Buckton (@rbuckton)
 
 _For more information see the [TC39 proposal process](https://tc39.github.io/process-document/)._
@@ -120,7 +120,7 @@ This proposal is motivated by a number of cases:
   // avoids leaking `a` or `b` to outer scope
   // ensures `b` is disposed before `a` in case `b` depends on `a`
   // ensures `a` is disposed even if disposing `b` throws
-  using (const a = ..., b = ...) { 
+  try (const a = ..., b = ...) { 
     ...
   }
   ```
@@ -131,7 +131,7 @@ This proposal is motivated by a number of cases:
   
   export async function readData() {
     // wait for outstanding writer and take a read lock
-    using (await lock.read()) { 
+    try (await lock.read()) { 
       ... // any number of readers
       await ...; 
       ... // still in read lock after `await`
@@ -140,15 +140,13 @@ This proposal is motivated by a number of cases:
   
   export async function writeData(data) {
     // wait for all readers and take a write lock
-    using (await lock.write()) { 
+    try (await lock.write()) { 
       ... // only one writer
       await ...;
       ... // still in write lock after `await`
     } // release the write lock
   }
   ```
-
-
 
 # Prior Art
 
@@ -161,18 +159,18 @@ This proposal is motivated by a number of cases:
 # Syntax
 
 ```js
-// using expression
-using (obj) {
+// 'try' with expression resource
+try (obj) {
   ...
 }
 
-// using with local binding
-using (const x = expr1) {
+// 'try' with local binding
+try (const x = expr1) {
   ...
 }
 
-// using with multiple local bindings
-using (const x = expr1, y = expr2) {
+// 'try' with multiple local bindings
+try (const x = expr1, y = expr2) {
   ...
 }
 ```
@@ -183,59 +181,69 @@ using (const x = expr1, y = expr2) {
      syntax in fenced code blocks as grammarkdown is the grammar format used by ecmarkup. -->
 
 ```grammarkdown
-UsingStatement[Yield, Await, Return] :
-    // NOTE: This will require a cover grammar to handle ambiguity between a call to a 
-    // function named `using` and a UsingStatement head.
-    `using` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
-    `using` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
-    `using` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` [no LineTerminator here] Block[?Yield, ?Await, ?Return]
+TryStatement[Yield, Await, Return] :
+    ...
+    `try` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] 
+      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
+    `try` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
+      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
+    `try` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
+      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
 ```
 
 **Notes:**
 
-- We define `using` as requiring a `[no LineTerminator here]` restriction to avoid backwards 
-  compatibility issues due to ASI, as `using` is not a reserved word.
-- In addition `using` requires a _Block_ rather than allowing _Statement_, as it has more in common
-  with `try`, `catch`, or `finally` than statements with a similar grammar.
-- To avoid ambiguity with _CallExpression_, a cover grammar would be needed.
-- We may opt to instead augment _TryStatement_ syntax in a fashion similar to Java's 
-  `try`-with-resources, e.g. `try (expr) {}` or `try (let x = expr) {}`, however the oddity of the 
-  implied `finally` might be a source of confusion for users.
 - We allow `var` declarations for consistency with other control-flow statements
   that support binding declarations in a parenthesized head, such as `for`, 
   `for..in`, and `for..of`.
 
 # Semantics
 
-## `using` existing resources
+## `try` with existing resources
 
 ```grammarkdown
-UsingStatement : 
-  `using` `(` Expression `)` Block
+TryStatement : 
+  `try` `(` Expression `)` Block
 ```
 
-When `using` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
-result of the expression. When the `using` block is exited, whether by an abrupt or normal 
+When `try` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
+result of the expression. When the `try` block is exited, whether by an abrupt or normal 
 completion, `[Symbol.dispose]()` is called on the local binding as long as it is neither `null` 
-nor `undefined`.
+nor `undefined`. If an error is thrown in both _Block_ and the call to `[Symbol.dispose]()`, an
+`AggregateError` containing both errors will be thrown instead.
 
 ```js
-using (expr) {
+try (expr) {
   ...
 }
 ```
 
-The above example has the same approximate runtime semantics as the following transposed 
+The above example has the similar runtime semantics as the following transposed 
 representation:
 
 ```js
 { 
-  const $$temp = expr;
+  const $$try = { value: expr, hasError: false, error: undefined };
   try {
     ...
   }
+  catch ($$error) {
+    $$try.hasError = true;
+    $$try.error = $$error;
+    throw $$error;
+  }
   finally {
-    if ($$temp !== null && $$temp !== undefined) $$temp[Symbol.dispose]();
+    try {
+      if ($$try.value !== null && $$try.value !== undefined) {
+        $$try.value[Symbol.dispose]();
+      }
+    }
+    catch ($$error) {
+      if ($$try.hasError) {
+        throw new AggregateError([$$try.error, $$error]);
+      }
+      throw $$error;
+    }
   }
 }
 ```
@@ -243,20 +251,20 @@ representation:
 The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close 
 the resource we are explicitly tracking.
 
-## `using` with explicit local bindings
+## `try` with explicit local bindings
 
 ```grammarkdown
-UsingStatement: 
-  `using` `(` `var` VariableDeclarationList `)` Block
-  `using` `(` LexicalDeclaration `)` Block
+TryStatement: 
+  `try` `(` `var` VariableDeclarationList `)` Block
+  `try` `(` LexicalDeclaration `)` Block
 ```
 
-When `using` is parsed with either a _VariableDeclarationList_ or a _LexicalDeclaration_, we again 
+When `try` is parsed with either a _VariableDeclarationList_ or a _LexicalDeclaration_, we again 
 create implicit block-scoped bindings for the initializers of each _VariableDeclaration_ or 
 _LexicalBinding_:
 
 ```js
-using (let x = expr1, y = expr2) {
+try (let x = expr1, y = expr2) {
   ...
 }
 ```
@@ -266,34 +274,64 @@ in this case `[Symbol.dispose]()` is called on the implicit bindings in the reve
 declaration. This is equivalent to the following:
 
 ```js
-using (let x = expr1) {
-  using (let y = expr2) {
+try (let x = expr1) {
+  try (let y = expr2) {
     ...
   }
 }
 ```
 
-Both of the above cases would have the same runtime semantics as the following transposed
+Both of the above cases would have similar runtime semantics as the following transposed
 representation:
 
 ```js
 {
-  const $$temp1 = expr1;
+  const $$try1 = { value: expr1, hasError: false, error: undefined };
   try {
-    let x = $$temp1;
+    let x = $$try1.value;
     {
-      const $$temp2 = expr2;
+      const $$try2 = { value: expr2, hasError: false, error: undefined };
       try {
-        let y = $$temp2;
+        let y = $$try1.value;
         ...
       }
+      catch ($$error) {
+        $$try2.hasError = true;
+        $$try2.error = $$error;
+        throw $$error;
+      }
       finally {
-        if ($$temp2 !== null && $$temp2 !== undefined) $$temp2[Symbol.dispose]();
+        try {
+          if ($$try2.value !== null && $$try2.value !== undefined) {
+            $$try2.value[Symbol.dispose]();
+          }
+        }
+        catch ($$error) {
+          if ($$try2.hasError) {
+            throw new AggregateError([$$try2.error, $$error]);
+          }
+          throw $$error;
+        }
       }
     }
   }
+  catch ($$error) {
+    $$try1.hasError = true;
+    $$try1.error = $$error;
+    throw $$error;
+  }
   finally {
-    if ($$temp1 !== null && $$temp1 !== undefined) $$temp1[Symbol.dispose]();
+    try {
+      if ($$try1.value !== null && $$try1.value !== undefined) {
+        $$try1.value[Symbol.dispose]();
+      }
+    }
+    catch ($$error) {
+      if ($$try1.hasError) {
+        throw new AggregateError([$$try1.error, $$error]);
+      }
+      throw $$error;
+    }
   }
 }
 ```
@@ -304,14 +342,14 @@ step. This also means that when there are multiple declarations in the list we m
 new `try/finally`-like protected region for each declaration. As a result, we must release 
 resources in reverse order.
 
-## `using` with binding patterns
+## `try` with binding patterns
 
-The `using` statement always creates implicit local bindings for the _Initializer_ of the 
+The `try` statement always creates implicit local bindings for the _Initializer_ of the 
 _VariableDeclaration_ or _LexicalBinding_. For binding patterns this means that we store the value 
 of `expr` in the example below, rather than `y`:
 
 ```js
-using (let { x, y } = expr) {
+try (let { x, y } = expr) {
 }
 ```
 
@@ -320,7 +358,7 @@ destructuring assignment is always the right-hand value:
 
 ```js
 let x, y;
-using ({ x, y } = expr) {
+try ({ x, y } = expr) {
 }
 ```
 
@@ -331,7 +369,7 @@ time:
 ```js
 // before:
 let obj = expr, x, y;
-using (obj) {
+try (obj) {
   x = obj.x;
   y = obj.y;
   ...
@@ -340,21 +378,21 @@ using (obj) {
 
 // after refactor into binding pattern:
 let obj = expr;
-using (obj) {
+try (obj) {
   let { x, y } = obj; // `obj` is otherwise unused
   ...
 }
 
 
-// after inline `obj` declaration into `using` statement:
-using (let obj = expr) {
+// after inline `obj` declaration into `try` statement:
+try (let obj = expr) {
   let { x, y } = obj; // `obj` is otherwise unused
   ...
 }
 
 
 // after refactor away single use of `obj`:
-using (let { x, y } = expr) {
+try (let { x, y } = expr) {
   ...
 }
 ```
@@ -367,7 +405,7 @@ in semantically equivalent code:
 ```js
 // before:
 let obj = expr, x, y;
-using (obj) {
+try (obj) {
   x = obj.x;
   y = obj.y;
   ...
@@ -376,22 +414,22 @@ using (obj) {
 
 // after refactor into assignment pattern:
 let obj = expr, x, y;
-using (obj) {
+try (obj) {
   ({ x, y } = obj);
   ...
 }
 
 
-// after move assignment pattern into head of `using`:
+// after move assignment pattern into head of `try`:
 let obj = expr, x, y;
-using ({ x, y } = obj) {
+try ({ x, y } = obj) {
   ...
 }
 
 
 // after refactor away single use of `obj`:
 let x, y;
-using ({ x, y } = expr) {
+try ({ x, y } = expr) {
   ...
 }
 ```
@@ -399,42 +437,100 @@ using ({ x, y } = expr) {
 As with the first set of refactorings, in all four cases it is the value of `expr` that is 
 disposed.
 
-## `using` on `null` or `undefined` values
+## `try` on `null` or `undefined` values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the `using` statement. 
-This is similar to the behavior of `using` in languages like C# that also allow `null`. One primary 
+This proposal has opted to ignore `null` and `undefined` values provided to the `try` statement. 
+This is similar to the behavior of `using` in C# that also allow `null`. One primary 
 reason for this behavior is to simplify a common case where a resource might be optional, without 
-requiring duplication of work:
+requiring duplication of work or needless allocations:
 
-```js
-using (const resource = isResourceAvailable() ? getResource() : undefined) {
-  ... // (1) do some work with or without resource
-  if (resource) resource.doSomething();
-  ... // (2) do some other work with or without resource
-}
-```
-
-Compared to:
 ```js
 if (isResourceAvailable()) {
-  using (const resource = getResource()) {
+  try (const resource = getResource()) {
     ... // (1) above
     resource.doSomething()
     ... // (2) above
   }
 }
 else {
+  // duplicate code path above
   ... // (1) above
   ... // (2) above
 }
 ```
 
-## `using` on values without `[Symbol.dispose]`
+Compared to:
+
+```js
+try (const resource = isResourceAvailable() ? getResource() : undefined) {
+  ... // (1) do some work with or without resource
+  if (resource) resource.doSomething();
+  ... // (2) do some other work with or without resource
+}
+```
+
+## `try` on values without `[Symbol.dispose]`
 
 If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown 
 **at the end** of the _Block_ when the member would be invoked.
 
-## `using` in AsyncFunction or AsyncGeneratorFunction
+## `try` with resources and Catch or Finally
+
+When resources are added to a `try` block, a _Catch_ or _Finally_ clause may follow. In these cases, the 
+_Catch_ and _Finally_ clauses are triggered *after* `[Symbol.dispose]()` is called. This is consistent with
+the fact that block-scoped bindings for resources would be unreachable outside of `try`'s _Block_:
+
+```js
+try (const resource = getResource()) {
+  ...
+}
+catch {
+  // resource has already been disposed
+}
+finally {
+  // resource has already been disposed
+}
+```
+
+The above example has the similar runtime semantics as the following transposed 
+representation:
+
+```js
+try {
+  const $$try = { value: getResource(), hasError: false, error: undefined };
+  try {
+    const resource = $$try.value;
+    ...
+  }
+  catch ($$error) {
+    $$try.hasError = true;
+    $$try.error = $$error;
+    throw $$error;
+  }
+  finally {
+    try {
+      if ($$try.value !== null && $$try.value !== undefined) {
+        $$try.value[Symbol.dispose]();
+      }
+    }
+    catch ($$error) {
+      if ($$try.hasError) {
+        throw new AggregateError([$$try.error, $$error]);
+      }
+      throw $$error;
+    }
+  }
+}
+catch {
+  // resource has already been disposed
+}
+finally {
+  // resource has already been disposed
+}
+```
+
+
+## `try` in AsyncFunction or AsyncGeneratorFunction
 
 In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `using` block we first look 
 for a `[Symbol.asyncDispose]` method before looking for a `[Symbol.dispose]` method. If we found a 
@@ -444,7 +540,7 @@ for a `[Symbol.asyncDispose]` method before looking for a `[Symbol.dispose]` met
 
 **WHATWG Streams API**
 ```js
-using (const reader = stream.getReader()) {
+try (const reader = stream.getReader()) {
   const { value, done } = reader.read();
   ...
 }
@@ -452,8 +548,8 @@ using (const reader = stream.getReader()) {
 
 **NodeJS FileHandle**
 ```js
-using (const f1 = fs.promises.open(f1, constants.O_RDONLY), 
-             f2 = fs.promises.open(f2, constants.O_WRONLY)) {
+try (const f1 = fs.promises.open(f1, constants.O_RDONLY), 
+           f2 = fs.promises.open(f2, constants.O_WRONLY)) {
   const buffer = Buffer.alloc(4092);
   const { bytesRead } = await f1.read(buffer);
   await f2.write(buffer, 0, bytesRead);
@@ -463,7 +559,7 @@ using (const f1 = fs.promises.open(f1, constants.O_RDONLY),
 **Transactional Consistency (ACID)**
 ```js
 // roll back transaction if either action fails
-using (const tx = transactionManager.startTransaction(account1, account2)) {
+try (const tx = transactionManager.startTransaction(account1, account2)) {
   await account1.debit(amount);
   await account2.credit(amount);
 
@@ -476,7 +572,7 @@ using (const tx = transactionManager.startTransaction(account1, account2)) {
 ```js
 // audit privileged function call entry and exit
 function privilegedActivity() {
-  using (auditLog.startActivity("privilegedActivity")) {
+  try (auditLog.startActivity("privilegedActivity")) {
     ...
   }
 }
@@ -497,6 +593,16 @@ interface SymbolConstructor {
 In addition, the methods `[Symbol.dispose]` and `[Symbol.asyncDispose]` methods would be added to 
 %GeneratorPrototype% and %AsyncGeneratorPrototype%, respectively. Each method, when called, calls 
 the `return` method on those prototypes.
+
+This proposal also adds the `AggregateError` class for cases where exceptions are thrown both in the
+`try` _Block_ and from the call to @@dispose (or @@asyncDispose):
+
+```ts
+declare class AggregateError extends Error {
+  errors: unknown[];
+  constructor(errors: Iterable<unknown>, message?: string);
+}
+```
 
 # TODO
 
