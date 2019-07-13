@@ -1,4 +1,4 @@
-# ECMAScript explicit resource management
+# ECMAScript Explicit Resource Management
 
 This proposal intends to address a common pattern in software development regarding
 the lifetime and management of various resources (memory, I/O, etc.). This pattern
@@ -184,11 +184,11 @@ try (const x = expr1, y = expr2) {
 TryStatement[Yield, Await, Return] :
     ...
     `try` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] 
-      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
+        Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
     `try` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
-      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
+        Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
     `try` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
-      Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
+        Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
 ```
 
 **Notes:**
