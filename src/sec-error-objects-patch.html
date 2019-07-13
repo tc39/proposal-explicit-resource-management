@@ -5,15 +5,74 @@
     <p>An AggregateError Object is an extended _NativeError_ object that encapsulates multiple errors.</p>
     <emu-clause id="sec-aggregateerror-constructor">
       <h1>The AggregateError Constructor</h1>
+      <p>The AggregateError constructor:</p>
+      <ul>
+        <li>is the intrinsic object <dfn>%AggregateError%</dfn></li>
+        <li>is the initial value of the `AggregateError` property of the global object.</li>
+        <li>creates and initializes a new AggregateError object when called as a function rather than as a constructor. Thus the function call `AggregateError(...)` is equivalent to the object creation expression `new AggregateError(...)` with the same arguments.</li>
+        <li>is designed to be subclassable. It may be used as the value of an `extends` clause of a class definition. Subclass constructors that intend to inherit the specified `AggregateError` behaviour must include a `super` call to the `AggregateError` constructor to create and initialize subclass instances with an [[ErrorData]] internal slot.</li>
+      </ul>
       <emu-clause id="sec-aggregateerror-errors-message">
         <h1>AggregateError ( _errors_, _message_ )</h1>
+        <p>When the `AggregateError` function is called with arguments _errors_ and _message_, the following steps are taken:</p>
+        <emu-alg>
+          1. If NewTarget is *undefined*, let _newTarget_ be the active function object; else let _newTarget_ be NewTarget.
+          1. Let _O_ be ? OrdinaryCreateFromConstructor(_newTarget_, `"%AggregateErrorPrototype%"`, &laquo; [[ErrorData]] &raquo;).
+          1. If _errors_ is not *undefined*, then
+            1. Let _errorsArray_ be ? ArrayFrom( _errors_ ).
+          1. Else,
+            1. Let _errorsArray_ be ! ArrayCreate(0).
+          1. Let _errorsDesc_ be the PropertyDescriptor { [[Value]]: _errorsArray_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+          1. Perform ! DefinePropertyOrThrow(_O_, `"errors"`, _errorsDesc_).
+          1. If _message_ is not *undefined*, then
+            1. Let _msg_ be ? ToString(_message_).
+            1. Let _msgDesc_ be the PropertyDescriptor { [[Value]]: _msg_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+            1. Perform ! DefinePropertyOrThrow(_O_, `"message"`, _msgDesc_).
+          1. Return _O_.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-the-aggregateerror-constructor">
+      <h1>Properties of the AggregateError Constructor</h1>
+      <p>The AggregateError constructor:</p>
+      <ul>
+        <li>has a [[Prototype]] internal slot whose value is the intrinsic object %Error%.</li>
+        <li>has the following properties:</li>
+      </ul>
+      <emu-clause id="sec-aggregateerror-prototype">
+        <h1>AggregateError.prototype</h1>
+        <p>The intial value of `AggregateError.prototype` is the intrinsic object <dfn>%AggregateErrorPrototype%</dfn>.</p>
+        <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *false* }.</p>
       </emu-clause>
     </emu-clause>
     <emu-clause id="sec-properties-of-the-aggregateerror-prototype-object">
-      <h1>Properties of the AggregateError Prototype Object ( _errors_, _message_ )</h1>
-      <emu-clause id="sec-aggregateerror-prototype-errors">
-        <h1>AggregateError.prototype.errors</h1>
+      <h1>Properties of the AggregateError Prototype Object</h1>
+      <p>The AggregateError prototype object:</p>
+      <ul>
+        <li>is an ordinary object.</li>
+        <li>is not an Error instance and does not have an [[ErrorData]] internal slot.</li>
+        <li>has a [[Prototype]] internal slot whose value is the intrinsic object %ErrorPrototype%.</li>
+      </ul>
+      <emu-clause id="sec-aggregateerror.prototype.constructor">
+        <h1>AggregateError.prototype.constructor</h1>
+        <p>The initial value of `AggregateError.prototype.constructor` is the intrinsic %AggregateError% object.</p>
       </emu-clause>
+      <emu-clause id="sec-aggregateerror.prototype.message">
+        <h1>AggregateError.prototype.message</h1>
+        <p>The initial value of `AggregateError.prototype.message` is the empty String.</p>
+      </emu-clause>
+      <emu-clause id="sec-aggregateerror.prototype.name">
+        <h1>AggregateError.prototype.name</h1>
+        <p>The initial value of `AggregateError.prototype.name` is `"AggregateError"`.</p>
+      </emu-clause>
+      <emu-clause id="sec-aggregateerror.prototype.errors">
+        <h1>AggregateError.prototype.errors</h1>
+        <p>The initial value of `AggregateError.prototype.errors` is *undefined*.</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-aggregateerror-instances">
+      <h1>Properties of AggregateError Instances</h1>
+      <p>AggregateError instances are ordinary objects that inherit properties from the AggregateError prototype object and have an [[ErrorData]] internal slot whose value is *undefined*. The only specified uses of [[ErrorData]] is to identify Error, AggregateError, and _NativeError_ instances as Error objects within `Object.prototype.toString`.</p>
     </emu-clause>
   </emu-clause>
 </emu-clause>

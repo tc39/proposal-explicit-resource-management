@@ -532,7 +532,7 @@ finally {
 
 ## `try` in AsyncFunction or AsyncGeneratorFunction
 
-In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `using` block we first look 
+In an _AsyncFunction_ or an _AsyncGeneratorFunction_, at the end of a `try` block we first look 
 for a `[Symbol.asyncDispose]` method before looking for a `[Symbol.dispose]` method. If we found a 
 `[Symbol.asyncDispose]` method, we Await the result of calling it.
 
