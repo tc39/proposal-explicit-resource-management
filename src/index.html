@@ -5,14 +5,46 @@
 <link rel="spec" href="es2015" />
 <script src="ecmarkup.js"></script>
 <pre class="metadata">
-    title: ECMAScript explicit resource management
-    stage: 0
-    grammar: strict
-    contributors: Ron Buckton, Ecma International
+  title: ECMAScript explicit resource management
+  stage: 1
+  grammar: strict
+  contributors: Ron Buckton, Ecma International
 </pre>
 
 <emu-intro id="sec-intro">
-    <h1>Introduction</h1>
-    <emu-import href="sec-introduction.html"></emu-import>
+  <h1>Introduction</h1>
+  <emu-import href="sec-introduction.html"></emu-import>
 </emu-intro>
 
+<emu-clause id="sec-ecmascript-data-types-and-values" aoid="Type">
+  <h1>ECMAScript Data Types and Values</h1>
+  <emu-clause id="sec-ecmascript-language-types">
+    <h1>ECMAScript Language Types</h1>
+    <emu-clause id="sec-ecmascript-language-types-symbol-type">
+      <h1>The Symbol Type</h1>
+      <emu-import href="sec-well-known-symbols-patch.html"></emu-import>
+    </emu-clause>
+    <emu-clause id="sec-object-type">
+      <h1>The Object Type</h1>
+      <emu-import href="sec-well-known-intrinsic-objects-patch.html"></emu-import>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-ecmascript-language-statements-and-declarations">
+  <h1>ECMAScript Language: Statements and Declarations</h1>
+  <emu-import href="sec-try-statement-patch.html"></emu-import>
+</emu-clause>
+
+<emu-clause id="sec-fundamental-objects">
+  <h1>Fundamental Objects</h1>
+  <emu-import href="sec-error-objects-patch.html"></emu-import>
+</emu-clause>
+
+<emu-clause id="sec-indexed-collections">
+  <h1>Indexed Collections</h1>
+  <emu-clause id="sec-array-objects">
+    <h1>Array Objects</h1>
+    <emu-import href="sec-properties-of-the-array-constructor-patch.html"></emu-import>
+  </emu-clause>
+</emu-clause>
