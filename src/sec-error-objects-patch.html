@@ -3,6 +3,7 @@
   <emu-clause id="sec-aggregateerror-objects">
     <h1><ins>AggregateError Objects</ins></h1>
     <p>An AggregateError Object is an extended _NativeError_ object that encapsulates multiple errors.</p>
+    <emu-note>NOTE: This is based on the same design for AggregateError in the <a href="https://tc39.es/proposal-promise-any/#sec-native-error-types-used-in-this-standard-aggregateerror">Promise.any</a> proposal.</emu-note>
     <emu-clause id="sec-aggregateerror-constructor">
       <h1>The AggregateError Constructor</h1>
       <p>The AggregateError constructor:</p>
@@ -18,12 +19,10 @@
         <emu-alg>
           1. If NewTarget is *undefined*, let _newTarget_ be the active function object; else let _newTarget_ be NewTarget.
           1. Let _O_ be ? OrdinaryCreateFromConstructor(_newTarget_, `"%AggregateErrorPrototype%"`, &laquo; [[ErrorData]] &raquo;).
-          1. If _errors_ is not *undefined*, then
-            1. Let _errorsArray_ be ? ArrayFrom( _errors_ ).
-          1. Else,
-            1. Let _errorsArray_ be ! ArrayCreate(0).
-          1. Let _errorsDesc_ be the PropertyDescriptor { [[Value]]: _errorsArray_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
-          1. Perform ! DefinePropertyOrThrow(_O_, `"errors"`, _errorsDesc_).
+          1. Let _errorsIterator_ be ? GetMethod(_errors_, @@iterator).
+          1. Let _errorsList_ be ? IterableToList(_errors_, _errorsIterator_).
+          1. Let _errorsArray_ be ! CreateArrayFromList(_errorsList_).
+          1. Perform ! CreateDataProperty(_O_, `"errors"`, _errorsArray_).
           1. If _message_ is not *undefined*, then
             1. Let _msg_ be ? ToString(_message_).
             1. Let _msgDesc_ be the PropertyDescriptor { [[Value]]: _msg_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
