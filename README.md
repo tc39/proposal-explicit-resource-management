@@ -658,7 +658,7 @@ The following is a high-level list of tasks to progress through each stage of th
 [Prose]: #motivations
 [Examples]: #examples
 [API]: #api
-[Specification]: https://tc39.github.io/proposal-using-statement
+[Specification]: https://tc39.github.io/proposal-explicit-resource-management
 [Transpiler]: #todo
 [Stage3ReviewerSignOff]: #todo
 [Stage3EditorSignOff]: #todo
