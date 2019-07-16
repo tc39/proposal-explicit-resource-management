@@ -183,7 +183,7 @@
     1. Assert: _tryEnv_ is a Lexical Environment.
     1. Assert: Type(_boundName_) is String or Undefined.
     1. Assert: _declarationKind_ is `"none"`, `"var"`, `"let"` or `"const"`.
-    1. If _declarationKind_ is `"const"` or `"let"`, then
+    1. If _declarationKind_ is `"let"` or `"const"`, then
       1. Assert: Type(_boundName_) is String.
       1. Let _envRec_ be _tryEnv_'s EnvironmentRecord.
       1. Assert: _envRec_ is a declarative EnvironmentRecord.
@@ -214,71 +214,68 @@
 </emu-clause>
 
 <emu-clause id="sec-runtime-semantics-dispose" aoid="Dispose">
-  <h1><ins>Runtime Semantics: Dispose ( _obj_, _hint_, _completion_ )</ins></h1>
-  <p>The abstract operation Dispose with arguments _obj_, _hint_ and _completion_ performs the following steps:</p>
+  <h1><ins>Runtime Semantics: Dispose ( _obj_ )</ins></h1>
+  <p>The abstract operation Dispose with argument _obj_ performs the following steps:</p>
   <emu-alg>
-    1. Assert: _hint_ is either ~async~ or ~sync~.
-    1. Assert: _completion_ is a Completion Record.
-    1. If _obj_ is *null* or *undefined*, return _completion_.
+    1. If _obj_ is *null* or *undefined*, return *undefined*.
+    1. If ! GetFunctionKind() is `"async"` or `"async generator"`, let _hint_ be ~async~.
+    1. Else, let _hint_ be ~sync~.
     1. If _hint_ is ~async~, then
-      1. Let _method_ be GetMethod(_obj_, @@asyncDispose).
-      1. If _method_.[[Type]] is ~normal~ and _method_.[[Value]] is *undefined*, then
-        1. Set _method_ to GetMethod(_obj_, @@dispose).
+      1. Let _method_ be ? GetMethod(_obj_, @@asyncDispose).
+      1. If _method_ is *undefined*, then
+        1. Set _method_ to ? GetMethod(_obj_, @@dispose).
     1. Else,
-      1. Set _method_ to GetMethod(_obj_, @@dispose).
-    1. If _method_.[[Type]] is ~normal~, then
-      1. Let _result_ be Call(_method_.[[Value]], _obj_).
-    1. Else,
-      1. Let _result_ be _method_.
-    1. If _result_.[[Type]] is ~normal~ and _hint_ is ~async~, then
-      1. Set _result_ to Await(_result_.[[Value]]).
-    1. If _result_.[[Type]] is ~throw~, then
-      1. If _completion_.[[Type]] is ~throw~, then
-        1. Let _errors_ be CreateArrayFromList(&laquo; _completion_.[[Value]], _result_.[[Value]] &raquo;).
-        1. Throw a new *AggregateError* exception with the errors in _errors_.
-      1. Else,
-        1. Return _result_.
-    1. Else,
-      1. Assert: _result_.[[Type]] is ~normal~.
-    1. Return _completion_.
+      1. Set _method_ to ? GetMethod(_obj_, @@dispose).
+    1. Let _result_ be ? Call(_method_, _obj_).
+    1. If _hint_ is ~async~, return ? Await(_result_).
+    1. Else, return _result_.
   </emu-alg>
 </emu-clause>
 
 <emu-clause id="sec-runtime-semantics-trywithresourcesevaluation" aoid="TryWithResourcesEvaluation">
-  <h1><ins>Runtime Semantics: TryWithResourcesEvaluation (_resources_, _boundNames_, _declarationKind_, _depth_, _Block_)</ins></h1>
-  <p>The abstract operation TryWithResourcesEvaluation with arguments _resources_, _boundNames_, _declarationKind_, _depth_, and _Block_ performs the following steps:</p>
+  <h1><ins>Runtime Semantics: TryWithResourcesEvaluation (_resources_, _boundNames_, _declarationKind_, _Block_)</ins></h1>
+  <p>The abstract operation TryWithResourcesEvaluation with arguments _resources_, _boundNames_, _declarationKind_, and _Block_ performs the following steps:</p>
   <emu-alg>
     1. Assert: _resources_ is a non-empty List.
-    1. Assert: _boundNames_ is a List.
+    1. Assert: Each element of _resources_ is either an |Expression|, |VariableDeclaration|, or |LexicalBinding|.
+    1. Assert: _boundNames_ is a non-empty List.
+    1. Assert: The number of elements in _boundNames_ is equal to the number of elements in _resources_.
+    1. Assert: The Type of each element of _boundNames_ is either String or Undefined.
     1. Assert: _declarationKind_ is `"none"`, `"var"`, `"let"`, or `"const"`.
     1. Assert: _Block_ is a |Block|.
-    1. Let _maxDepth_ be the number of elements in _resources_.
-    1. Assert: 0 &le; _depth_ &lt; _maxDepth_.
-    1. Let _resource_ be the element at index _depth_ of _resources_.
-    1. If _declarationKind_ is `"none"`, then
-      1. Let _boundName_ be *undefined*.
-    1. Else,
-      1. Assert: The number of elements in _boundNames_ is equal to _maxDepth_.
-      1. Let _boundName_ be the element at index _depth_ of _boundNames_.
+    1. Let _resourcesLength_ be the number of elements in _resources_.
     1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
     1. Let _tryEnv_ be NewDeclarativeEnvironment(_oldEnv_).
     1. Perform TryWithResourcesInstantiation(_boundName_, _declarationKind_, _tryEnv_).
     1. Set the running execution context's LexicalEnvironment to _tryEnv_.
-    1. Let _exprCompletion_ be TryResourceEvaluation(_resource_, _boundName_).
-    1. If _exprCompletion_.[[Type]] is not ~normal~, then
-      1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-      1. Return _exprCompletion_.
-    1. If _depth_ &lt; _maxDepth_ - 1, then
-      1. Let _result_ be TryWithResourcesEvaluation(_resources_, _boundNames_, _declarationKind_, _depth_ + 1, _Block_).
-    1. Else,
-      1. Let _result_ be the result of evaulating _Block_.
-    1. If ! GetFunctionKind() is `"async"` or `"async generator"`, then
-      1. Let _hint_ be ~async~.
-    1. Else,
-      1. Let _hint_ be ~sync~.
-    1. Let _disposeResult_ be Dispose(_expr_, _hint_, _result_).
+    1. Let _resourceStack_ be a new empty List.
+    1. Let _lastCompletion_ be NormalCompletion(~empty~).
+    1. Let _n_ be 0.
+    1. Repeat, while _lastCompletion_.[[Type]] is ~normal~ and _n_ &lt; _resourcesLength_
+      1. Let _resource_ be the _n_<sup>th</sup> element of _resources_.
+      1. Let _boundName_ be the _n_<sup>th</sup> element of _boundNames_.
+      1. Let _lastCompletion_ be TryResourceEvaluation(_resource_, _boundName_).
+      1. If _lastCompletion_.[[Type]] is ~normal~, then
+        1. Add _lastCompletion_.[[Value]] as the last element of _resourceStack_.
+        1. Set _n_ to _n_ + 1.
+    1. If _lastCompletion_.[[Type]] is ~normal~, then
+      1. Let _lastCompletion_ be the result of evaluating _Block_.
+    1. Let _errors_ be a new empty List.
+    1. If _lastCompletion_.[[Type]] is ~throw~, then
+      1. Add _lastCompletion_.[[Value]] as the last element of _errors_.
+    1. For each _resource_ of _resourceStack_, in reverse list order, do
+      1. Set _disposeCompletion_ to Dispose(_resource_).
+      1. Assert: _disposeCompletion_.[[Type]] is either ~throw~ or ~normal~.
+      1. If _disposeCompletion_.[[Type]] is ~throw~, then
+        1. Add _disposeCompletion_.[[Value]] as the last element of _errors_.
     1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-    1. Return _disposeResult_.
+    1. Let _errorsLength_ be the number of elements in _errors_.
+    1. If _errorsLength_ = 0, return _lastCompletion_.
+    1. If _errorsLength_ = 1, then
+      1. Let _error_ be the first element of _errors_.
+      1. return ThrowCompletion(_error_).
+    1. Let _errorsArray_ be CreateArrayFromList(_errors_).
+    1. Throw a new *AggregateError* exception with the errors in _errorsArray_.
   </emu-alg>
 </emu-clause>
 
@@ -287,7 +284,8 @@
   <emu-grammar><ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins></emu-grammar>
   <emu-alg>
     1. Let _resources_ be &laquo; |Expression| &raquo;.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, &laquo; &raquo;, `"none"`, `0`, |Block|).
+    1. Let _boundNames_ be &laquo; *undefined* &raquo;.
+    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, `"none"`, |Block|).
     1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
     1. Else, let _C_ be _B_.
     1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
@@ -299,7 +297,7 @@
   <emu-alg>
     1. Let _resources_ be TryResources of |VariableDeclarationList|.
     1. Let _boundNames_ be the BoundNames of |VariableDeclarationList|.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundName_, `"var"`, `0`, |Block|).
+    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, `"var"`, |Block|).
     1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
     1. Else, let _C_ be _B_.
     1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
@@ -313,7 +311,7 @@
     1. Let _boundNames_ be the BoundNames of BindingList.
     1. If IsConstantDeclaration of |LetOrConst| is *true*, let _declarationKind_ be `"const"`.
     1. Else, let _declarationKind_ be `"let"`.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundName_, _declarationKind_, `0`, |Block|).
+    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, _declarationKind_, |Block|).
     1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
     1. Else, let _C_ be _B_.
     1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
