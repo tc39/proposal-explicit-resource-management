@@ -181,21 +181,16 @@ try (const x = expr1, y = expr2) {
      syntax in fenced code blocks as grammarkdown is the grammar format used by ecmarkup. -->
 
 ```grammarkdown
+TryWithResourcesDeclaration[Yield, Await] :
+    `const` BindingList[+In, ?Yield, ?Await]
+
 TryStatement[Yield, Await, Return] :
     ...
     `try` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] 
         Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-    `try` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
-        Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-    `try` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
+    `try` `(` TryWithResourcesDeclaration[?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return]
         Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
 ```
-
-**Notes:**
-
-- We allow `var` declarations for consistency with other control-flow statements
-  that support binding declarations in a parenthesized head, such as `for`, 
-  `for..in`, and `for..of`.
 
 # Semantics
 
@@ -203,7 +198,7 @@ TryStatement[Yield, Await, Return] :
 
 ```grammarkdown
 TryStatement : 
-  `try` `(` Expression `)` Block
+    `try` `(` Expression `)` Block Catch? Finally?
 ```
 
 When `try` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
@@ -255,16 +250,13 @@ the resource we are explicitly tracking.
 
 ```grammarkdown
 TryStatement: 
-  `try` `(` `var` VariableDeclarationList `)` Block
-  `try` `(` LexicalDeclaration `)` Block
+    `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?
 ```
 
-When `try` is parsed with either a _VariableDeclarationList_ or a _LexicalDeclaration_, we again 
-create implicit block-scoped bindings for the initializers of each _VariableDeclaration_ or 
-_LexicalBinding_:
+When `try` is parsed with a _TryWithResourcesDeclaration_ we create block-scoped bindings for the initializers of each _LexicalBinding_:
 
 ```js
-try (let x = expr1, y = expr2) {
+try (const x = expr1, y = expr2) {
   ...
 }
 ```
@@ -274,8 +266,8 @@ in this case `[Symbol.dispose]()` is called on the implicit bindings in the reve
 declaration. This is equivalent to the following:
 
 ```js
-try (let x = expr1) {
-  try (let y = expr2) {
+try (const x = expr1) {
+  try (const y = expr2) {
     ...
   }
 }
@@ -288,11 +280,11 @@ representation:
 {
   const $$try1 = { value: expr1, hasError: false, error: undefined };
   try {
-    let x = $$try1.value;
+    const x = $$try1.value;
     {
       const $$try2 = { value: expr2, hasError: false, error: undefined };
       try {
-        let y = $$try1.value;
+        const y = $$try1.value;
         ...
       }
       catch ($$error) {
@@ -345,11 +337,11 @@ resources in reverse order.
 ## `try` with binding patterns
 
 The `try` statement always creates implicit local bindings for the _Initializer_ of the 
-_VariableDeclaration_ or _LexicalBinding_. For binding patterns this means that we store the value 
+_LexicalBinding_. For binding patterns this means that we store the value 
 of `expr` in the example below, rather than `y`:
 
 ```js
-try (let { x, y } = expr) {
+try (const { x, y } = expr) {
 }
 ```
 
@@ -368,31 +360,31 @@ time:
 
 ```js
 // before:
-let obj = expr, x, y;
+const obj = expr;
 try (obj) {
-  x = obj.x;
-  y = obj.y;
+  const x = obj.x;
+  const y = obj.y;
   ...
 }
 
 
 // after refactor into binding pattern:
-let obj = expr;
+const obj = expr;
 try (obj) {
-  let { x, y } = obj; // `obj` is otherwise unused
+  const { x, y } = obj; // `obj` is otherwise unused
   ...
 }
 
 
 // after inline `obj` declaration into `try` statement:
-try (let obj = expr) {
-  let { x, y } = obj; // `obj` is otherwise unused
+try (const obj = expr) {
+  const { x, y } = obj; // `obj` is otherwise unused
   ...
 }
 
 
 // after refactor away single use of `obj`:
-try (let { x, y } = expr) {
+try (const { x, y } = expr) {
   ...
 }
 ```
@@ -618,7 +610,7 @@ The following is a high-level list of tasks to progress through each stage of th
 
 ### Stage 2 Entrance Criteria
 
-* [ ] [Initial specification text][Specification].  
+* [x] [Initial specification text][Specification].  
 * [ ] [Transpiler support][Transpiler] (_Optional_).  
 
 ### Stage 3 Entrance Criteria
@@ -658,7 +650,7 @@ The following is a high-level list of tasks to progress through each stage of th
 [Prose]: #motivations
 [Examples]: #examples
 [API]: #api
-[Specification]: https://tc39.github.io/proposal-explicit-resource-management
+[Specification]: https://tc39.es/proposal-explicit-resource-management
 [Transpiler]: #todo
 [Stage3ReviewerSignOff]: #todo
 [Stage3EditorSignOff]: #todo

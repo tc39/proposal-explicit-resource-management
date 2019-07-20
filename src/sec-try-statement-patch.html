@@ -2,10 +2,12 @@
   <h1>The `try` Statement</h1>
   <h2>Syntax</h2>
   <emu-grammar type="definition">
+    TryWithResourcesDeclaration[Yield, Await] :
+      `const` BindingList[+In, ?Yield, ?Await]
+
     TryStatement[Yield, Await, Return] :
       <ins>`try` `(` [lookahead ∉ { `let [` }] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?</ins>
-      <ins>`try` `(` `var` VariableDeclarationList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?</ins>
-      <ins>`try` `(` LetOrConst BindingList[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?</ins>
+      <ins>`try` `(` TryWithResourcesDeclaration[?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?</ins>
       `try` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]
       `try` Block[?Yield, ?Await, ?Return] Finally[?Yield, ?Await, ?Return]
       `try` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return] Finally[?Yield, ?Await, ?Return]
@@ -15,12 +17,12 @@
 <emu-clause id="sec-try-statement-static-semantics-early-errors">
   <h1>Static Semantics: Early Errors</h1>
   <emu-grammar>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryWithResourcesDeclaration : `const` BindingList</ins>
   </emu-grammar>
   <ul>
-    <li>
-      It is a Syntax Error if any element of the BoundNames of |BindingList| also occurs in the VarDeclaredNames of |Block|.
-    </li>
+    <li>It is a Syntax Error if any element of the BoundNames of |BindingList| contains `"let"`.</li>
+    <li>It is a Syntax Error if any element of the BoundNames of |BindingList| contains any duplicate entries.</li>
+    <li>It is a Syntax Error if any element of the BoundNames of |BindingList| also occurs in the VarDeclaredNames of |Block|.</li>
   </ul>
 </emu-clause>
 
@@ -30,8 +32,7 @@
   <emu-see-also-para op="ContainsDuplicateLabels"></emu-see-also-para>
   <emu-grammar>
     <ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins>
   </emu-grammar>
   <emu-alg>
     1. Let _hasDuplicates_ be ContainsDuplicateLabels of |Block| with argument _labelSet_.
@@ -52,8 +53,7 @@
   <emu-see-also-para op="ContainsUndefinedBreakTarget"></emu-see-also-para>
   <emu-grammar>
     <ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins>
   </emu-grammar>
   <emu-alg>
     1. Let _hasUndefinedTarget_ be ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
@@ -74,8 +74,7 @@
   <emu-see-also-para op="ContainsUndefinedContinueTarget"></emu-see-also-para>
   <emu-grammar>
     <ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins>
   </emu-grammar>
   <emu-alg>
     1. Let _hasUndefinedTarget_ be ContainsUndefinedContinueTarget of |Block| with argument _labelSet_.
@@ -90,22 +89,32 @@
   </emu-alg>
 </emu-clause>
 
+<emu-clause id="sec-try-statement-static-semantics-boundnames">
+  <h1>Static Semantics: BoundNames</h1>
+  <emu-see-also-para op="BoundNames"></emu-see-also-para>
+  <emu-grammar>TryWithResourcesDeclaration : `const` BindingList</emu-grammar>
+  <emu-alg>
+    1. Return the BoundNames of |BindingList|.
+  </emu-alg>
+</emu-clause>
+
+<emu-clause id="sec-try-statement-static-semantics-isconstantdeclaration">
+  <h1>Static Semantics: IsConstantDeclaration</h1>
+  <emu-see-also-para op="IsConstantDeclaration"></emu-see-also-para>
+  <emu-grammar>
+    <ins>TryWithResourcesDeclaration : `const` BindingList</ins>
+  </emu-grammar>
+  <emu-alg>
+    1. Return *true*.
+  </emu-alg>
+</emu-clause>
+
 <emu-clause id="sec-try-statement-static-semantics-vardeclarednames">
   <h1>Static Semantics: VarDeclaredNames</h1>
   <emu-see-also-para op="VarDeclaredNames"></emu-see-also-para>
-  <emu-grammar><ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins></emu-grammar>
-  <emu-alg>
-    1. Let _names_ be BoundNames of |VariableDeclarationList|.
-    1. Append to _names_ the elements of the VarDeclaredNames of |Block|.
-    1. If |Catch| is present, then
-      1. Append to _names_ the elements of the VarDeclaredNames of |Catch|.
-    1. If |Finally| is present, then
-      1. Append to _names_ the elements of the VarDeclaredNames of |Finally|.
-    1. Return _names_.
-  </emu-alg>
   <emu-grammar>
     <ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins>
   </emu-grammar>
   <emu-alg>
     1. Let _names_ be VarDeclaredNames of |Block|.
@@ -120,19 +129,9 @@
 <emu-clause id="sec-try-statement-static-semantics-varscopeddeclarations">
   <h1>Static Semantics: VarScopedDeclarations</h1>
   <emu-see-also-para op="VarScopedDeclarations"></emu-see-also-para>
-  <emu-grammar><ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins></emu-grammar>
-  <emu-alg>
-    1. Let _declarations_ be VarScopedDeclarations of |VariableDeclarationList|.
-    1. Append to _declarations_ the elements of the VarScopedDeclarations of |Block|.
-    1. If |Catch| is present, then
-      1. Append to _declarations_ the elements of the VarScopedDeclarations of |Catch|.
-    1. If |Finally| is present, then
-      1. Append to _declarations_ the elements of the VarScopedDeclarations of |Finally|.
-    1. Return _declarations_.
-  </emu-alg>
   <emu-grammar>
     <ins>TryStatement : `try` `(` Expression `)` Block Catch? Finally?</ins>
-    <ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins>
+    <ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins>
   </emu-grammar>
   <emu-alg>
     1. Let _declarations_ be VarScopedDeclarations of |Block|.
@@ -147,18 +146,10 @@
 <emu-clause id="sec-static-semantics-tryresources" aoid="TryResources">
   <h1><ins>Static Semantics: TryResources</ins></h1>
   <emu-grammar>
-    VariableDeclarationList: VariableDeclarationList `,` VariableDeclaration
+    TryWithResourcesDeclaration : `const` BindingList
   </emu-grammar>
   <emu-alg>
-    1. Let _resources_ be TryResources of |VariableDeclarationList|.
-    1. Append to _resources_ the elements of the TryResources of |VariableDeclaration|.
-    1. Return _resources_.
-  </emu-alg>
-  <emu-grammar>
-    VariableDeclarationList: VariableDeclaration
-  </emu-grammar>
-  <emu-alg>
-    1. Return &laquo; |VariableDeclaration| &raquo;.
+    1. Return TryResources of |BindingList|.
   </emu-alg>
   <emu-grammar>
     BindingList: BindingList `,` LexicalBinding
@@ -182,15 +173,12 @@
   <emu-alg>
     1. Assert: _tryEnv_ is a Lexical Environment.
     1. Assert: Type(_boundName_) is String or Undefined.
-    1. Assert: _declarationKind_ is `"none"`, `"var"`, `"let"` or `"const"`.
-    1. If _declarationKind_ is `"let"` or `"const"`, then
+    1. Assert: _declarationKind_ is ~none~ or ~const~.
+    1. If _declarationKind_ is ~const~, then
       1. Assert: Type(_boundName_) is String.
       1. Let _envRec_ be _tryEnv_'s EnvironmentRecord.
       1. Assert: _envRec_ is a declarative EnvironmentRecord.
-      1. If _declarationKind_ is `"const"`, then
-        1. Perfom ! _envRec_.CreateImmutableBinding(_boundName_, *true*).
-      1. Else,
-        1. Perfom ! _envRec_.CreateMutableBinding(_boundName_, *false*).
+      1. Perfom ! _envRec_.CreateImmutableBinding(_boundName_, *true*).
   </emu-alg>
 </emu-clause>
 
@@ -198,14 +186,14 @@
   <h1><ins>Runtime Semantics: TryResourceEvaluation (_resource_, _boundName_, _declarationKind_)</ins></h1>
   <p>The abstract operation TryResourceEvaluation with arguments _resource_, _boundName_ and _declarationKind_ performs the following steps:</p>
   <emu-alg>
-    1. Assert: _declarationKind_ is `"none"`, `"var"`, `"let"`, or `"const"`.
-    1. If _declarationKind_ is `"none"`, then
+    1. Assert: _declarationKind_ is ~none~ or ~const~.
+    1. If _declarationKind_ is ~none~, then
       1. Assert: _resource_ is an |Expression|.
       1. Assert: _boundName_ is *undefined*.
       1. Let _exprRef_ be the result of evaluating _resource_.
       1. Return ? GetValue(_exprRef_).
     1. Else,
-      1. Assert: _resource_ is a |VariableDeclaration| or a |LexicalBinding|.
+      1. Assert: _resource_ is a |LexicalBinding|.
       1. Assert: Type(_boundName_) is String.
       1. Let _decl_ be the result of evaluating _resource_.
       1. ReturnIfAbrupt(_decl_).
@@ -240,7 +228,7 @@
     1. Assert: _boundNames_ is a non-empty List.
     1. Assert: The number of elements in _boundNames_ is equal to the number of elements in _resources_.
     1. Assert: The Type of each element of _boundNames_ is either String or Undefined.
-    1. Assert: _declarationKind_ is `"none"`, `"var"`, `"let"`, or `"const"`.
+    1. Assert: _declarationKind_ is ~none~ or ~const~.
     1. Assert: _Block_ is a |Block|.
     1. Let _resourcesLength_ be the number of elements in _resources_.
     1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
@@ -284,7 +272,7 @@
   <emu-alg>
     1. Let _resources_ be &laquo; |Expression| &raquo;.
     1. Let _boundNames_ be &laquo; *undefined* &raquo;.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, `"none"`, |Block|).
+    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, ~none~, |Block|).
     1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
     1. Else, let _C_ be _B_.
     1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
@@ -292,25 +280,11 @@
     1. If _F_.[[Type]] is ~normal~, set _F_ to _C_.
     1. Return Completion(UpdateEmpty(_F_, *undefined*)).
   </emu-alg>
-  <emu-grammar><ins>TryStatement : `try` `(` `var` VariableDeclarationList `)` Block Catch? Finally?</ins></emu-grammar>
+  <emu-grammar><ins>TryStatement : `try` `(` TryWithResourcesDeclaration `)` Block Catch? Finally?</ins></emu-grammar>
   <emu-alg>
-    1. Let _resources_ be TryResources of |VariableDeclarationList|.
-    1. Let _boundNames_ be the BoundNames of |VariableDeclarationList|.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, `"var"`, |Block|).
-    1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
-    1. Else, let _C_ be _B_.
-    1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
-    1. Else, let _F_ be _C_.
-    1. If _F_.[[Type]] is ~normal~, set _F_ to _C_.
-    1. Return Completion(UpdateEmpty(_F_, *undefined*)).
-  </emu-alg>
-  <emu-grammar><ins>TryStatement : `try` `(` LetOrConst BindingList `)` Block Catch? Finally?</ins></emu-grammar>
-  <emu-alg>
-    1. Let _resources_ be TryResources of BindingList.
-    1. Let _boundNames_ be the BoundNames of BindingList.
-    1. If IsConstantDeclaration of |LetOrConst| is *true*, let _declarationKind_ be `"const"`.
-    1. Else, let _declarationKind_ be `"let"`.
-    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, _declarationKind_, |Block|).
+    1. Let _resources_ be TryResources of TryWithResourcesDeclaration.
+    1. Let _boundNames_ be the BoundNames of TryWithResourcesDeclaration.
+    1. Let _B_ be TryWithResourcesEvaluation(_resources_, _boundNames_, ~const~, |Block|).
     1. If _B_.[[Type]] is ~throw~ and |Catch| is present, let _C_ be CatchClauseEvaluation of |Catch| with argument _B_.[[Value]].
     1. Else, let _C_ be _B_.
     1. If |Finally| is present, let _F_ be the result of evaluating |Finally|.
