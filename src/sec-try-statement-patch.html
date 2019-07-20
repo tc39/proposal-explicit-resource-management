@@ -221,14 +221,13 @@
     1. If ! GetFunctionKind() is `"async"` or `"async generator"`, let _hint_ be ~async~.
     1. Else, let _hint_ be ~sync~.
     1. If _hint_ is ~async~, then
-      1. Let _method_ be ? GetMethod(_obj_, @@asyncDispose).
-      1. If _method_ is *undefined*, then
-        1. Set _method_ to ? GetMethod(_obj_, @@dispose).
-    1. Else,
-      1. Set _method_ to ? GetMethod(_obj_, @@dispose).
-    1. Let _result_ be ? Call(_method_, _obj_).
-    1. If _hint_ is ~async~, return ? Await(_result_).
-    1. Else, return _result_.
+      1. Let _asyncMethod_ be ? GetMethod(_obj_, @@asyncDispose).
+      1. If _asyncMethod_ is not *undefined*, then
+        1. Let _asyncResult_ be ? Call(_asyncMethod_, _obj_).
+        1. Return ? Await(_asyncResult_).
+    1. Let _syncMethod_ be ? GetMethod(_obj_, @@dispose).
+    1. Let _syncResult_ be ? Call(_syncMethod_, _obj_).
+    1. Else, return _syncResult_.
   </emu-alg>
 </emu-clause>
 
