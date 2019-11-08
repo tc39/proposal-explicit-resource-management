@@ -49,7 +49,7 @@ try (const obj = g()) {
 
 ## Status
 
-**Stage:** 1  
+**Stage:** 2
 **Champion:** Ron Buckton (@rbuckton)
 
 _For more information see the [TC39 proposal process](https://tc39.github.io/process-document/)._
