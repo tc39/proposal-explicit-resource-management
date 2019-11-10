@@ -596,6 +596,20 @@ declare class AggregateError extends Error {
 }
 ```
 
+# Meeting Notes
+
+* [TC39 July 24th, 2018](https://tc39.es/tc39-notes/2018-07_july-24.html#explicit-resource-management)
+  - [Conclusion](https://tc39.es/tc39-notes/2018-07_july-24.html#conclusionresolution-explicit-resource-management)
+    - Stage 1 acceptance
+* [TC39 July 23rd, 2019](https://tc39.es/tc39-notes/2019-07_july-23.html#explicit-resource-management)
+  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-23.html#conclusionresolution-explicit-resource-management)
+    - Table until Thursday, inconclusive.
+* [TC39 July 25th, 2019](https://tc39.es/tc39-notes/2019-07_july-25.html#explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management)
+  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-25.html#conclusionresolution-explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management):
+    - Investigate Syntax
+    - Approved for Stage 2
+    - YK (@wycatz) & WH (@waldemarhorwat) will be stage 3 reviewers
+
 # TODO
 
 
