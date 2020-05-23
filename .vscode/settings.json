@@ -2,7 +2,16 @@
     "[markdown]": {
         "files.trimTrailingWhitespace": false
     },
+    "[html]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+    },
+    "[ecmarkup]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+    },
     "files.associations": {
-        "*.html": "ecmarkup"
+        "*.html": "ecmarkup",
+        "*.emu": "ecmarkup"
     }
 }

@@ -24,7 +24,7 @@
     "gulp": "^4.0.2",
     "gulp-emu": "^1.2.0",
     "gulp-livereload": "^4.0.1",
-    "st": "^1.2.2"
+    "serve-handler": "^6.1.0"
   },
   "repository": "tc39/proposal-explicit-resource-management"
 }

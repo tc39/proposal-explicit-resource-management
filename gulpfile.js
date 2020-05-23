@@ -3,7 +3,7 @@ const gulp = require("gulp");
 const emu = require("gulp-emu");
 const livereload = require("gulp-livereload");
 const http = require("http");
-const st = require("st");
+const serve = require("serve-handler");
 
 const clean = () => del("docs/**/*");
 gulp.task("clean", clean);
@@ -22,16 +22,16 @@ const watch = () => {
 gulp.task("watch", watch);
 
 const start = (done) => {
-    http.createServer(st({ 
-        path: __dirname + '/docs',
-        index: 'index.html',
-        cache: false
-    })).listen(8080, e => {
+    http.createServer((req, res) => {
+        return serve(req, res, {
+            public: "docs",
+            headers: [{ "source": "**/*", headers: [{ key: "cache-control", value: "no-cache" }] }]
+        });
+    }).listen(8080, e => {
         if (e) return done(e);
         console.log(`folder "docs" serving at http://localhost:8080`);
         done();
     });
 };
 gulp.task("start", gulp.parallel(watch, start));
-
 gulp.task("default", build);
