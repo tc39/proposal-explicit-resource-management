@@ -663,8 +663,8 @@ This proposal also adds the `AggregateError` class for cases where exceptions ar
 
 ```ts
 declare class AggregateError extends Error {
-  errors: unknown[];
   constructor(errors: Iterable<unknown>, message?: string);
+  get errors(): unknown[];
 }
 ```
 
