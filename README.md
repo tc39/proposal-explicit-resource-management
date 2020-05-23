@@ -64,6 +64,7 @@ This proposal is motivated by a number of cases:
   - ECMAScript Iterators: `iterator.return()`
   - WHATWG Stream Readers: `reader.releaseLock()`
   - NodeJS FileHandles: `handle.close()`
+  - Emscripten C++ objects handles: `Module._free(ptr) obj.delete() Module.destroy(obj)`
 - Avoiding common footguns when managing resources:
   ```js
   const reader = stream.getReader();
