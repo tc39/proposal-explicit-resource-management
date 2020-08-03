@@ -224,7 +224,7 @@
       1. Let _tryEnv_ be ! NewTryUsingEnvironment(_oldEnv_, _hint_).
       1. Let _envRec_ be _tryEnv_'s EnvironmentRecord.
       1. For each _boundNames_ of _boundNames_, do
-        1. Perfom ! _envRec_.CreateImmutableBinding(_boundName_, *true*).
+        1. Perform ! _envRec_.CreateImmutableBinding(_boundName_, *true*).
       1. Let _completion_ be the result of evaluating _Head_.
       1. If _completion_.[[Type]] is ~normal~, then
         1. If _Head_ is an |Expression|, then
@@ -242,8 +242,8 @@
       1. Set the running execution context's LexicalEnvironment to _oldEnv_.
       1. Let _errorsLength_ be the number of elements in _errors_.
       1. If _errorsLength_ &gt; 1, then
-        1. Let _errorsArray_ be CreateArrayFromList(_errors_).
-        1. Let _error_ be a new *AggregateError* exception with the errors in _errorsArray_.
+        1. Let _error_ be a newly created `AggregateError` object.
+        1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
         1. Return ThrowCompletion(_error_).
       1. If _errorsLength_ = 1, then
         1. Let _error_ be the first element of _errors_.
