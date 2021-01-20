@@ -1,0 +1,25 @@
+<emu-clause id="sec-modules">
+  <h1>Modules</h1>
+  <emu-clause id="sec-module-semantics">
+    <h1>Module Semantics</h1>
+    <emu-clause id="sec-source-text-module-records">
+      <h1>Source Text Module Records</h1>
+      <emu-clause id="sec-source-text-module-record-execute-module" aoid="ExecuteModule">
+        <h1>ExecuteModule ( ) Concrete Method</h1>
+        <p>The ExecuteModule concrete method of a Source Text Module Record _module_ takes no arguments. It performs the following steps when called:</p>
+
+        <emu-alg>
+          1. Suspend the currently running execution context.
+          1. Let _moduleContext_ be _module_.[[Context]].
+          1. Push _moduleContext_ onto the execution context stack; _moduleContext_ is now the running execution context.
+          1. Let _result_ be the result of evaluating _module_.[[ECMAScriptCode]].
+          1. <ins>Let _env_ be _moduleContext_'s LexicalEnvironment.</ins>
+          1. <ins>Set _result_ to DisposeEnvironment(_env_, _result_).</ins>
+          1. Suspend _moduleContext_ and remove it from the execution context stack.
+          1. Resume the context that is now on the top of the execution context stack as the running execution context.
+          1. Return Completion(_result_).
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>

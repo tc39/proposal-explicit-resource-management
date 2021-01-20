@@ -19,10 +19,11 @@
   "license": "SEE LICENSE IN https://tc39.es/ecma262/#sec-copyright-and-software-license",
   "devDependencies": {
     "@types/gulp": "^4.0.6",
-    "del": "^2.2.2",
-    "ecmarkup": "^3.25.3",
+    "del": "^6.0.0",
+    "ecmarkup": "^5.0.0",
     "gulp": "^4.0.2",
-    "gulp-emu": "^1.2.0",
+    "gulp-emu": "^1.3.2",
+    "gulp-live-server": "0.0.31",
     "gulp-livereload": "^4.0.1",
     "serve-handler": "^6.1.0"
   },

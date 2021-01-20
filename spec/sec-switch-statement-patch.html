@@ -1,0 +1,23 @@
+<emu-clause id="sec-switch-statement">
+  <h1>The `switch` Statement</h1>
+  <emu-clause id="sec-switch-statement-runtime-semantics-evaluation">
+    <h1>Runtime Semantics: Evaluation</h1>
+    <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+    <emu-alg>
+      1. Let _exprRef_ be the result of evaluating |Expression|.
+      1. Let _switchValue_ be ? GetValue(_exprRef_).
+      1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+      1. Let _blockEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+      1. Perform BlockDeclarationInstantiation(|CaseBlock|, _blockEnv_).
+      1. Set the running execution context's LexicalEnvironment to _blockEnv_.
+      1. Let _R_ be CaseBlockEvaluation of |CaseBlock| with argument _switchValue_.
+      1. <ins>Let _env_ be _blockEnv_'s LexicalEnvironment.</ins>
+      1. <ins>Set _result_ to DisposeEnvironment(_env_, _result_).</ins>
+      1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+      1. Return _R_.
+    </emu-alg>
+    <emu-note>
+      <p>No matter how control leaves the |SwitchStatement| the LexicalEnvironment is always restored to its former state.</p>
+    </emu-note>
+  </emu-clause>
+</emu-clause>

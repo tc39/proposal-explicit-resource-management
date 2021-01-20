@@ -30,7 +30,7 @@
             <td>
               <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handled, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
               <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-              <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `try`-`using` statement, as the resource will be automatically disposed when the code within the `try`-`using` statement has been evaluated.</p>
+              <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using const` or `using value` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
             </td>
           </tr>
           </tbody>
@@ -64,12 +64,84 @@
             <td>
               <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handled, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
               <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-              <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `try`-`using`-`await` statement, as the resource will be automatically disposed when the code within the `try`-`using`-`await` statement has been evaluated.</p>
+              <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await const` or `using await value` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
             </td>
           </tr>
           </tbody>
         </table>
       </emu-table>
+    </emu-clause>
+  </emu-clause>
+  <emu-clause id="sec-disposable-objects">
+    <h1>Disposable Objects</h1>
+    <p>TODO</p>
+    <emu-clause id="sec-disposable-constructor">
+      <h1>The Disposable Constructor</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-disposable-onDispose">
+        <h1>Disposable ( _onDispose_ )</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-the-disposable-constructor">
+      <h1>Properties of the Disposable Constructor</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-disposable.from">
+        <h1>Disposable.from ( _iterable_ )</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-the-disposable-prototype-object">
+      <h1>Properties of the Disposable Prototype Object</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-disposable.prototype-@@dispose">
+        <h1>Disposable.prototype [ @@dispose ] ()</h1>
+        <p>TODO</p>
+      </emu-clause>
+      <emu-clause id="sec-disposable.prototype-@@toStringTag">
+        <h1>Disposable.prototype [ @@toStringTag ]</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-disposable-instances">
+      <h1>Properties of Disposable Instances</h1>
+      <p>TODO</p>
+    </emu-clause>
+  </emu-clause>
+  <emu-clause id="sec-asyncdisposable-objects">
+    <h1>AsyncDisposable Objects</h1>
+    <p>TODO</p>
+    <emu-clause id="sec-asyncdisposable-constructor">
+      <h1>The AsyncDisposable Constructor</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-asyncdisposable-onAsyncDispose">
+        <h1>AsyncDisposable ( _onAsyncDispose_ )</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-the-asyncdisposable-constructor">
+      <h1>Properties of the AsyncDisposable Constructor</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-asyncdisposable.from">
+        <h1>AsyncDisposable.from ( _iterable_ )</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-the-asyncdisposable-prototype-object">
+      <h1>Properties of the AsyncDisposable Prototype Object</h1>
+      <p>TODO</p>
+      <emu-clause id="sec-asyncdisposable.prototype-@@asyncDispose">
+        <h1>AsyncDisposable.prototype [ @@asyncDispose ] ()</h1>
+        <p>TODO</p>
+      </emu-clause>
+      <emu-clause id="sec-asyncdisposable.prototype-@@toStringTag">
+        <h1>AsyncDisposable.prototype [ @@toStringTag ]</h1>
+        <p>TODO</p>
+      </emu-clause>
+    </emu-clause>
+    <emu-clause id="sec-properties-of-asyncdisposable-instances">
+      <h1>Properties of AsyncDisposable Instances</h1>
+      <p>TODO</p>
     </emu-clause>
   </emu-clause>
 </emu-clause>

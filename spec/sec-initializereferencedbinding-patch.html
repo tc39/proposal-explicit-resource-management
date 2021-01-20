@@ -1,0 +1,14 @@
+<emu-clause id="sec-initializereferencedbinding" aoid="InitializeReferencedBinding">
+  <h1>InitializeReferencedBinding ( _V_, _W_<ins>, _hint_</ins> )</h1>
+  <p>The abstract operation InitializeReferencedBinding takes arguments _V_<del> and _W_</del><ins>, _W_, and _hint_</ins>. It performs the following steps when called:</p>
+  <emu-alg>
+    1. ReturnIfAbrupt(_V_).
+    1. ReturnIfAbrupt(_W_).
+    1. Assert: _V_ is a Reference Record.
+    1. Assert: IsUnresolvableReference(_V_) is *false*.
+    1. <ins>Assert: _hint_ is ~normal~, ~sync~, or ~async~.</ins>
+    1. Let _base_ be _V_.[[Base]].
+    1. Assert: _base_ is an Environment Record.
+    1. Return _base_.InitializeBinding(_V_.[[ReferencedName]], _W_<ins>, _hint_</ins>).
+  </emu-alg>
+</emu-clause>

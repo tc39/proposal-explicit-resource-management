@@ -1,0 +1,20 @@
+<emu-clause id="sec-block">
+  <h1>Block</h1>
+  <emu-clause id="sec-block-runtime-semantics-evaluation">
+    <h1>Runtime Semantics: Evaluation</h1>
+    <emu-grammar>Block : `{` StatementList `}`</emu-grammar>
+    <emu-alg>
+      1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+      1. Let _blockEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+      1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
+      1. Set the running execution context's LexicalEnvironment to _blockEnv_.
+      1. Let _blockValue_ be the result of evaluating |StatementList|.
+      1. <ins>Set _blockValue_ to be the result of performing DisposeEnvironment(_blockEnv_, _blockValue_).</ins>
+      1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+      1. Return _blockValue_.
+    </emu-alg>
+    <emu-note>
+      <p>No matter how control leaves the |Block| the LexicalEnvironment is always restored to its former state.</p>
+    </emu-note>
+  </emu-clause>
+</emu-clause>

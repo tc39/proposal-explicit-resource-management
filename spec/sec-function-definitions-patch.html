@@ -1,0 +1,15 @@
+<emu-clause id="sec-function-definitions">
+  <h1>Function Definitions</h1>
+  <emu-clause id="sec-runtime-semantics-evaluatefunctionbody" oldids="sec-function-definitions-runtime-semantics-evaluatebody" type="sdo" aoid="EvaluateFunctionBody">
+    <h1>Runtime Semantics: EvaluateFunctionBody</h1>
+    <p>With parameters _functionObject_ and _argumentsList_ (a List).</p>
+    <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
+    <emu-alg>
+      1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
+      1. <del>Return the result of evaluating |FunctionStatementList|.</del>
+      1. <ins>Let _result_ be result of evaluating |FunctionStatementList|.</ins>
+      1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
+      1. <ins>Return DisposeEnvironment(_env_, _result_).</ins>
+    </emu-alg>
+  </emu-clause>
+</emu-clause>

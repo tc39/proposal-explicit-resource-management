@@ -1,0 +1,242 @@
+<emu-clause id="sec-environment-records">
+  <h1>Environment Records</h1>
+  <p><dfn>Environment Record</dfn> is a specification type used to define the association of |Identifier|s to specific variables and functions, based upon the lexical nesting structure of ECMAScript code. Usually an Environment Record is associated with some specific syntactic structure of ECMAScript code such as a |FunctionDeclaration|, a |BlockStatement|, or a |Catch| clause of a |TryStatement|. Each time such code is evaluated, a new Environment Record is created to record the identifier bindings that are created by that code.</p>
+  <p>Every Environment Record has an [[OuterEnv]] field, which is either *null* or a reference to an outer Environment Record. This is used to model the logical nesting of Environment Record values. The outer reference of an (inner) Environment Record is a reference to the Environment Record that logically surrounds the inner Environment Record. An outer Environment Record may, of course, have its own outer Environment Record. An Environment Record may serve as the outer environment for multiple inner Environment Records. For example, if a |FunctionDeclaration| contains two nested |FunctionDeclaration|s then the Environment Records of each of the nested functions will have as their outer Environment Record the Environment Record of the current evaluation of the surrounding function.</p>
+  <p>Environment Records are purely specification mechanisms and need not correspond to any specific artefact of an ECMAScript implementation. It is impossible for an ECMAScript program to directly access or manipulate such values.</p>
+
+  <emu-clause id="sec-the-environment-record-type-hierarchy">
+    <h1>The Environment Record Type Hierarchy</h1>
+    <p>The Environment Record abstract class includes the abstract specification methods defined in <emu-xref href="#table-abstract-methods-of-environment-records"></emu-xref>. These abstract methods have distinct concrete algorithms for each of the concrete subclasses.</p>
+    <emu-table id="table-abstract-methods-of-environment-records" caption="Abstract Methods of Environment Records" oldids="table-15">
+      <table>
+        <tbody>
+        <tr>
+          <th>
+            Method
+          </th>
+          <th>
+            Purpose
+          </th>
+        </tr>
+        <tr>
+          <td>
+            HasBinding(N)
+          </td>
+          <td>
+            Determine if an Environment Record has a binding for the String value _N_. Return *true* if it does and *false* if it does not.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            CreateMutableBinding(N, D)
+          </td>
+          <td>
+            Create a new but uninitialized mutable binding in an Environment Record. The String value _N_ is the text of the bound name. If the Boolean argument _D_ is *true* the binding may be subsequently deleted.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            CreateImmutableBinding(N, S)
+          </td>
+          <td>
+            Create a new but uninitialized immutable binding in an Environment Record. The String value _N_ is the text of the bound name. If _S_ is *true* then attempts to set it after it has been initialized will always throw an exception, regardless of the strict mode setting of operations that reference that binding.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            InitializeBinding(N, V<ins>, _hint_</ins>)
+          </td>
+          <td>
+            Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` or `using value` statement (~sync~), a `using await const` or `using await value` statement (~async~), or a regular variable declaration (~normal~).</ins>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            SetMutableBinding(N, V, S)
+          </td>
+          <td>
+            Set the value of an already existing mutable binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and may be a value of any ECMAScript language type. _S_ is a Boolean flag. If _S_ is *true* and the binding cannot be set throw a *TypeError* exception.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            GetBindingValue(N, S)
+          </td>
+          <td>
+            Returns the value of an already existing binding from an Environment Record. The String value _N_ is the text of the bound name. _S_ is used to identify references originating in strict mode code or that otherwise require strict mode reference semantics. If _S_ is *true* and the binding does not exist throw a *ReferenceError* exception. If the binding exists but is uninitialized a *ReferenceError* is thrown, regardless of the value of _S_.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            DeleteBinding(N)
+          </td>
+          <td>
+            Delete a binding from an Environment Record. The String value _N_ is the text of the bound name. If a binding for _N_ exists, remove the binding and return *true*. If the binding exists but cannot be removed return *false*. If the binding does not exist return *true*.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            HasThisBinding()
+          </td>
+          <td>
+            Determine if an Environment Record establishes a `this` binding. Return *true* if it does and *false* if it does not.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            HasSuperBinding()
+          </td>
+          <td>
+            Determine if an Environment Record establishes a `super` method binding. Return *true* if it does and *false* if it does not.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            WithBaseObject()
+          </td>
+          <td>
+            If this Environment Record is associated with a `with` statement, return the with object. Otherwise, return *undefined*.
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </emu-table>
+
+    <emu-clause id="sec-declarative-environment-records">
+      <h1>Declarative Environment Records</h1>
+      <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
+      <p><ins>Every declarative Environment Record also has a [[ResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using value` statements that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+      <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
+
+      <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
+        <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
+        <p>The InitializeBinding concrete method of a declarative Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+        <emu-alg>
+          1. Assert: _envRec_ must have an uninitialized binding for _N_.
+          1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _V_, _hint_).</ins>
+          1. Set the bound value for _N_ in _envRec_ to _V_.
+          1. <emu-not-ref>Record</emu-not-ref> that the binding for _N_ in _envRec_ has been initialized.
+          1. Return NormalCompletion(~empty~).
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-object-environment-records">
+      <h1>Object Environment Records</h1>
+      <emu-clause id="sec-object-environment-records-initializebinding-n-v">
+        <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
+        <p>The InitializeBinding concrete method of an object Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. It performs the following steps when called:</p>
+        <emu-alg>
+          1. Assert: _hint_ is ~normal~.
+          1. Return ? _envRec_.SetMutableBinding(_N_, _V_, *false*).
+        </emu-alg>
+        <emu-note>
+          <p>In this specification, all uses of CreateMutableBinding for object Environment Records are immediately followed by a call to InitializeBinding for the same name. Hence, this specification does not explicitly track the initialization state of bindings in object Environment Records.</p>
+        </emu-note>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-global-environment-records" oldids="global-environment">
+      <h1>Global Environment Records</h1>
+      <emu-clause id="sec-global-environment-records-initializebinding-n-v">
+        <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
+        <p>The InitializeBinding concrete method of a global Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+        <emu-alg>
+          1. Let _DclRec_ be _envRec_.[[DeclarativeRecord]].
+          1. If _DclRec_.HasBinding(_N_) is *true*, then
+            1. Return _DclRec_.InitializeBinding(_N_, _V_, _hint_).
+          1. Assert: If the binding exists, it must be in the object Environment Record.
+          1. Assert: _hint_ is ~normal~.
+          1. Let _ObjRec_ be _envRec_.[[ObjectRecord]].
+          1. Return ? _ObjRec_.InitializeBinding(_N_, _V_).
+        </emu-alg>
+      </emu-clause>
+  </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-environment-record-operations">
+    <h1>Environment Record Operations</h1>
+
+    <emu-clause id="sec-environment-record-operations-adddisposableresource-env-v-hint" aoid="AddDisposableResource">
+      <h1><ins>AddDisposableResource ( _env_, _V_, _hint_ )</ins></h1>
+      <emu-alg>
+        1. Assert: _env_ is an declarative Environment Record.
+        1. Assert: _hint_ is ~sync~ or ~async~.
+        1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
+        1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
+        1. Append _resource_ to _env_.[[ResourceStack]].
+        1. Return NormalCompletion(~empty~).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-environment-record-operations-disposeenvironment-env-completion" aoid="DisposeEnvironment">
+      <h1><ins>DisposeEnvironment ( _env_, _completion_ )</ins></h1>
+      <emu-alg>
+        1. Assert: _env_ is an declarative Environment Record or *undefined*.
+        1. Assert: _completion_ is a Completion Record.
+        1. If _env_ is *undefined*, return _completion_.
+        1. Let _errors_ be a new empty List.
+        1. If _completion_.[[Type]] is ~throw~, then
+          1. Append _completion_.[[Value]] to _errors_.
+        1. For each _resource_ of _envRec_.[[ResourceStack]], in reverse list order, do
+          1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
+          1. If _result_.[[Type]] is ~throw~, then
+            1. Append _result_.[[Value]] to _errors_.
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Let _errorsLength_ be the number of elements in _errors_.
+        1. If _errorsLength_ &gt; 1, then
+          1. Let _error_ be a newly created `AggregateError` object.
+          1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
+          1. Return ThrowCompletion(_error_).
+        1. If _errorsLength_ = 1, then
+          1. Let _error_ be the first element of _errors_.
+          1. Return ThrowCompletion(_error_).
+        1. Return _completion_.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <!--
+    <p>The behaviour of the additional concrete specification methods for try-using Environment Records is defined by the following algorithms:</p>
+    <emu-clause id="sec-try-using-environment-records-initializebinding-n-v">
+      <h1>InitializeBinding ( _N_, _V_ )</h1>
+      <emu-alg>
+        1. Let _envRec_ be the try-using Environment Record for which the method was invoked.
+        1. Assert: _envRec_ must have an uninitialized binding for _N_.
+        1. Perform ? _envRec_.AddDisposableResource(_V_).
+        1. Set the bound value for _N_ in _envRec_ to _V_.
+        1. Record that the binding for _N_ in _envRec_ has been initialized.
+        1. Return NormalCompletion(~empty~).
+      </emu-alg>
+    </emu-clause>
+    <emu-clause id="sec-try-using-environment-records-pushtryusingresource-n-v">
+      <h1>AddDisposableResource ( _V_ )</h1>
+      <emu-alg>
+        1. Let _envRec_ be the try-using Environment Record for which the method was invoked.
+        1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
+        1. Let _hint_ be _envRec_.[[Hint]].
+        1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
+        1. Append _resource_ to _envRec_.[[ResourceStack]].
+        1. Return NormalCompletion(~empty~).
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+<emu-clause id="sec-lexical-environment-operations">
+  <h1>Lexical Environment Operations</h1>
+  <emu-clause id="sec-newtryusingenvironment" aoid="NewTryUsingEnvironment">
+    <h1><ins>NewTryUsingEnvironment ( _E_, _hint_ )</h1>
+    <p>When the abstract operation NewDeclarativeEnvironment is called with a Lexical Environment as argument _E_ and argument _hint_ the following steps are performed:</p>
+    <emu-alg>
+      1. Assert: _hint_ is either ~sync~ or ~async~.
+      1. Let _env_ be a new Lexical Environment.
+      1. Let _envRec_ be a new try-using Environment Record containing no bindings.
+      1. Set _envRec_.[[Hint]] to _hint_.
+      1. Set _envRec_.[[ResourceStack]] to a new empty List.
+      1. Set _env_'s EnvironmentRecord to _envRec_.
+      1. Set the outer lexical environment reference of _env_ to _E_.
+      1. Return _env_.
+    </emu-alg>
+  </emu-clause>
+-->
+</emu-clause>

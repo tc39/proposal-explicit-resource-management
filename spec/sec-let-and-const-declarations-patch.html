@@ -1,0 +1,135 @@
+<emu-clause id="sec-let-and-const-declarations">
+  <h1>Let and Const Declarations</h1>
+  <h2>Syntax</h2>
+  <emu-grammar type="definition">
+    LexicalDeclaration[In, Yield, Await] :
+      LetOrConst BindingList[?In, ?Yield, ?Await, <ins>~Using</ins>] `;`
+      <ins>`using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`</ins>
+      <ins>[+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const` BindingList[?In, ?Yield, +Await, +Using] `;`</ins>
+    
+    LetOrConst :
+      `let`
+      `const`
+
+    BindingList[In, Yield, Await, <ins>Using</ins>] :
+      LexicalBinding[?In, ?Yield, ?Await, <ins>?Using</ins>]
+      BindingList[?In, ?Yield, ?Await, <ins>?Using</ins>] `,` LexicalBinding[?In, ?Yield, ?Await, <ins>?Using</ins>]
+
+    LexicalBinding[In, Yield, Await, <ins>Using</ins>] :
+      BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
+      <del>BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</del>
+      <ins>[~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</ins>
+  </emu-grammar>
+
+  <emu-clause id="sec-let-and-const-declarations-static-semantics-early-errors">
+    <h1>Static Semantics: Early Errors</h1>
+    <emu-grammar>
+        <ins>
+        LexicalDeclaration :
+            `using` `const` BindingList `;`
+            `using` `await` `const` BindingList `;`
+        </ins>
+    </emu-grammar>
+    <ul>
+      <li>
+        It is a Syntax Error if the BoundNames of |BindingList| contains *"let"*.
+      </li>
+      <li>
+        It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
+      </li>
+    </ul>
+  </emu-clause>
+
+  <emu-clause id="sec-let-and-const-declarations-runtime-semantics-evaluation">
+    <h1>Runtime Semantics: Evaluation</h1>
+    <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
+    <emu-alg>
+      1. Let _next_ be the result of <del>evaluating</del><ins>BindingEvaluation for</ins> |BindingList|<ins> with parameter ~normal~</ins>.
+      1. ReturnIfAbrupt(_next_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-grammar><ins>LexicalDeclaration : `using` `const` BindingList `;`</ins></emu-grammar>
+    <emu-alg>
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~sync~.
+      1. ReturnIfAbrupt(_next_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-grammar><ins>LexicalDeclaration : `using` `await` `const` BindingList `;`</ins></emu-grammar>
+    <emu-alg>
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~async~.
+      1. ReturnIfAbrupt(_next_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-grammar><del>BindingList : BindingList `,` LexicalBinding</del></emu-grammar>
+    <emu-alg>
+      1. <del>Let _next_ be the result of evaluating |BindingList|.</del>
+      1. <del>ReturnIfAbrupt(_next_).</del>
+      1. <del>Return the result of evaluating |LexicalBinding|.</del>
+    </emu-alg>
+    <emu-grammar><del>LexicalBinding : BindingIdentifier</del></emu-grammar>
+    <emu-alg>
+      1. <del>Let _lhs_ be ResolveBinding(StringValue of |BindingIdentifier|).</del>
+      1. <del>Return InitializeReferencedBinding(_lhs_, *undefined*).</del>
+    </emu-alg>
+    <emu-note>
+      <p><del></del>A static semantics rule ensures that this form of |LexicalBinding| never occurs in a `const` declaration.</del></p>
+    </emu-note>
+    <emu-grammar><del>LexicalBinding : BindingIdentifier Initializer</del></emu-grammar>
+    <emu-alg>
+      1. <del>Let _bindingId_ be StringValue of |BindingIdentifier|.</del>
+      1. <del>Let _lhs_ be ResolveBinding(_bindingId_).</del>
+      1. <del>If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then</del>
+        1. <del>Let _value_ be NamedEvaluation of |Initializer| with argument _bindingId_.</del>
+      1. <del>Else,</del>
+        1. <del>Let _rhs_ be the result of evaluating |Initializer|.</del>
+        1. <del>Let _value_ be ? GetValue(_rhs_).</del>
+      1. <del>Return InitializeReferencedBinding(_lhs_, _value_).</del>
+    </emu-alg>
+    <emu-grammar><del>LexicalBinding : BindingPattern Initializer</del></emu-grammar>
+    <emu-alg>
+      1. <del>Let _rhs_ be the result of evaluating |Initializer|.</del>
+      1. <del>Let _value_ be ? GetValue(_rhs_).</del>
+      1. <del>Let _env_ be the running execution context's LexicalEnvironment.</del>
+      1. <del>Return the result of performing BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.</del>
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation">
+    <h1><ins>Runtime Semantics: BindingEvaluation</ins></h1>
+    <p>With parameter _hint_.</p>
+    <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
+    <emu-alg>
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter _hint_.
+      1. ReturnIfAbrupt(_next_).
+      1. Return the result of BindingEvaluation for |LexicalBinding| with parameter _hint_.
+    </emu-alg>
+    <emu-grammar>LexicalBinding : BindingIdentifier</emu-grammar>
+    <emu-alg>
+      1. Assert: _hint_ is ~normal~.
+      1. Let _lhs_ be ResolveBinding(StringValue of |BindingIdentifier|).
+      1. Return InitializeReferencedBinding(_lhs_, *undefined*, ~normal~).
+    </emu-alg>
+    <emu-note>
+      <p>A static semantics rule ensures that this form of |LexicalBinding| never occurs in a `const` declaration.</p>
+    </emu-note>
+    <emu-grammar>LexicalBinding : BindingIdentifier Initializer</emu-grammar>
+    <emu-alg>
+      1. Let _bindingId_ be StringValue of |BindingIdentifier|.
+      1. Let _lhs_ be ResolveBinding(_bindingId_).
+      1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
+        1. Let _value_ be NamedEvaluation of |Initializer| with argument _bindingId_.
+      1. Else,
+        1. Let _rhs_ be the result of evaluating |Initializer|.
+        1. Let _value_ be ? GetValue(_rhs_).
+      1. Return InitializeReferencedBinding(_lhs_, _value_, _hint_).
+    </emu-alg>
+    <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
+    <emu-alg>
+      1. Assert: _hint_ is ~normal~.
+      1. Let _rhs_ be the result of evaluating |Initializer|.
+      1. Let _value_ be ? GetValue(_rhs_).
+      1. Let _env_ be the running execution context's LexicalEnvironment.
+      1. Return the result of performing BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.
+    </emu-alg>
+  </emu-clause>
+</emu-clause>

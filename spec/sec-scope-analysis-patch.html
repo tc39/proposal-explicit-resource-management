@@ -1,0 +1,32 @@
+<emu-clause id="sec-syntax-directed-operations-scope-analysis">
+  <h1>Scope Analysis</h1>
+
+  <emu-clause id="sec-static-semantics-boundnames" oldids="sec-identifiers-static-semantics-boundnames,sec-let-and-const-declarations-static-semantics-boundnames,sec-variable-statement-static-semantics-boundnames,sec-destructuring-binding-patterns-static-semantics-boundnames,sec-for-in-and-for-of-statements-static-semantics-boundnames,sec-function-definitions-static-semantics-boundnames,sec-arrow-function-definitions-static-semantics-boundnames,sec-generator-function-definitions-static-semantics-boundnames,sec-async-generator-function-definitions-static-semantics-boundnames,sec-class-definitions-static-semantics-boundnames,sec-async-function-definitions-static-semantics-BoundNames,sec-async-arrow-function-definitions-static-semantics-BoundNames,sec-imports-static-semantics-boundnames,sec-exports-static-semantics-boundnames" type="sdo" aoid="BoundNames">
+    <h1>Static Semantics: BoundNames</h1>
+    <emu-grammar>
+      <ins>
+        LexicalDeclaration :
+          `using` `const` BindingList `;`
+          `using` `await` `const` BindingList `;`
+      </ins>
+    </emu-grammar>
+    <emu-alg>
+      1. Return the BoundNames of |BindingList|.
+    </emu-alg>
+
+  </emu-clause>
+
+  <emu-clause id="sec-static-semantics-isconstantdeclaration" oldids="sec-let-and-const-declarations-static-semantics-isconstantdeclaration,sec-function-definitions-static-semantics-isconstantdeclaration,sec-generator-function-definitions-static-semantics-isconstantdeclaration,sec-async-generator-function-definitions-static-semantics-isconstantdeclaration,sec-class-definitions-static-semantics-isconstantdeclaration,sec-async-function-definitions-static-semantics-IsConstantDeclaration,sec-exports-static-semantics-isconstantdeclaration" type="sdo" aoid="IsConstantDeclaration">
+    <h1>Static Semantics: IsConstantDeclaration</h1>
+    <emu-grammar>
+      <ins>
+        LexicalDeclaration : 
+          `using` `const` BindingList `;`
+          `using` `await` `const` BindingList `;`
+      </ins>
+    </emu-grammar>
+    <emu-alg>
+      1. Return *true*.
+    </emu-alg>
+  </emu-clause>
+</emu-clause>

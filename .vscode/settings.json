@@ -11,7 +11,7 @@
         "editor.tabSize": 2,
     },
     "files.associations": {
-        "*.html": "ecmarkup",
+        // "*.html": "ecmarkup",
         "*.emu": "ecmarkup"
     }
 }

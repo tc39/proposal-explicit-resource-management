@@ -1,0 +1,42 @@
+<emu-clause id="sec-algorithm-conventions">
+  <h1>Algorithm Conventions</h1>
+  <emu-clause id="sec-runtime-semantics">
+    <h1>Runtime Semantics</h1>
+    <emu-clause id="sec-disposeandreturnifabrupt" aoid="DisposeAndReturnIfAbrupt">
+      <h1><ins>DisposeAndReturnIfAbrupt</ins></h1>
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. DisposeAndReturnIfAbrupt(_env_, _argument_).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _env_ is a declarative Environment Record or *undefined*.
+        1. If _argument_ is an abrupt completion, return DisposeEnvironment(_env_, _argument_).
+        1. If _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
+      </emu-alg>
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. DisposeAndReturnIfAbrupt(_env_, AbstractOperation()).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _env_ is a declarative Environment Record or *undefined*.
+        1. Let _hygenicTemp_ be AbstractOperation().
+        1. If _hygenicTemp_ is an abrupt completion, return DisposeEnvironment(_env_, _hygenicTemp_).
+        1. If _hygenicTemp_ is a Completion Record, set _hygenicTemp_ to _hygenicTemp_.[[Value]].
+      </emu-alg>
+      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeAndReturnIfAbrupt.</p>
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. Let _result_ be AbstractOperation(DisposeAndReturnIfAbrupt(_env_, _argument_)).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _env_ is a declarative Environment Record or *undefined*.
+        1. If _argument_ is an abrupt completion, return DisposeEnvironment(_env_, _argument_).
+        1. If _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
+        1. Let _result_ be AbstractOperation(_argument_).
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>

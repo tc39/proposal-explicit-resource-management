@@ -32,6 +32,17 @@
         </tr>
         <tr>
           <td>
+            [[Hint]]
+          </td>
+          <td>
+            ~sync~ or ~async~.
+          </td>
+          <td>
+            Indicates whether the resources was added by a `using const` or `using value` statement (~sync~) or a `using await const` or `using await value` statement (~async~).
+          </td>
+        </tr>
+        <tr>
+          <td>
             [[DisposeMethod]]
           </td>
           <td>
@@ -52,7 +63,7 @@
       1. Assert: _V_ is an ECMAScript language value.
       1. Assert: _hint_ is either ~sync~ or ~async~.
       1. Let _disposeMethod_ be ? GetDisposeMethod(_V_, _hint_).
-      1. Return the DisposableResource { [[ResourceValue]]: _V_, [[DisposeMethod]]: _disposeMethod_ }.
+      1. Return the DisposableResource { [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _disposeMethod_ }.
     </emu-alg>
   </emu-clause>
   <emu-clause id="sec-getdisposemethod" aoid="GetDisposeMethod">

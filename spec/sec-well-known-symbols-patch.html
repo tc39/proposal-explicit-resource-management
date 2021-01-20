@@ -22,7 +22,7 @@
           <ins>`"Symbol.asyncDispose"`</ins>
         </td>
         <td>
-          <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `try`-`using` statement while in an async function or async generator.</ins>
+          <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await const` and `using await value` statements while in an async function, async generator, or the top level of a _Module_.</ins>
         </td>
       </tr>
       <tr>
@@ -33,7 +33,7 @@
           <ins>`"Symbol.dispose"`</ins>
         </td>
         <td>
-          <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `try`-`using` statement.</ins>
+          <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using const` and `using value` statements.</ins>
         </td>
       </tr>
       </tbody>

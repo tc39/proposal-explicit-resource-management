@@ -1,0 +1,38 @@
+<emu-clause id="sec-destructuring-binding-patterns">
+  <h1>Destructuring Binding Patterns</h1>
+  <emu-clause id="sec-destructuring-binding-patterns-runtime-semantics-restbindinginitialization" type="sdo" aoid="RestBindingInitialization">
+    <h1>Runtime Semantics: RestBindingInitialization</h1>
+    <p>With parameters _value_, _environment_, and _excludedNames_.</p>
+
+    <emu-grammar>BindingRestProperty : `...` BindingIdentifier</emu-grammar>
+    <emu-alg>
+      1. Let _lhs_ be ? ResolveBinding(StringValue of |BindingIdentifier|, _environment_).
+      1. Let _restObj_ be ! OrdinaryObjectCreate(%Object.prototype%).
+      1. Perform ? CopyDataProperties(_restObj_, _value_, _excludedNames_).
+      1. If _environment_ is *undefined*, return PutValue(_lhs_, _restObj_).
+      1. Return InitializeReferencedBinding(_lhs_, _restObj_<ins>, ~normal~</ins>).
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-runtime-semantics-keyedbindinginitialization" type="sdo" aoid="KeyedBindingInitialization">
+    <h1>Runtime Semantics: KeyedBindingInitialization</h1>
+    <p>With parameters _value_, _environment_, and _propertyName_.</p>
+    <emu-note>
+      <p>When *undefined* is passed for _environment_ it indicates that a PutValue operation should be used to assign the initialization value. This is the case for formal parameter lists of non-strict functions. In that case the formal parameter bindings are preinitialized in order to deal with the possibility of multiple parameters with the same name.</p>
+    </emu-note>
+    <emu-grammar>SingleNameBinding : BindingIdentifier Initializer?</emu-grammar>
+    <emu-alg>
+      1. Let _bindingId_ be StringValue of |BindingIdentifier|.
+      1. Let _lhs_ be ? ResolveBinding(_bindingId_, _environment_).
+      1. Let _v_ be ? GetV(_value_, _propertyName_).
+      1. If |Initializer| is present and _v_ is *undefined*, then
+        1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
+          1. Set _v_ to the result of performing NamedEvaluation for |Initializer| with argument _bindingId_.
+        1. Else,
+          1. Let _defaultValue_ be the result of evaluating |Initializer|.
+          1. Set _v_ to ? GetValue(_defaultValue_).
+      1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _v_).
+      1. Return InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
+    </emu-alg>
+  </emu-clause>
+</emu-clause>

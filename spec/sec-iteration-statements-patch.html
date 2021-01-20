@@ -1,0 +1,49 @@
+<emu-clause id="sec-iteration-statements">
+  <h1>Iteration Statements</h1>
+  <h2>Syntax</h2>
+  <emu-grammar type="definition">
+    ForDeclaration[Yield, Await] :
+      LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
+      <ins>`using` `const` ForBinding[?Yield, ?Await, +Using]</ins>
+      <ins>[+Await] `using` `await` `const` ForBinding[?Yield, +Await, +Using]</ins>
+
+    ForBinding[Yield, Await, <ins>Using</ins>] :
+      BindingIdentifier[?Yield, ?Await]
+      <del>BindingPattern[?Yield, ?Await]</del>
+      <ins>[~Using] BindingPattern[?Yield, ?Await]</ins>
+  </emu-grammar>
+
+  <emu-clause id="sec-iteration-statements-semantics">
+    <h1>Semantics</h1>
+    <emu-clause id="sec-runtime-semantics-loopevaluation" type="sdo" aoid="LoopEvaluation">
+      <h1>Runtime Semantics: LoopEvaluation</h1>
+      <p>With parameter _labelSet_.</p>
+      <emu-grammar>IterationStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _loopEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. Let _isConst_ be IsConstantDeclaration of |LexicalDeclaration|.
+        1. Let _boundNames_ be the BoundNames of |LexicalDeclaration|.
+        1. For each element _dn_ of _boundNames_, do
+          1. If _isConst_ is *true*, then
+            1. Perform ! _loopEnv_.CreateImmutableBinding(_dn_, *true*).
+          1. Else,
+            1. Perform ! _loopEnv_.CreateMutableBinding(_dn_, *false*).
+        1. Set the running execution context's LexicalEnvironment to _loopEnv_.
+        1. Let _forDcl_ be the result of evaluating |LexicalDeclaration|.
+        1. If _forDcl_ is an abrupt completion, then
+          1. <ins>Set _forDcl_ to be DisposeEnvironment(_loopEnv_, _forDcl_).</ins>
+          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+          1. Return Completion(_forDcl_).
+        1. If _isConst_ is *false*, let _perIterationLets_ be _boundNames_; otherwise let _perIterationLets_ be &laquo; &raquo;.
+        1. Let _bodyResult_ be ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, _perIterationLets_, _labelSet_).
+        1. <ins>Set _bodyResult_ to be DisposeEnvironment(_loopEnv_, _bodyResult_).</ins>
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return Completion(_bodyResult_).
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-import href="sec-for-statement-patch.html"></emu-import>
+  <emu-import href="sec-for-in-and-for-of-statements-patch.html"></emu-import>
+</emu-clause>

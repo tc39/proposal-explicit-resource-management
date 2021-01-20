@@ -61,6 +61,11 @@ contributors: Ron Buckton, Ecma International
   </ul>
 </div>
 
+<emu-clause id="sec-notational-conventions">
+  <h1>Notational Conventions</h1>
+  <emu-import href="sec-algorithm-conventions-patch.html"></emu-import>
+</emu-clause>
+
 <emu-clause id="sec-ecmascript-data-types-and-values" aoid="Type">
   <h1>ECMAScript Data Types and Values</h1>
   <emu-clause id="sec-ecmascript-language-types">
@@ -70,6 +75,13 @@ contributors: Ron Buckton, Ecma International
       <emu-import href="sec-well-known-symbols-patch.html"></emu-import>
     </emu-clause>
   </emu-clause>
+  <emu-clause id="sec-ecmascript-specification-types">
+    <h1>ECMAScript Specification Types</h1>
+    <emu-clause id="sec-reference-record-specification-type" oldids="sec-reference-specification-type">
+      <h1>The Reference Record Specification Type</h1>
+      <emu-import href="sec-initializereferencedbinding-patch.html"></emu-import>
+    </emu-clause>
+  </emu-clause>
 </emu-clause>
 
 <emu-clause id="sec-abstract-operations">
@@ -77,14 +89,44 @@ contributors: Ron Buckton, Ecma International
   <emu-import href="sec-operations-on-disposable-objects-patch.html"></emu-import>
 </emu-clause>
 
+<emu-clause id="sec-syntax-directed-operations">
+  <h1>Syntax-Directed Operations</h1>
+  <emu-import href="sec-scope-analysis-patch.html"></emu-import>
+  <emu-import href="sec-miscellaneous-patch.html"></emu-import>
+</emu-clause>
+
 <emu-clause id="sec-executable-code-and-execution-contexts">
   <h1>Executable Code and Execution Contexts</h1>
-  <emu-import href="sec-lexical-environments-patch.html"></emu-import>
+  <emu-import href="sec-environment-records-patch.html"></emu-import>
+</emu-clause>
+
+<emu-clause id="sec-ordinary-and-exotic-objects-behaviors">
+  <h1>Ordinary and Exotic Objects Behaviors</h1>
+  <emu-import href="sec-ecmascript-function-objects-patch.html"></emu-import>
 </emu-clause>
 
 <emu-clause id="sec-ecmascript-language-statements-and-declarations">
   <h1>ECMAScript Language: Statements and Declarations</h1>
-  <emu-import href="sec-try-statement-patch.html"></emu-import>
+  <emu-import href="sec-block-patch.html"></emu-import>
+  <emu-clause id="sec-declarations-and-the-variable-statement">
+    <h1>Declarations and the Variable Statement</h1>
+    <emu-import href="sec-let-and-const-declarations-patch.html"></emu-import>
+    <emu-import href="sec-destructuring-binding-patterns-patch.html"></emu-import>
+  </emu-clause>
+  <emu-import href="sec-iteration-statements-patch.html"></emu-import>
+  <emu-import href="sec-switch-statement-patch.html"></emu-import>
+</emu-clause>
+
+<emu-clause id="sec-ecmascript-language-functions-and-classes">
+  <h1>ECMAScript Language: Functions and Classes</h1>
+  <emu-import href="sec-function-definitions-patch.html"></emu-import>
+  <emu-import href="sec-tail-position-calls-patch.html"></emu-import>
+</emu-clause>
+
+<emu-clause id="sec-ecmascript-language-scripts-and-modules">
+  <h1>ECMAScript Language: Scripts and Modules</h1>
+  <emu-import href="sec-scripts-patch.html"></emu-import>
+  <emu-import href="sec-modules-patch.html"></emu-import>
 </emu-clause>
 
 <emu-clause id="sec-control-abstraction-objects">
@@ -101,4 +143,7 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
   <emu-import href="sec-resource-management-patch.html"></emu-import>
+  <emu-import href="sec-generator-objects-patch.html"></emu-import>
+  <emu-import href="sec-asyncgenerator-objects-patch.html"></emu-import>
+  <emu-import href="sec-async-function-objects-patch.html"></emu-import>
 </emu-clause>
