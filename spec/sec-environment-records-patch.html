@@ -47,7 +47,7 @@
             InitializeBinding(N, V<ins>, _hint_</ins>)
           </td>
           <td>
-            Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` or `using value` statement (~sync~), a `using await const` or `using await value` statement (~async~), or a regular variable declaration (~normal~).</ins>
+            Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` statement (~sync~), a `using await const` statement (~async~), or a regular variable declaration (~normal~).</ins>
           </td>
         </tr>
         <tr>
@@ -105,7 +105,7 @@
     <emu-clause id="sec-declarative-environment-records">
       <h1>Declarative Environment Records</h1>
       <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-      <p><ins>Every declarative Environment Record also has a [[ResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using value` statements that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+      <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using await const` statements that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
       <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
       <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
@@ -151,92 +151,6 @@
           1. Return ? _ObjRec_.InitializeBinding(_N_, _V_).
         </emu-alg>
       </emu-clause>
-  </emu-clause>
-  </emu-clause>
-
-  <emu-clause id="sec-environment-record-operations">
-    <h1>Environment Record Operations</h1>
-
-    <emu-clause id="sec-environment-record-operations-adddisposableresource-env-v-hint" aoid="AddDisposableResource">
-      <h1><ins>AddDisposableResource ( _env_, _V_, _hint_ )</ins></h1>
-      <emu-alg>
-        1. Assert: _env_ is an declarative Environment Record.
-        1. Assert: _hint_ is ~sync~ or ~async~.
-        1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
-        1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
-        1. Append _resource_ to _env_.[[ResourceStack]].
-        1. Return NormalCompletion(~empty~).
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-environment-record-operations-disposeenvironment-env-completion" aoid="DisposeEnvironment">
-      <h1><ins>DisposeEnvironment ( _env_, _completion_ )</ins></h1>
-      <emu-alg>
-        1. Assert: _env_ is an declarative Environment Record or *undefined*.
-        1. Assert: _completion_ is a Completion Record.
-        1. If _env_ is *undefined*, return _completion_.
-        1. Let _errors_ be a new empty List.
-        1. If _completion_.[[Type]] is ~throw~, then
-          1. Append _completion_.[[Value]] to _errors_.
-        1. For each _resource_ of _envRec_.[[ResourceStack]], in reverse list order, do
-          1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
-          1. If _result_.[[Type]] is ~throw~, then
-            1. Append _result_.[[Value]] to _errors_.
-        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-        1. Let _errorsLength_ be the number of elements in _errors_.
-        1. If _errorsLength_ &gt; 1, then
-          1. Let _error_ be a newly created `AggregateError` object.
-          1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
-          1. Return ThrowCompletion(_error_).
-        1. If _errorsLength_ = 1, then
-          1. Let _error_ be the first element of _errors_.
-          1. Return ThrowCompletion(_error_).
-        1. Return _completion_.
-      </emu-alg>
     </emu-clause>
   </emu-clause>
-
-  <!--
-    <p>The behaviour of the additional concrete specification methods for try-using Environment Records is defined by the following algorithms:</p>
-    <emu-clause id="sec-try-using-environment-records-initializebinding-n-v">
-      <h1>InitializeBinding ( _N_, _V_ )</h1>
-      <emu-alg>
-        1. Let _envRec_ be the try-using Environment Record for which the method was invoked.
-        1. Assert: _envRec_ must have an uninitialized binding for _N_.
-        1. Perform ? _envRec_.AddDisposableResource(_V_).
-        1. Set the bound value for _N_ in _envRec_ to _V_.
-        1. Record that the binding for _N_ in _envRec_ has been initialized.
-        1. Return NormalCompletion(~empty~).
-      </emu-alg>
-    </emu-clause>
-    <emu-clause id="sec-try-using-environment-records-pushtryusingresource-n-v">
-      <h1>AddDisposableResource ( _V_ )</h1>
-      <emu-alg>
-        1. Let _envRec_ be the try-using Environment Record for which the method was invoked.
-        1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
-        1. Let _hint_ be _envRec_.[[Hint]].
-        1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
-        1. Append _resource_ to _envRec_.[[ResourceStack]].
-        1. Return NormalCompletion(~empty~).
-      </emu-alg>
-    </emu-clause>
-  </emu-clause>
-</emu-clause>
-<emu-clause id="sec-lexical-environment-operations">
-  <h1>Lexical Environment Operations</h1>
-  <emu-clause id="sec-newtryusingenvironment" aoid="NewTryUsingEnvironment">
-    <h1><ins>NewTryUsingEnvironment ( _E_, _hint_ )</h1>
-    <p>When the abstract operation NewDeclarativeEnvironment is called with a Lexical Environment as argument _E_ and argument _hint_ the following steps are performed:</p>
-    <emu-alg>
-      1. Assert: _hint_ is either ~sync~ or ~async~.
-      1. Let _env_ be a new Lexical Environment.
-      1. Let _envRec_ be a new try-using Environment Record containing no bindings.
-      1. Set _envRec_.[[Hint]] to _hint_.
-      1. Set _envRec_.[[ResourceStack]] to a new empty List.
-      1. Set _env_'s EnvironmentRecord to _envRec_.
-      1. Set the outer lexical environment reference of _env_ to _E_.
-      1. Return _env_.
-    </emu-alg>
-  </emu-clause>
--->
 </emu-clause>

@@ -21,7 +21,7 @@
           1. Set _generator_.[[GeneratorState]] to ~completed~.
           1. Once a generator enters the ~completed~ state it never leaves it and its associated execution context is never resumed. Any execution state associated with _generator_ can be discarded at this point.
           1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-          1. <ins>Set _result_ to DisposeEnvironment(_env_, _result_).</ins>
+          1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
           1. If _result_.[[Type]] is ~normal~, let _resultValue_ be *undefined*.
           1. Else if _result_.[[Type]] is ~return~, let _resultValue_ be _result_.[[Value]].
           1. Else,

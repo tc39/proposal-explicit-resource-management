@@ -1,0 +1,15 @@
+<emu-clause id="sec-arrow-function-definitions">
+  <h1>Arrow Function Definitions</h1>
+  <emu-clause id="sec-runtime-semantics-evaluateconcisebody" oldids="sec-arrow-function-definitions-runtime-semantics-evaluatebody" type="sdo" aoid="EvaluateConciseBody">
+    <h1>Runtime Semantics: EvaluateConciseBody</h1>
+    <p>With parameters _functionObject_ and _argumentsList_ (a List).</p>
+    <emu-grammar>ConciseBody : ExpressionBody</emu-grammar>
+    <emu-alg>
+      1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
+      1. <del>Return the result of evaluating |ExpressionBody|.</del>
+      1. <ins>Let _result_ be result of evaluating |ExpressionBody|.</ins>
+      1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
+      1. <ins>Return DisposeResources(_env_, _result_).</ins>
+    </emu-alg>
+  </emu-clause>
+</emu-clause>

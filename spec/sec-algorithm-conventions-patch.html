@@ -2,41 +2,91 @@
   <h1>Algorithm Conventions</h1>
   <emu-clause id="sec-runtime-semantics">
     <h1>Runtime Semantics</h1>
-    <emu-clause id="sec-disposeandreturnifabrupt" aoid="DisposeAndReturnIfAbrupt">
-      <h1><ins>DisposeAndReturnIfAbrupt</ins></h1>
+    <ins class="block">
+    <emu-clause id="sec-disposeifabrupt" aoid="DisposeIfAbrupt">
+      <h1>DisposeIfAbrupt</h1>
+
       <p>Algorithm steps that say or are otherwise equivalent to:</p>
       <emu-alg>
-        1. DisposeAndReturnIfAbrupt(_env_, _argument_).
+        1. DisposeIfAbrupt(_argument_, _disposable_).
       </emu-alg>
       <p>mean the same thing as:</p>
       <emu-alg>
-        1. Assert: _env_ is a declarative Environment Record or *undefined*.
-        1. If _argument_ is an abrupt completion, return DisposeEnvironment(_env_, _argument_).
-        1. If _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
+        1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_).
       </emu-alg>
+
       <p>Algorithm steps that say or are otherwise equivalent to:</p>
       <emu-alg>
-        1. DisposeAndReturnIfAbrupt(_env_, AbstractOperation()).
+        1. DisposeIfAbrupt(_argument_, _disposable_, _errors_).
       </emu-alg>
       <p>mean the same thing as:</p>
       <emu-alg>
-        1. Assert: _env_ is a declarative Environment Record or *undefined*.
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
+        1. Assert: _errors_ is a List.
+        1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_, _errors_).
+      </emu-alg>
+
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. DisposeIfAbrupt(AbstractOperation(), _disposable_).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
         1. Let _hygenicTemp_ be AbstractOperation().
-        1. If _hygenicTemp_ is an abrupt completion, return DisposeEnvironment(_env_, _hygenicTemp_).
-        1. If _hygenicTemp_ is a Completion Record, set _hygenicTemp_ to _hygenicTemp_.[[Value]].
+        1. If _hygenicTemp_ is an abrupt completion, set _hygenicTemp_ to DisposeResources(_disposable_, _hygenicTemp_).
       </emu-alg>
-      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeAndReturnIfAbrupt.</p>
+      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
+
       <p>Algorithm steps that say or are otherwise equivalent to:</p>
       <emu-alg>
-        1. Let _result_ be AbstractOperation(DisposeAndReturnIfAbrupt(_env_, _argument_)).
+        1. DisposeIfAbrupt(AbstractOperation(), _disposable_, _errors_).
       </emu-alg>
       <p>mean the same thing as:</p>
       <emu-alg>
-        1. Assert: _env_ is a declarative Environment Record or *undefined*.
-        1. If _argument_ is an abrupt completion, return DisposeEnvironment(_env_, _argument_).
-        1. If _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
+        1. Assert: _errors_ is a List.
+        1. Let _hygenicTemp_ be AbstractOperation().
+        1. If _hygenicTemp_ is an abrupt completion, set _hygenicTemp_ to DisposeResources(_disposable_, _hygenicTemp_, _errors_).
+      </emu-alg>
+      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
+
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. Let _result_ be AbstractOperation(DisposeIfAbrupt(_argument_, _disposable_)).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
+        1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_).
         1. Let _result_ be AbstractOperation(_argument_).
       </emu-alg>
+
+      <p>Algorithm steps that say or are otherwise equivalent to:</p>
+      <emu-alg>
+        1. Let _result_ be AbstractOperation(DisposeIfAbrupt(_argument_, _disposable_, _errors_)).
+      </emu-alg>
+      <p>mean the same thing as:</p>
+      <emu-alg>
+        1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
+        1. Assert: _errors_ is a List.
+        1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_, _errors_).
+        1. Let _result_ be AbstractOperation(_argument_).
+      </emu-alg>
+
+      <emu-note>
+        <p>DisposeIfAbrupt can be combined with the `?` and `!` prefixes, so that for example</p>
+        <emu-alg>
+          1. Let _result_ be ? DisposeIfAbrupt(_value_, _disposable_).
+        </emu-alg>
+        <p>means the same thing as:</p>
+        <emu-alg>
+          1. Let _result_ be DisposeIfAbrupt(_value_, _disposable_).
+          1. ReturnIfAbrupt(_result_).
+        </emu-alg>
+      </emu-note>
     </emu-clause>
+    </ins>
   </emu-clause>
 </emu-clause>

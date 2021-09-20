@@ -3,9 +3,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
 <link rel="spec" href="es2015" />
 <style>
-  ins.block {
-    font-weight: bold;
-    font-style: italic;
+  h1.ins {
+    background-color: #e0f8e0;
+    text-decoration: none;
+    border-bottom: 1px solid #396;
   }
   hr {
     height: 0.25em;
@@ -22,44 +23,20 @@
     padding-left: 0;
     list-style: none;
   }
-  #metadata-block {
-    margin: 4em 0;
-    padding: 10px;
-    border: 1px solid #ee8421;
-  }
-  #metadata-block h1 {
-    font-size: 1.5em;
-    margin-top: 0;
-  }
-  #metadata-block > ul {
-    list-style-type: none;
-    margin: 0; padding: 0;
-  }
+
 </style>
 <pre class="metadata">
 title: ECMAScript Explicit Resource Management
 status: proposal
-stage: 1
+stage: 2
 contributors: Ron Buckton, Ecma International
 </pre>
 
-<div id="metadata-block">
-  <h1>Contributing to this Proposal</h1>
-  <p>This proposal is developed on GitHub with the help of the ECMAScript community. There are a number of ways to contribute to the development of this specification:</p>
-  <ul>
-    <li>GitHub Repository: <a href="https://github.com/tc39/proposal-explicit-resource-management">https://github.com/tc39/proposal-explicit-resource-management</a></li>
-    <li>Issues: <a href="https://github.com/tc39/proposal-explicit-resource-management/issues">All Issues</a>, <a href="https://github.com/tc39/proposal-explicit-resource-management/issues/new">File a New Issue</a></li>
-    <li>Pull Requests: <a href="https://github.com/tc39/proposal-explicit-resource-management/pulls">All Pull Requests</a>, <a href="https://github.com/tc39/proposal-explicit-resource-management/pulls/new">Create a New Pull Request</a></li>
-    <!-- <li>Test Suite: <a href="https://github.com/tc39/test262">Test262</a></li> -->
-    <li>
-      <p>Community:</p>
-      <ul>
-        <li>Discourse: <a href="https://es.discourse.group">https://es.discourse.group</a></li>
-        <li>IRC: <a href="ircs://irc.freenode.net:6667">#tc39</a> on <a href="https://freenode.net/kb/answer/chat">freenode</a></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+<emu-intro id="intro">
+  <h1>Introduction</h1>
+  <p>This proposal introduces syntax and semantics around explicit resource management.</p>
+  <p>See <a href="https://github.com/tc39/explicit-resource-management">the proposal repository</a> for background material and discussion.</p>
+</emu-intro>
 
 <emu-clause id="sec-notational-conventions">
   <h1>Notational Conventions</h1>
@@ -120,6 +97,8 @@ contributors: Ron Buckton, Ecma International
 <emu-clause id="sec-ecmascript-language-functions-and-classes">
   <h1>ECMAScript Language: Functions and Classes</h1>
   <emu-import href="sec-function-definitions-patch.html"></emu-import>
+  <emu-import href="sec-arrow-function-definitions-patch.html"></emu-import>
+  <emu-import href="sec-class-definitions-patch.html"></emu-import>
   <emu-import href="sec-tail-position-calls-patch.html"></emu-import>
 </emu-clause>
 

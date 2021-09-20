@@ -32,12 +32,12 @@
         1. Set the running execution context's LexicalEnvironment to _loopEnv_.
         1. Let _forDcl_ be the result of evaluating |LexicalDeclaration|.
         1. If _forDcl_ is an abrupt completion, then
-          1. <ins>Set _forDcl_ to be DisposeEnvironment(_loopEnv_, _forDcl_).</ins>
+          1. <ins>Set _forDcl_ to be DisposeResources(_loopEnv_, _forDcl_).</ins>
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
           1. Return Completion(_forDcl_).
         1. If _isConst_ is *false*, let _perIterationLets_ be _boundNames_; otherwise let _perIterationLets_ be &laquo; &raquo;.
         1. Let _bodyResult_ be ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, _perIterationLets_, _labelSet_).
-        1. <ins>Set _bodyResult_ to be DisposeEnvironment(_loopEnv_, _bodyResult_).</ins>
+        1. <ins>Set _bodyResult_ to be DisposeResources(_loopEnv_, _bodyResult_).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
         1. Return Completion(_bodyResult_).
       </emu-alg>

@@ -12,7 +12,7 @@
       1. Set the running execution context's LexicalEnvironment to _blockEnv_.
       1. Let _R_ be CaseBlockEvaluation of |CaseBlock| with argument _switchValue_.
       1. <ins>Let _env_ be _blockEnv_'s LexicalEnvironment.</ins>
-      1. <ins>Set _result_ to DisposeEnvironment(_env_, _result_).</ins>
+      1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
       1. Set the running execution context's LexicalEnvironment to _oldEnv_.
       1. Return _R_.
     </emu-alg>

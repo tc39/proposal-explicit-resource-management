@@ -1,4 +1,41 @@
 <emu-clause id="sec-tail-position-calls">
   <h1>Tail Position Calls</h1>
-  <p>TODO</p>
-</emu-clause> 
+
+  <emu-clause id="sec-isintailposition" type="abstract operation">
+    <h1>
+      Static Semantics: IsInTailPosition (
+        _call_: a Parse Node,
+      )
+    </h1>
+    <dl class="header">
+    </dl>
+    <emu-alg>
+      1. If the source code matching _call_ is non-strict code, return *false*.
+      1. If _call_ is not contained within a |FunctionBody|, |ConciseBody|, or |AsyncConciseBody|, return *false*.
+      1. Let _body_ be the |FunctionBody|, |ConciseBody|, or |AsyncConciseBody| that most closely contains _call_.
+      1. If _body_ is the |FunctionBody| of a |GeneratorBody|, return *false*.
+      1. If _body_ is the |FunctionBody| of an |AsyncFunctionBody|, return *false*.
+      1. If _body_ is the |FunctionBody| of an |AsyncGeneratorBody|, return *false*.
+      1. If _body_ is an |AsyncConciseBody|, return *false*.
+      1. <ins>If _call_ is not contained within a |Statement|, |CaseClause|, or |DefaultClause| that is also contained within _body_, let _container_ be *undefined*.</ins>
+      1. <ins>Otherwise, let _container_ be the |Statement|, |CaseClause| or |DefaultClause| that most closely contains _call_ and is contained by _body_.</ins>
+      1. <ins>Repeat, while _container_ is not *undefined*,</ins>
+        1. <ins>If _container_ Contains `using const`, return *false*.</ins>
+        1. <ins>If _container_ Contains `using await const`, return *false*.</ins>
+        1. <ins>If _container_ is not contained within a |Statement|, |CaseClause|, or |DefaultClause| that is also contained within _body_, set _container_ to *undefined*.</ins>
+        1. <ins>Otherwise, set _container_ to the |Statement|, |CaseClause| or |DefaultClause| that most closely contains _container_ and is contained by _body_.</ins>
+      1. <ins>If _body_ Contains `using const`, return *false*.</ins>
+      1. <ins>If _body_ Contains `using await const`, return *false*.</ins>
+      1. Return the result of HasCallInTailPosition of _body_ with argument _call_.
+    </emu-alg>
+    <emu-note>
+      <p>Tail Position calls are only defined in strict mode code because of a common non-standard language extension (see <emu-xref href="#sec-addrestrictedfunctionproperties"></emu-xref>) that enables observation of the chain of caller contexts.</p>
+    </emu-note>
+    <ins class="block">
+    <emu-note>
+      DRAFT NOTE: I am not certain whether Contains can be used in the way described above. I may need to consider an alternative if that is the case.
+    </emu-note>
+    </ins>
+  </emu-clause>
+
+</emu-clause>

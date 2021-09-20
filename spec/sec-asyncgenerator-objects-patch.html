@@ -21,7 +21,7 @@
           1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
           1. Set _generator_.[[AsyncGeneratorState]] to ~completed~.
           1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-          1. <ins>Set _result_ to DisposeEnvironment(_env_, _result_).</ins>
+          1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
           1. If _result_ is a normal completion, let _resultValue_ be *undefined*.
           1. Else,
             1. Let _resultValue_ be _result_.[[Value]].

@@ -9,7 +9,7 @@
       1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
       1. Set the running execution context's LexicalEnvironment to _blockEnv_.
       1. Let _blockValue_ be the result of evaluating |StatementList|.
-      1. <ins>Set _blockValue_ to be the result of performing DisposeEnvironment(_blockEnv_, _blockValue_).</ins>
+      1. <ins>Set _blockValue_ to the result of performing DisposeResources(_blockEnv_, _blockValue_).</ins>
       1. Set the running execution context's LexicalEnvironment to _oldEnv_.
       1. Return _blockValue_.
     </emu-alg>
