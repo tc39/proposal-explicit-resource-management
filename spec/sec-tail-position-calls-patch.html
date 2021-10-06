@@ -17,12 +17,6 @@
       1. If _body_ is the |FunctionBody| of an |AsyncFunctionBody|, return *false*.
       1. If _body_ is the |FunctionBody| of an |AsyncGeneratorBody|, return *false*.
       1. If _body_ is an |AsyncConciseBody|, return *false*.
-      1. <ins>If _call_ is not contained within a |Statement|, |CaseClause|, or |DefaultClause| that is also contained within _body_, let _container_ be *undefined*.</ins>
-      1. <ins>Otherwise, let _container_ be the |Statement|, |CaseClause| or |DefaultClause| that most closely contains _call_ and is contained by _body_.</ins>
-      1. <ins>Repeat, while _container_ is not *undefined*,</ins>
-        1. <ins>If _container_ Contains |UsingConst|, return *false*.</ins>
-        1. <ins>If _container_ is not contained within a |Statement|, |CaseClause|, or |DefaultClause| that is also contained within _body_, set _container_ to *undefined*.</ins>
-        1. <ins>Otherwise, set _container_ to the |Statement|, |CaseClause| or |DefaultClause| that most closely contains _container_ and is contained by _body_.</ins>
       1. <ins>If _body_ Contains |UsingConst|, return *false*.</ins>
       1. Return the result of HasCallInTailPosition of _body_ with argument _call_.
     </emu-alg>
