@@ -4,12 +4,17 @@
   <emu-grammar type="definition">
     LexicalDeclaration[In, Yield, Await] :
       LetOrConst BindingList[?In, ?Yield, ?Await, <ins>~Using</ins>] `;`
-      <ins>`using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`</ins>
-      <ins>[+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const` BindingList[?In, ?Yield, +Await, +Using] `;`</ins>
-    
+      <ins>UsingConst[?Await] BindingList[?In, ?Yield, ?Await, +Using] `;`</ins>
+
     LetOrConst :
       `let`
       `const`
+
+    <ins>
+    UsingConst[Await] :
+      `using` [no LineTerminator here] `const`
+      [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const`
+    </ins>
 
     BindingList[In, Yield, Await, <ins>Using</ins>] :
       LexicalBinding[?In, ?Yield, ?Await, <ins>?Using</ins>]
@@ -24,12 +29,9 @@
 
   <emu-clause id="sec-let-and-const-declarations-static-semantics-early-errors">
     <h1>Static Semantics: Early Errors</h1>
+    <ins class="block">
     <emu-grammar>
-        <ins>
-        LexicalDeclaration :
-            `using` `const` BindingList `;`
-            `using` `await` `const` BindingList `;`
-        </ins>
+      LexicalDeclaration : UsingConst BindingList `;`
     </emu-grammar>
     <ul>
       <li>
@@ -39,32 +41,21 @@
         It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
       </li>
       <li>
-        It is a Syntax Error if the goal symbol is |Script| and |LexicalDeclaration| is not contained, either directly or indirectly, within a |BlockStatement|, |HoistableDeclaration|, |ClassDeclaration|, |ForStatement|, |ForInOfStatement|, |SwitchStatement|, or |Expression|.
+        It is a Syntax Error if the goal symbol is |Script| and |LexicalDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassBody|.
       </li>
     </ul>
     <emu-note>
-      Draft Note: Erroring outside of a block-scoped context in a |Script| is currently under discussion in <a href="https://github.com/tc39/proposal-explicit-resource-management/issues/66">#66</a>. The above boundaries have been chosen for the following reasons:
+      Draft Note: This behavior is currently under discussion in <a href="https://github.com/tc39/proposal-explicit-resource-management/issues/66">#66</a>. The above boundaries have been chosen for the following reasons:
       <ul>
         <li>
-          The boundary |BlockStatement| introduces an explicit block scope.
+          |Block|, |CaseBlock|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, and |ClassBody| each introduce an explicit block scope.
         </li>
         <li>
-          The boundaries |ForStatement| and |ForInOfStatement| both introduce an implicit block scope for each iteration.
+          |ForStatement| and |ForInOfStatement| both introduce an implicit block scope per iteration.
         </li>
-        <li>
-          The boundary |SwitchStatement| introduces a block scope within |CaseBlock|.
-        </li>
-        <li>
-          The boundary |HoistableDeclaration| introduces an implicit block scope within function bodies.
-        </li>
-        <li>
-          The boundary |ClassDeclaration| introduces an implicit block scope within class bodies and function bodies.
-        </li>
-        <li>
-          The boundary |Expression| effectively covers the introduction of a block scope within function expressions, arrow functions, and class expressions.
-        </li>
-      </ul> 
+      </ul>
     </emu-note>
+    </ins>
   </emu-clause>
 
   <emu-clause id="sec-let-and-const-declarations-runtime-semantics-evaluation">
@@ -77,15 +68,11 @@
     </emu-alg>
 
     <ins class="block">
-    <emu-grammar>LexicalDeclaration : `using` `const` BindingList `;`</emu-grammar>
+    <emu-grammar>LexicalDeclaration : UsingConst BindingList `;`</emu-grammar>
     <emu-alg>
-      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~sync~.
-      1. ReturnIfAbrupt(_next_).
-      1. Return NormalCompletion(~empty~).
-    </emu-alg>
-    <emu-grammar>LexicalDeclaration : `using` `await` `const` BindingList `;`</emu-grammar>
-    <emu-alg>
-      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~async~.
+      1. If |UsingConst| Contains `await`, let _hint_ be ~async~.
+      1. Otherwise, Let _hint_ be ~sync~.
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter _hint_.
       1. ReturnIfAbrupt(_next_).
       1. Return NormalCompletion(~empty~).
     </emu-alg>

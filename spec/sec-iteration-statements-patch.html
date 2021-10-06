@@ -4,8 +4,7 @@
   <emu-grammar type="definition">
     ForDeclaration[Yield, Await] :
       LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-      <ins>`using` `const` ForBinding[?Yield, ?Await, +Using]</ins>
-      <ins>[+Await] `using` `await` `const` ForBinding[?Yield, +Await, +Using]</ins>
+      <ins>UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]</ins>
 
     ForBinding[Yield, Await, <ins>Using</ins>] :
       BindingIdentifier[?Yield, ?Await]
