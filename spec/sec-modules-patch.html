@@ -21,5 +21,38 @@
         </emu-alg>
       </emu-clause>
     </emu-clause>
+    <emu-clause id="sec-exports">
+      <h1>Exports</h1>
+      <h2>Syntax</h2>
+      <emu-grammar type="definition">
+        ExportDeclaration :
+          `export` ExportFromClause FromClause `;`
+          `export` NamedExports `;`
+          `export` VariableStatement[~Yield, +Await]
+          <del>`export` Declaration[~Yield, +Await]</del>
+          <ins>`export` [lookahead &notin; { `using` }] Declaration[~Yield, +Await]</ins>
+          `export` `default` HoistableDeclaration[~Yield, +Await, +Default]
+          `export` `default` ClassDeclaration[~Yield, +Await, +Default]
+          `export` `default` [lookahead &notin; {`function`, `async` [no |LineTerminator| here] `function`, `class`}] AssignmentExpression[+In, ~Yield, +Await] `;`
+
+        ExportFromClause :
+          `*`
+          `*` `as` IdentifierName
+          NamedExports
+
+        NamedExports :
+          `{` `}`
+          `{` ExportsList `}`
+          `{` ExportsList `,` `}`
+
+        ExportsList :
+          ExportSpecifier
+          ExportsList `,` ExportSpecifier
+
+        ExportSpecifier :
+          IdentifierName
+          IdentifierName `as` IdentifierName
+      </emu-grammar>
+    </emu-clause>
   </emu-clause>
 </emu-clause>
