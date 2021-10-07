@@ -804,7 +804,7 @@ The following is a high-level list of tasks to progress through each stage of th
 
 ### Stage 3 Entrance Criteria
 
-* [ ] [Complete specification text][Specification].  
+* [x] [Complete specification text][Specification].  
 * [ ] Designated reviewers have [signed off][Stage3ReviewerSignOff] on the current spec text.  
 * [ ] The ECMAScript editor has [signed off][Stage3EditorSignOff] on the current spec text.  
 
