@@ -139,20 +139,17 @@
     <dl class="header"></dl>
     <emu-alg>
       1. If _errors_ is not present, let _errors_ be a new empty List.
-      1. If _completion_.[[Type]] is ~throw~, then
-        1. Append _completion_.[[Value]] to _errors_.
       1. If _disposable_ is not *undefined*, then
         1. For each _resource_ of _disposable_.[[DisposableResourceStack]], in reverse list order, do
           1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
           1. If _result_.[[Type]] is ~throw~, then
             1. Append _result_.[[Value]] to _errors_.
       1. Let _errorsLength_ be the number of elements in _errors_.
-      1. If _errorsLength_ &gt; 1, then
+      1. If _errorsLength_ &gt; 0, then
+        1. If _completion_.[[Type]] is ~throw~, then
+          1. Insert _completion_.[[Value]] as the first element of _errors_.
         1. Let _error_ be a newly created `AggregateError` object.
         1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
-        1. Return ThrowCompletion(_error_).
-      1. If _errorsLength_ = 1, then
-        1. Let _error_ be the first element of _errors_.
         1. Return ThrowCompletion(_error_).
       1. Return _completion_.
     </emu-alg>
