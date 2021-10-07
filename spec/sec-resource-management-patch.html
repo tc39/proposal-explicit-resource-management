@@ -134,7 +134,7 @@
           1. If _errors_ is not empty, then
             1. let _result_ be DisposeResources(_disposable_, NormalCompletion(*undefined*), _errors_).
             1. Assert: _result_.[[Type]] is ~throw~.
-            !. Return _result_.
+            1. Return _result_.
           1. Return _disposable_.
         </emu-alg>
         <emu-note>
