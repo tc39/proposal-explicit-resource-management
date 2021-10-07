@@ -180,8 +180,11 @@ using await const y = expr2, (expr3), z = expr3;    // multiple resources
 ```grammarkdown
 LexicalDeclaration[In, Yield, Await] :
   LetOrConst BindingList[?In, ?Yield, ?Await, ~Using] `;`
-  `using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`
-  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const` BindingList[?In, ?Yield, +Await, +Using] `;`
+  UsingConst[?Await] BindingList[?In, ?Yield, ?Await, +Using] `;`
+
+UsingConst[Await] :
+  `using` [no LineTerminator here] `const`
+  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const`
 
 BindingList[In, Yield, Await, Using] :
   LexicalBinding[?In, ?Yield, ?Await, ?Using]
@@ -190,7 +193,15 @@ BindingList[In, Yield, Await, Using] :
 LexicalBinding[In, Yield, Await, Using] :
   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
   [~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
-  [+Using] `(` AssignmentExpression[+In, ?Yield, +Await] `)`
+  [+Using] `void` Initializer[?In, ?Yield, ?Await]
+
+ForDeclaration[Yield, Await] :
+  LetOrConst ForBinding[?Yield, ?Await, ~Using]
+  UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]
+
+ForBinding[Yield, Await, Using] :
+  BindingIdentifier[?Yield, ?Await]
+  [~Using] BindingPattern[?Yield, ?Await]
 ```
 
 # Semantics
@@ -270,10 +281,10 @@ LexicalDeclaration :
     `using` `await` `const` BindingList `;`
 
 LexicalBinding :
-    `(` AssignmentExpression `)`
+    `void` Initializer
 ```
 
-When `using const` is parsed with `(` _AssignmentExpression_ `)`, an implicit block-scoped binding is
+When `using const` is parsed with `void` _Initializer_, an implicit block-scoped binding is
 created for the result of the expression. When the _Block_ (or _Script_/_Module_ at the top level)
 containing the `using const` statement is exited, whether by an abrupt or normal completion,
 `[Symbol.dispose]()` is called on the implicit binding as long as it is neither `null` nor `undefined`.
@@ -283,7 +294,7 @@ an `AggregateError` containing both errors will be thrown instead.
 ```js
 {
   ...
-  using const (expr); // in Block scope
+  using const void = expr; // in Block scope
   ...
 }
 ```
@@ -335,12 +346,12 @@ the resource we are explicitly tracking.
 ### `using const` with Multiple Resources
 
 A `using const` declaration can mix multiple explicit (i.e., `using const x = expr`) and implicit (i.e., 
-`using const (expr)`) bindings in the same declaration:
+`using const void = expr`) bindings in the same declaration:
 
 ```js
 {
   ...
-  using const x = expr1, (expr2), y = expr3;
+  using const x = expr1, void = expr2, y = expr3;
   ...
 }
 ```
@@ -353,7 +364,7 @@ declaration. This is _approximately_ equivalent to the following:
 {
   using const x = expr1;
   {
-    using const (expr2);
+    using const void = expr2;
     {
       using const y = expr2;
       ...
@@ -519,6 +530,20 @@ Is semantically equivalent to the following transposed representation:
 }
 ```
 
+### `using const` in `for-of` and `for-await-of` Loops
+
+A `using const` or `using await const` declaration can occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
+
+```js
+for (using const x of iterateResources()) {
+  // use x
+}
+```
+
+In this case, the value bound to `x` in each iteration will be disposed at the end of each iteration. This will not dispose resources that are not iterated, such as if iteration is terminated early due to `return`, `break`, or `throw`.
+
+Neither `using const` nor `using await const` can be used in a `for-in` loop.
+
 # Examples
 
 The following show examples of using this proposal with various APIs, assuming those APIs adopted this proposal.
@@ -559,7 +584,7 @@ The following show examples of using this proposal with various APIs, assuming t
 ```js
 // audit privileged function call entry and exit
 function privilegedActivity() {
-  using const (auditLog.startActivity("privilegedActivity")); // log activity start
+  using const void = auditLog.startActivity("privilegedActivity"); // log activity start
   ...
 } // log activity end
 ```
@@ -570,7 +595,7 @@ import { Semaphore } from "...";
 const sem = new Semaphore(1); // allow one participant at a time
 
 export async function tryUpdate(record) {
-  using const (await sem.wait()); // asynchronously block until we are the sole participant
+  using const void = await sem.wait(); // asynchronously block until we are the sole participant
   ...
 } // synchronously release semaphore and notify the next participant
 ```
@@ -732,7 +757,7 @@ The ability to create a disposable resource from a callback has several benefits
   ```js
   {
     const reader = ...;
-    using const (new Disposable(() => reader.releaseLock()));
+    using const void = new Disposable(() => reader.releaseLock());
     ...
   }
   ```
@@ -741,7 +766,7 @@ The ability to create a disposable resource from a callback has several benefits
   ```js
   function f() {
     console.log("enter");
-    using const (new Disposable(() => console.log("exit")));
+    using const void = new Disposable(() => console.log("exit"));
     ...
   }
   ```
