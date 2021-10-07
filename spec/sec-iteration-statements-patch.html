@@ -1,16 +1,5 @@
 <emu-clause id="sec-iteration-statements">
   <h1>Iteration Statements</h1>
-  <h2>Syntax</h2>
-  <emu-grammar type="definition">
-    ForDeclaration[Yield, Await] :
-      LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-      <ins>UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]</ins>
-
-    ForBinding[Yield, Await, <ins>Using</ins>] :
-      BindingIdentifier[?Yield, ?Await]
-      <del>BindingPattern[?Yield, ?Await]</del>
-      <ins>[~Using] BindingPattern[?Yield, ?Await]</ins>
-  </emu-grammar>
 
   <emu-clause id="sec-iteration-statements-semantics">
     <h1>Semantics</h1>
