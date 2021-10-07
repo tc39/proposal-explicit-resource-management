@@ -1,37 +1,27 @@
 const del = require("del");
+const path = require("path");
 const gulp = require("gulp");
 const emu = require("gulp-emu");
-const livereload = require("gulp-livereload");
-const http = require("http");
-const serve = require("serve-handler");
+const gls = require("gulp-live-server");
 
-const clean = () => del("docs/**/*");
-gulp.task("clean", clean);
+gulp.task("clean", () => del("docs/**/*"));
 
-const build = () => gulp
+gulp.task("build", () => gulp
     .src(["spec/index.html"])
     .pipe(emu())
-    .pipe(gulp.dest("docs"))
-    .pipe(livereload());
-gulp.task("build", build);
+    .pipe(gulp.dest("docs")));
 
-const watch = () => {
-    livereload.listen({ basePath: "docs" });
-    return gulp.watch(["spec/**/*"], build);
-};
-gulp.task("watch", watch);
+gulp.task("watch", () => gulp
+    .watch(["spec/**/*"], gulp.task("build")));
 
-const start = (done) => {
-    http.createServer((req, res) => {
-        return serve(req, res, {
-            public: "docs",
-            headers: [{ "source": "**/*", headers: [{ key: "cache-control", value: "no-cache" }] }]
+gulp.task("start", gulp.parallel("watch", () => {
+    const server = gls.static("docs", 8080);
+    const promise = server.start();
+    (/** @type {import("chokidar").FSWatcher}*/(gulp.watch(["docs/**/*"])))
+        .on("change", file => {
+            server.notify({ path: path.resolve(file) });
         });
-    }).listen(8080, e => {
-        if (e) return done(e);
-        console.log(`folder "docs" serving at http://localhost:8080`);
-        done();
-    });
-};
-gulp.task("start", gulp.parallel(watch, start));
-gulp.task("default", build);
+    return promise;
+}));
+
+gulp.task("default", gulp.task("build"));

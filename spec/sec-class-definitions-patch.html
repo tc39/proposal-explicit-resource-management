@@ -1,0 +1,17 @@
+<emu-clause id="sec-class-definitions">
+  <h1>Class Definitions</h1>
+
+  <emu-clause id="sec-runtime-semantics-evaluateclassstaticblockbody" type="sdo" aoid="EvaluateClassStaticBlockBody">
+    <h1>Runtime Semantics: EvaluateClassStaticBlockBody</h1>
+    <p>With parameter _functionObject_.</p>
+    <emu-grammar>ClassStaticBlockBody : ClassStaticBlockStatementList</emu-grammar>
+    <emu-alg>
+      1. Perform ? FunctionDeclarationInstantiation(_functionObject_, &laquo; &raquo;).
+      1. <del>Return the result of evaluating |ClassStaticBlockStatementList|.</del>
+      1. <ins>Let _result_ be result of evaluating |ClassStaticBlockStatementList|.</ins>
+      1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
+      1. <ins>Return DisposeResources(_env_, _result_).</ins>
+    </emu-alg>
+  </emu-clause>
+
+</emu-clause>

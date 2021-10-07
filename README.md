@@ -32,32 +32,12 @@ finally {
 
 As such, we propose the adoption of a syntax to simplify this common pattern:
 
-**`try using` Blocks**
-```js
-function * g() {
-  try using (const handle = acquireFileHandle()) { // critical resource
-    ...
-  } // cleanup
-  
-  // or, if `handle` binding is unused:
-  try using (acquireFileHandle()) { // critical resource
-    ...
-  } // cleanup
-}
-
-try using (const obj = g()) {
-  const r = obj.next();
-  ...
-} // calls finally blocks in `g`
-```
-
-**`using const` Declarations and `using value` Statements**
 ```js
 function * g() {
   using const handle = acquireFileHandle(); // block-scoped critical resource
 
   // or, if `handle` binding is unused:
-  using value acquireFileHandle(); // block-scoped critical resource
+  using const (acquireFileHandle()); // block-scoped critical resource
 } // cleanup
 
 {
@@ -141,95 +121,55 @@ This proposal is motivated by a number of cases:
   // avoids leaking `a` or `b` to outer scope
   // ensures `b` is disposed before `a` in case `b` depends on `a`
   // ensures `a` is disposed even if disposing `b` throws
-  try using (const a = ..., b = ...) { 
-    ...
-  }
+  using const a = ..., b = ...;
+  ...
   ```
-- Non memory/IO applications:
+- Non-blocking memory/IO applications:
   ```js
-  import { ReaderWriterLock } from "prex";
+  import { ReaderWriterLock } from "...";
   const lock = new ReaderWriterLock(); 
   
   export async function readData() {
     // wait for outstanding writer and take a read lock
-    try using (await lock.read()) { 
-      ... // any number of readers
-      await ...; 
-      ... // still in read lock after `await`
-    } // release the read lock
-  }
+    using const (await lock.read());
+    ... // any number of readers
+    await ...; 
+    ... // still in read lock after `await`
+  } // release the read lock
   
   export async function writeData(data) {
     // wait for all readers and take a write lock
-    try using (await lock.write()) { 
-      ... // only one writer
-      await ...;
-      ... // still in write lock after `await`
-    } // release the write lock
-  }
+    using const (await lock.write());
+    ... // only one writer
+    await ...;
+    ... // still in write lock after `await`
+  } // release the write lock
   ```
 
 # Prior Art
 
 <!-- Links to similar concepts in existing languages, prior proposals, etc. -->
 
-- C#: [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
+- C#: 
+  - [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
+  - [`using` declaration](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/using#using-declaration)  
 - Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)  
 - Python: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement) 
 
 # Syntax
 
-## `try using` Blocks
-
-```js
-// for a synchronously-disposed resource:
-
-// 'try' with expression resource
-try using (expr) {
-  ...
-}
-
-// 'try' with local binding
-try using (const x = expr1) {
-  ...
-}
-
-// 'try' with multiple local bindings
-try using (const x = expr1, y = expr2) {
-  ...
-}
-
-// for an asynchronously disposed resource in an async function:
-
-// 'try' with expression resource
-try using await (obj) {
-  ...
-}
-
-// 'try' with local binding
-try using await (const x = expr1) {
-  ...
-}
-
-// 'try' with multiple local bindings
-try using await (const x = expr1, y = expr2) {
-  ...
-}
-
-```
-
-## `using value` Statements and `using const` Declarations
+## `using const` Declarations
 
 ```js
 // for a synchronously-disposed resource (block scoped):
-using value expr;                         // no local binding
-using const x = expr1;                    // local binding
-using const y = expr2, z = expr3;         // multiple bindings
+using const x = expr1;                              // resource w/ local binding
+using const (expr);                                 // resource w/o local binding
+using const y = expr2, (expr3), z = expr4;          // multiple resources
 
 // for an asynchronously-disposed resource (block scoped):
-using await value expr;                   // no local binding
-using await const x = expr1;              // local binding
-using await const y = expr2, z = expr3;   // multiple bindings
+using await const x = expr1;                        // resource w/ local binding
+using await const (expr);                           // resource w/o local binding
+using await const y = expr2, (expr3), z = expr3;    // multiple resources
 ```
 
 # Grammar
@@ -238,28 +178,13 @@ using await const y = expr2, z = expr3;   // multiple bindings
      syntax in fenced code blocks as grammarkdown is the grammar format used by ecmarkup. -->
 
 ```grammarkdown
-Statement[Yield, Await, Return] :
-  ...
-  UsingValueStatement[?Yield, ?Await]
-
-TryUsingDeclaration[Yield, Await] :
-    `const` BindingList[+In, ?Yield, ?Await, +Using]
-
-TryStatement[Yield, Await, Return] :
-    ...
-    `try` `using` `(` [lookahead ≠ `let [`] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-    `try` `using` `(` TryUsingDeclaration[?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-    [+Await] `try` `using` `await` `(` [lookahead ≠ `let [`] Expression[+In, ?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-    [+Await] `try` `using` `await` `(` TryUsingDeclaration[?Yield, ?Await] `)` Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]? Finally[?Yield, ?Await, ?Return]?
-
-UsingValueStatement[Yield, Await] :
-  `using` [no LineTerminator here] `value` AssignmentExpression[+In, ?Yield, ?Await] `;`
-  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `value` AssignmentExpression[+In, ?Yield, +Await] `;`
-
 LexicalDeclaration[In, Yield, Await] :
   LetOrConst BindingList[?In, ?Yield, ?Await, ~Using] `;`
-  `using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`
-  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const` BindingList[?In, ?Yield, +Await, +Using] `;`
+  UsingConst[?Await] BindingList[?In, ?Yield, ?Await, +Using] `;`
+
+UsingConst[Await] :
+  `using` [no LineTerminator here] `const`
+  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const`
 
 BindingList[In, Yield, Await, Using] :
   LexicalBinding[?In, ?Yield, ?Await, ?Using]
@@ -268,28 +193,38 @@ BindingList[In, Yield, Await, Using] :
 LexicalBinding[In, Yield, Await, Using] :
   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
   [~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
+  [+Using] `void` Initializer[?In, ?Yield, ?Await]
+
+ForDeclaration[Yield, Await] :
+  LetOrConst ForBinding[?Yield, ?Await, ~Using]
+  UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]
+
+ForBinding[Yield, Await, Using] :
+  BindingIdentifier[?Yield, ?Await]
+  [~Using] BindingPattern[?Yield, ?Await]
 ```
 
 # Semantics
 
-## `try using` Blocks
+## `using const` Declarations
 
-### `try using` with Existing Resources
+### `using const` with Explicit Local Bindings
 
 ```grammarkdown
-TryStatement : 
-    `try` `using` `(` Expression `)` Block Catch? Finally?
-    `try` `using` `await` `(` Expression `)` Block Catch? Finally?
+LexicalDeclaration :
+  `using` `const` BindingList `;`
+
+LexicalBinding :
+    BindingIdentifier Initializer
 ```
 
-When `try using` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
-result of the expression. When the `try using` block is exited, whether by an abrupt or normal 
-completion, `[Symbol.dispose]()` is called on the local binding as long as it is neither `null` 
-nor `undefined`. If an error is thrown in both _Block_ and the call to `[Symbol.dispose]()`, an
-`AggregateError` containing both errors will be thrown instead.
+When `using const` is parsed with _BindingIdentifier_ _Initializer_, the bindings created in the declaration 
+are tracked for disposal at the end of the containing _Block_, _Script_, or _Module_:
 
 ```js
-try using (expr) {
+{
+  ...
+  using const x = expr1;
   ...
 }
 ```
@@ -298,82 +233,11 @@ The above example has similar runtime semantics as the following transposed
 representation:
 
 ```js
-{ 
-  const $$try = { stack: [], errors: [] };
-  try {
-    const $$expr = expr;
-    if ($$expr !== null && $$expr !== undefined) {
-      const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
-      $$try.stack.push({ value: $$expr, dispose: $$dispose });
-    }
-
-    ...
-
-  }
-  catch ($$error) {
-    $$try.errors.push($$error);
-  }
-  finally {
-    while ($$try.stack.length) {
-      const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
-      try {
-        $$dispose.call($$expr);
-      }
-      catch ($$error) {
-        $$try.errors.push($$error);
-      }
-    }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
-    }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
-    }
-  }
-}
-```
-
-The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close 
-the resource we are explicitly tracking.
-
-### `try using` with Explicit Local Bindings
-
-```grammarkdown
-TryUsingDeclaration :
-    `const` BindingList
-
-TryStatement : 
-    `try` `using` `(` TryUsingDeclaration `)` Block Catch? Finally?
-```
-
-When `try using` is parsed with a _TryUsingDeclaration_ we track the bindings created in the declaration for disposal:
-
-```js
-try using (const x = expr1, y = expr2) {
-  ...
-}
-```
-
-These implicit bindings are again used to perform resource disposal when the _Block_ exits, however
-in this case `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their
-declaration. This is approximately equivalent to the following:
-
-```js
-try using (const x = expr1) {
-  try using (const y = expr2) {
-    ...
-  }
-}
-```
-
-Both of the above cases would have similar runtime semantics as the following transposed
-representation:
-
-```js
 {
   const $$try = { stack: [], errors: [] };
   try {
+    ...
+
     const x = expr1;
     if (x !== null && x !== undefined) {
       const $$dispose = x[Symbol.dispose];
@@ -381,15 +245,7 @@ representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    const y = expr2;
-    if (y !== null && y !== undefined) {
-      const $$dispose = y[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
-      $$try.stack.push({ value: y, dispose: $$dispose });
-    }
-
     ...
-
   }
   catch ($$error) {
     $$try.errors.push($$error);
@@ -414,223 +270,31 @@ representation:
 }
 ```
 
-Since we must always ensure that we properly release resources, we must ensure that any abrupt 
-completion that might occur during binding initialization results in evaluation of the cleanup 
-step. When there are multiple declarations in the list, we track each resource in the order they 
-are declared. As a result, we must release these resources in reverse order.
+If exceptions are thrown both in the block following the `using const` declaration and in the call to 
+`[Symbol.dispose]()`, all exceptions are reported.
 
-### `try using` with Destructuring
-
-The `try using` statement does not allow destructuring for local bindings. This is due to following
-reasons:
-
-- It is unclear as to what should be disposed (the object being destructured or the individual bindings).
-- If individual bindings are to be disposed, what happens to unused bindings (i.e., `try using (const { x } = { x, y }) ...`).
-
-Instead, you should explicitly destructure _before_ or _after_ declaring your disposable resource:
-
-```js
-// before (when each property is disposable)
-const { x, y } = f();
-try using (Disposable.from([x, y])) {
-  ...
-}
-
-// avoid destructuring (when each property is disposable)
-const obj = f();
-try using (const x = obj.x, y = obj.y) {
-  ...
-}
-
-// after (when the destructured object is disposable)
-try using (const obj = f()) {
-  const { x, y } = obj;
-}
-```
-
-### `try using` on `null` or `undefined` Values
-
-This proposal has opted to ignore `null` and `undefined` values provided to the `try using` statement. 
-This is similar to the behavior of `using` in C# that also allows `null`. One primary reason for this
-behavior is to simplify a common case where a resource might be optional, without requiring duplication 
-of work or needless allocations:
-
-```js
-if (isResourceAvailable()) {
-  try using (const resource = getResource()) {
-    ... // (1) above
-    resource.doSomething()
-    ... // (2) above
-  }
-}
-else {
-  // duplicate code path above
-  ... // (1) above
-  ... // (2) above
-}
-```
-
-Compared to:
-
-```js
-try using (const resource = isResourceAvailable() ? getResource() : undefined) {
-  ... // (1) do some work with or without resource
-  resource?.doSomething();
-  ... // (2) do some other work with or without resource
-}
-```
-
-### `try using` on Values Without `[Symbol.dispose]`
-
-If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown 
-**immediately** when the resource is tracked.
-
-### `try using` with _Catch_ or _Finally_
-
-When resources are added to a `try using` block, a _Catch_ or _Finally_ clause may follow. In these cases, the 
-_Catch_ and _Finally_ clauses are triggered *after* `[Symbol.dispose]()` is called. This is consistent with
-the fact that block-scoped bindings for resources would be unreachable outside of `try using`'s _Block_:
-
-```js
-try using (getResource()) { // or `try using (const x = getResource())`
-  ...
-}
-catch {
-  // resource has already been disposed
-}
-finally {
-  // resource has already been disposed
-}
-```
-
-The above example has the similar runtime semantics as the following transposed 
-representation:
-
-```js
-try {
-  const $$try = { stack: [], errors: [] };
-  try {
-    const $$expr = getResource();
-    if ($$expr !== null && $$expr !== undefined) {
-      const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
-      $$try.stack.push({ value: $$expr, dispose: $$dispose });
-    }
-
-    ...
-
-  }
-  catch ($$error) {
-    $$try.errors.push($$error);
-  }
-  finally {
-    while ($$try.stack.length) {
-      const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
-      try {
-        $$dispose.call($$expr);
-      }
-      catch ($$error) {
-        $$try.errors.push($$error);
-      }
-    }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
-    }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
-    }
-  }
-}
-catch {
-  // resource has already been disposed
-}
-finally {
-  // resource has already been disposed
-}
-```
-
-### `try using await` in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
-
-In an _AsyncFunction_ or an _AsyncGeneratorFunction_, or the top-level of a _Module_, when we evaluate a 
-`try using await` block we first look for a `[Symbol.asyncDispose]` method before looking for a
-`[Symbol.dispose]` method. At the end of the block or module, if the method returns a value other than `undefined`, 
-we Await the value before exiting:
-
-```js
-try using await (const x = expr) {
-  ...
-}
-```
-
-Is semantically equivalent to the following transposed representation:
-
-
-```js
-{
-  const $$try = { stack: [], errors: [] };
-  try {
-    const $$expr = getResource();
-    if ($$expr !== null && $$expr !== undefined) {
-      let $$dispose = $$expr[Symbol.asyncDispose];
-      if ($$dispose === undefined) {
-        $$dispose = $$expr[Symbol.dispose];
-      }
-      if (typeof $$dispose !== "function") throw new TypeError();
-      $$try.stack.push({ value: $$expr, dispose: $$dispose });
-    }
-
-    ...
-
-  }
-  catch ($$error) {
-    $$try.errors.push($$error);
-  }
-  finally {
-    while ($$try.stack.length) {
-      const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
-      try {
-        const $$result = $$dispose.call($$expr);
-        if ($$result !== undefined) {
-          await $$result;
-        }
-      }
-      catch ($$error) {
-        $$try.errors.push($$error);
-      }
-    }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
-    }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
-    }
-  }
-}
-```
-
-
-
-## `using value` Statements and `using const` Declarations
-
-### `using value` with Existing Resources
+### `using const` with Existing Resources
 
 ```grammarkdown
-UsingValueStatement : 
-    `using` `value` Expression `;`
-    `using` `await` `value` Expression `;`
+LexicalDeclaration : 
+    `using` `const` BindingList `;`
+    `using` `await` `const` BindingList `;`
+
+LexicalBinding :
+    `void` Initializer
 ```
 
-When `using value` is parsed with an _Expression_, an implicit block-scoped binding is created for the 
-result of the expression. When the _Block_ (or _Script_/_Module_ at the top level) containing the 
-`using value` statement is exited, whether by an abrupt or normal completion, `[Symbol.dispose]()` is 
-called on the local binding as long as it is neither `null` nor `undefined`. If an error is thrown in 
-both the containing _Block_/_Script_/_Module_ and the call to `[Symbol.dispose]()`, an
-`AggregateError` containing both errors will be thrown instead.
+When `using const` is parsed with `void` _Initializer_, an implicit block-scoped binding is
+created for the result of the expression. When the _Block_ (or _Script_/_Module_ at the top level)
+containing the `using const` statement is exited, whether by an abrupt or normal completion,
+`[Symbol.dispose]()` is called on the implicit binding as long as it is neither `null` nor `undefined`.
+If an error is thrown in both the containing _Block_/_Script_/_Module_ and the call to `[Symbol.dispose]()`,
+an `AggregateError` containing both errors will be thrown instead.
 
 ```js
 {
   ...
-  using value expr; // in Block scope
+  using const void = expr; // in Block scope
   ...
 }
 ```
@@ -679,34 +343,32 @@ representation:
 The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close 
 the resource we are explicitly tracking.
 
-### `using const` with Explicit Local Bindings
+### `using const` with Multiple Resources
 
-```grammarkdown
-LexicalDeclaration :
-  `using` `const` BindingList `;`
-```
-
-When `using const` is parsed we track the bindings created in the declaration for disposal at the end of
-the containing _Block_, _Script_, or _Module_:
+A `using const` declaration can mix multiple explicit (i.e., `using const x = expr`) and implicit (i.e., 
+`using const void = expr`) bindings in the same declaration:
 
 ```js
 {
   ...
-  using const x = expr1, y = expr2;
+  using const x = expr1, void = expr2, y = expr3;
   ...
 }
 ```
 
-These implicit bindings are again used to perform resource disposal when the _Block_, _Script_, or _Module_ 
-exits, however in this case `[Symbol.dispose]()` is called on the implicit bindings in the reverse order of their
+These bindings are again used to perform resource disposal when the _Block_, _Script_, or _Module_ 
+exits, however in this case `[Symbol.dispose]()` is invoked in the reverse order of their
 declaration. This is _approximately_ equivalent to the following:
 
 ```js
 {
   using const x = expr1;
   {
-    using const y = expr2;
-    ...
+    using const void = expr2;
+    {
+      using const y = expr2;
+      ...
+    }
   }
 }
 ```
@@ -727,7 +389,14 @@ representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    const y = expr2;
+    const $$expr = expr2; // evaluate `expr2`
+    if ($$expr !== null && $$expr !== undefined) {
+      const $$dispose = $$expr[Symbol.dispose];
+      if (typeof $$dispose !== "function") throw new TypeError();
+      $$try.stack.push({ value: $$expr, dispose: $$dispose });
+    }
+
+    const y = expr3;
     if (y !== null && y !== undefined) {
       const $$dispose = y[Symbol.dispose];
       if (typeof $$dispose !== "function") throw new TypeError();
@@ -764,12 +433,11 @@ completion that might occur during binding initialization results in evaluation 
 step. When there are multiple declarations in the list, we track each resource in the order they 
 are declared. As a result, we must release these resources in reverse order.
 
+### `using const` on `null` or `undefined` Values
 
-### `using value` and `using const` on `null` or `undefined` Values
-
-This proposal has opted to ignore `null` and `undefined` values provided to the `using value` statement
-and `using const` declaration. This is similar to the behavior of `using` in C#, which also allows `null`.
-One primary reason for this behavior is to simplify a common case where a resource might be optional, 
+This proposal has opted to ignore `null` and `undefined` values provided to the `using const` 
+declaration. This is similar to the behavior of `using` in C#, which also allows `null`. One 
+primary reason for this behavior is to simplify a common case where a resource might be optional, 
 without requiring duplication of work or needless allocations:
 
 ```js
@@ -795,17 +463,17 @@ resource?.doSomething();
 ... // (2) do some other work with or without resource
 ```
 
-### `using value` and `using const` on Values Without `[Symbol.dispose]`
+### `using const` on Values Without `[Symbol.dispose]`
 
 If a resource does not have a callable `[Symbol.dispose]` member (or `[Symbol.asyncDispose]` in the 
-case of a `using await ...`), a `TypeError` would be thrown **immediately** when the resource is tracked.
+case of a `using await const`), a `TypeError` would be thrown **immediately** when the resource is tracked.
 
-### `using await value` and `using await const` in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
+### `using await const` in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
 
 In an _AsyncFunction_ or an _AsyncGeneratorFunction_, or the top-level of a _Module_, when we evaluate a 
-`using await value` statement or `using await const` declaration we first look for a `[Symbol.asyncDispose]` 
-method before looking for a `[Symbol.dispose]` method. At the end of the containing block or _Module_,
-if the method returns a value other than `undefined`, we Await the value before exiting:
+`using await const` declaration we first look for a `[Symbol.asyncDispose]` method before looking for a 
+`[Symbol.dispose]` method. At the end of the containing _Block_ or _Module_ if the method 
+returns a value other than `undefined`, we Await the value before exiting:
 
 ```js
 {
@@ -862,6 +530,97 @@ Is semantically equivalent to the following transposed representation:
 }
 ```
 
+### `using const` in `for-of` and `for-await-of` Loops
+
+A `using const` or `using await const` declaration can occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
+
+```js
+for (using const x of iterateResources()) {
+  // use x
+}
+```
+
+In this case, the value bound to `x` in each iteration will be disposed at the end of each iteration. This will not dispose resources that are not iterated, such as if iteration is terminated early due to `return`, `break`, or `throw`.
+
+Neither `using const` nor `using await const` can be used in a `for-in` loop.
+
+# Examples
+
+The following show examples of using this proposal with various APIs, assuming those APIs adopted this proposal.
+
+**WHATWG Streams API**
+```js
+{
+  using const reader = stream.getReader();
+  const { value, done } = reader.read();
+}
+```
+
+**NodeJS FileHandle**
+```js
+{
+  using const f1 = fs.promises.open(s1, constants.O_RDONLY),
+              f2 = fs.promises.open(s2, constants.O_WRONLY);
+  const buffer = Buffer.alloc(4092);
+  const { bytesRead } = await f1.read(buffer);
+  await f2.write(buffer, 0, bytesRead);
+} // both handles are closed
+```
+
+**Transactional Consistency (ACID)**
+```js
+// roll back transaction if either action fails
+{
+  using const tx = transactionManager.startTransaction(account1, account2);
+  await account1.debit(amount);
+  await account2.credit(amount);
+
+  // mark transaction success
+  tx.succeeded = true;
+} // transaction is committed
+```
+
+**Logging and tracing**
+```js
+// audit privileged function call entry and exit
+function privilegedActivity() {
+  using const void = auditLog.startActivity("privilegedActivity"); // log activity start
+  ...
+} // log activity end
+```
+
+**Async Coordination**
+```js
+import { Semaphore } from "...";
+const sem = new Semaphore(1); // allow one participant at a time
+
+export async function tryUpdate(record) {
+  using const void = await sem.wait(); // asynchronously block until we are the sole participant
+  ...
+} // synchronously release semaphore and notify the next participant
+```
+
+# API
+
+## Additions to `Symbol`
+
+This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose 
+values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
+
+**Well-known Symbols**
+| Specification Name | \[\[Description]] | Value and Purpose |
+|:-|:-|:-|
+| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of the `using const`statements. |
+| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Called by the semantics of the `using await const` statement. |
+
+**TypeScript Definition**
+```ts
+interface SymbolConstructor {
+  readonly dispose: symbol;
+  readonly asyncDispose: symbol;
+}
+```
+
 ## Built-in Disposables
 
 ### `%IteratorPrototype%.@@dispose()`
@@ -889,109 +648,6 @@ We propose to add `@@asyncDispose` to the built-in `%AsyncIteratorPrototype%` as
 We could also consider adding `@@dispose` to such objects as the return value from `Proxy.revocable()`, but that
 is currently out of scope for the current proposal.
 
-# Examples
-
-The following show examples of using this proposal with various APIs, assuming those APIs adopted this proposal.
-
-**WHATWG Streams API**
-```js
-try using (const reader = stream.getReader()) {
-  const { value, done } = reader.read();
-  ...
-}
-// or
-{
-  using const reader = stream.getReader();
-  const { value, done } = reader.read();
-}
-```
-
-**NodeJS FileHandle**
-```js
-try using (const f1 = await fs.promises.open(s1, constants.O_RDONLY),
-                 f2 = await fs.promises.open(s2, constants.O_WRONLY)) {
-  const buffer = Buffer.alloc(4092);
-  const { bytesRead } = await f1.read(buffer);
-  await f2.write(buffer, 0, bytesRead);
-} // both handles are closed
-
-// or
-{
-  using const f1 = fs.promises.open(s1, constants.O_RDONLY),
-              f2 = fs.promises.open(s2, constants.O_WRONLY);
-  const buffer = Buffer.alloc(4092);
-  const { bytesRead } = await f1.read(buffer);
-  await f2.write(buffer, 0, bytesRead);
-} // both handles are closed
-```
-
-**Transactional Consistency (ACID)**
-```js
-// roll back transaction if either action fails
-try using (const tx = transactionManager.startTransaction(account1, account2)) {
-  await account1.debit(amount);
-  await account2.credit(amount);
-
-  // mark transaction success
-  tx.succeeded = true;
-} // transaction is committed
-
-// or
-{
-  using const tx = transactionManager.startTransaction(account1, account2);
-  await account1.debit(amount);
-  await account2.credit(amount);
-
-  // mark transaction success
-  tx.succeeded = true;
-} // transaction is committed
-```
-
-**Logging and tracing**
-```js
-// audit privileged function call entry and exit
-function privilegedActivity() {
-  try using (auditLog.startActivity("privilegedActivity")) { // log activity start
-    ...
-  } // log activity end
-}
-
-// or
-function privilegedActivity() {
-  using value auditLog.startActivity("privilegedActivity"); // log activity start
-  ...
-} // log activity end
-```
-
-**Async Coordination**
-```js
-import { Semaphore } from "...";
-const sem = new Semaphore(1); // allow one participant at a time
-
-export async function tryUpdate(record) {
-  using value await sem.wait(); // asynchronously block until we are the sole participant
-  ...
-} // synchronously release semaphore and notify the next participant
-```
-
-# API
-
-## Additions to `Symbol`
-
-This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose 
-values are the @@dispose and @@asyncDispose internal symbols, respectively:
-
-```ts
-interface SymbolConstructor {
-  readonly dispose: symbol;
-  readonly asyncDispose: symbol;
-}
-```
-
-In addition, the methods `[Symbol.dispose]` and `[Symbol.asyncDispose]` methods would be added to 
-%GeneratorPrototype% and %AsyncGeneratorPrototype%, respectively. Each method, when called, calls 
-the `return` method on those prototypes.
-
 ## The Common `Disposable` and `AsyncDisposable` Interfaces
 
 ### The `Disposable` Interface
@@ -1002,6 +658,7 @@ An object is _disposable_ if it conforms to the following interface:
 |:-|:-|:-|
 | `@@dispose` | A function that performs explicit cleanup. | The function should return `undefined`. |
 
+**TypeScript Definition**
 ```ts
 interface Disposable {
   /**
@@ -1019,6 +676,7 @@ An object is _async disposable_ if it conforms to the following interface:
 |:-|:-|:-|
 | `@@asyncDispose` | An async function that performs explicit cleanup. | The function must return a `Promise`. |
 
+**TypeScript Definition**
 ```ts
 interface AsyncDisposable {
   /**
@@ -1038,14 +696,14 @@ called. If any disposable in the container throws an error, they would be collec
 ```js
 class Disposable {
   /**
-   * @param {Iterable<Disposable>} disposables An iterable containing objects to be disposed 
+   * @param {Iterable<Disposable>} disposables - An iterable containing objects to be disposed 
    * when this object is disposed.
    * @returns {Disposable}
    */
   static from(disposables);
 
   /**
-   * @param {() => void} onDispose A callback to execute when this object is disposed.
+   * @param {() => void} onDispose - A callback to execute when this object is disposed.
    */
   constructor(onDispose);
 
@@ -1057,13 +715,13 @@ class Disposable {
 
 class AsyncDisposable {
   /**
-   * @param {Iterable<Disposable | AsyncDisposable>} disposables An iterable containing objects 
+   * @param {Iterable<Disposable | AsyncDisposable>} disposables - An iterable containing objects 
    * to be disposed when this object is disposed.
    */
   static from(disposables);
 
   /**
-   * @param {() => void | Promise<void>} onAsyncDispose A callback to execute when this object is
+   * @param {() => void | Promise<void>} onAsyncDispose - A callback to execute when this object is
    * disposed.
    */
   constructor(onAsyncDispose);
@@ -1076,7 +734,7 @@ class AsyncDisposable {
 }
 ```
 
-The `Disposable` class, as well as its async variant, the `AsyncDisposable` class, each provide two capabilities:
+The `Disposable` and `AsyncDisposable` classes each provide two capabilities:
 - Aggregation
 - Interoperation and Customization
 
@@ -1094,28 +752,21 @@ callback. This callback will be executed when the resource's `Symbol.dispose` me
 
 The ability to create a disposable resource from a callback has several benefits:
 
-- It allows developers to leverage `try using` (or `using const`, etc.) while working with existing resources that do not conform to the 
+- It allows developers to leverage `using const` while working with existing resources that do not conform to the 
   `Symbol.dispose` mechanic:
   ```js
-  const reader = ...;
-  try using (new Disposable(() => reader.releaseLock())) {
-    ...
-  }
-  // or
   {
     const reader = ...;
-    using value new Disposable(() => reader.releaseLock());
+    using const void = new Disposable(() => reader.releaseLock());
     ...
   }
   ```
 - It grants user the ability to schedule other cleanup work to evaluate at the end of the block similar to Go's 
   `defer` statement:
   ```js
-  const defer = f => new Disposable(f);
-  ...
   function f() {
     console.log("enter");
-    using value defer(() => console.log("exit"));
+    using const void = new Disposable(() => console.log("exit"));
     ...
   }
   ```
