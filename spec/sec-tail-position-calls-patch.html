@@ -131,29 +131,12 @@
           `for` `(` LeftHandSideExpression `in` Expression `)` Statement
           `for` `(` `var` ForBinding `in` Expression `)` Statement
           `for` `(` ForDeclaration `in` Expression `)` Statement
-          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
-          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
-          <del>`for` `(` ForDeclaration `of` AssignmentExpression `)` Statement</del>
 
         WithStatement : `with` `(` Expression `)` Statement
       </emu-grammar>
       <emu-alg>
         1. Return HasCallInTailPosition of |Statement| with argument _call_.
       </emu-alg>
-
-      <ins class="block">
-      <emu-grammar>
-        ForInOfStatement :
-          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
-      </emu-grammar>
-      <emu-alg>
-        1. If |ForDeclaration| Contains |UsingConst|, return ~not-found~.
-        1. Return HasCallInTailPosition of |Statement| with argument _call_.
-      </emu-alg>
-      <emu-note>
-        Draft Note: We do not propagate ~contains-using-const~ here as a `for-of` statement introduces an implicit block scope per iteration. We do stop immediately if the |ForDeclaration| contains a |UsingConst| as that means that there are additional evaluation steps that will occur following a nested |ReturnStatement|.
-      </emu-note>
-      </ins>
 
       <emu-grammar>
         LabelledStatement :
