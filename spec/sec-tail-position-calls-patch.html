@@ -18,7 +18,7 @@
       1. If _body_ is the |FunctionBody| of an |AsyncGeneratorBody|, return *false*.
       1. If _body_ is an |AsyncConciseBody|, return *false*.
       1. <del>Return the result of</del><ins>Let _has_ be</ins> HasCallInTailPosition of _body_ with argument _call_.
-      1. <ins>If _has_ is ~found~, return *true*.</ins>
+      1. <ins>If _has_ is ~tail-call-found~, return *true*.</ins>
       1. <ins>Otherwise, return *false*.</ins>
     </emu-alg>
     <emu-note>
@@ -31,6 +31,45 @@
     <p>With parameter _call_.</p>
     <emu-note>
       <p>_call_ is a Parse Node that represents a specific range of source text. When the following algorithms compare _call_ to another Parse Node, it is a test of whether they represent the same source text.</p>
+      <p>HasCallInTailPosition returns one of the values listed in <emu-xref href="#table-hascallintailposition-return-values"></emu-xref>:</p>
+      <emu-table id="table-hascallintailposition-return-values" caption="HasCallInTailPosition Return Values">
+        <table>
+          <tbody>
+          <tr>
+            <th>
+              Value
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+          <tr>
+            <td>
+              <nobr>~tail-call-not-found~</nobr>
+            </td>
+            <td>
+              A call was found in a tail position.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <nobr>~tail-call-found~</nobr>
+            </td>
+            <td>
+              A call was not found in a tail position.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <nobr>~contains-using-const~</nobr>
+            </td>
+            <td>
+              The Parse Node contains a `using const` declaration which could result in additional evaluation after any call in a possible tail position when that call is in the same |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, or |AsyncFunctionBody|.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </emu-table>
     </emu-note>
 
     <emu-clause id="sec-statement-rules">
@@ -38,7 +77,7 @@
       <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of |StatementList| with argument _call_.
-        1. If _has_ is <del>*true*</del><ins>~found~</ins>, return <del>*true*</del><ins>~found~</ins>.
+        1. If _has_ is <del>*true*</del><ins>~tail-call-found~</ins>, return <del>*true*</del><ins>~tail-call-found~</ins>.
         1. <ins>If _has_ is ~contains-using-const~, return ~contains-using-const~.</ins>
         1. Return HasCallInTailPosition of |StatementListItem| with argument _call_.
       </emu-alg>
@@ -84,7 +123,7 @@
         CaseBlock : `{` `}`
       </emu-grammar>
       <emu-alg>
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
 
       <ins class="block">
@@ -96,8 +135,8 @@
       <emu-grammar>Block : StatementList</emu-grammar>
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of |StatementList| with argument _call_.
-        1. If _has_ is ~found~, return ~found~.
-        1. Return ~not-found~.
+        1. If _has_ is ~tail-call-found~, return ~tail-call-found~.
+        1. Return ~tail-call-not-found~.
       </emu-alg>
       <emu-note>
         Draft Note: We do not propagate ~contains-using-const~ here as a |Block| is an explicit block scope. Any nested |UsingConst| declarations will have already been disposed before execution continues. We also stop immediately upon encountering ~contains-using-const~ as any |UsingConst| in the statement list means that there are additional evaluation steps that will occur following a nested |ReturnStatement|.
@@ -107,12 +146,12 @@
       <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of the first |Statement| with argument _call_.
-        1. If _has_ is <del>*true*</del><ins>~found~</ins>, return <del>*true*</del><ins>~found~</ins>.
-        1. <ins>Assert: _has_ is ~not-found~.</ins>
+        1. If _has_ is <del>*true*</del><ins>~tail-call-found~</ins>, return <del>*true*</del><ins>~tail-call-found~</ins>.
+        1. <ins>Assert: _has_ is ~tail-call-not-found~.</ins>
         1. <del>Return</del><ins>Set _has_ to</ins> HasCallInTailPosition of the second |Statement| with argument _call_.
-        1. <ins>If _has_ is ~found~, return ~found~.</ins>
-        1. <ins>Assert: _has_ is ~not-found~.</ins>
-        1. <ins>Return ~not-found~.</ins>
+        1. <ins>If _has_ is ~tail-call-found~, return ~tail-call-found~.</ins>
+        1. <ins>Assert: _has_ is ~tail-call-not-found~.</ins>
+        1. <ins>Return ~tail-call-not-found~.</ins>
       </emu-alg>
 
       <emu-grammar>
@@ -125,7 +164,7 @@
         ForStatement :
           `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
           `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement
-          `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+          <del>`for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</del>
 
         ForInOfStatement :
           `for` `(` LeftHandSideExpression `in` Expression `)` Statement
@@ -137,6 +176,16 @@
       <emu-alg>
         1. Return HasCallInTailPosition of |Statement| with argument _call_.
       </emu-alg>
+
+      <ins class="block">
+      <emu-grammar>
+        ForStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Let |LexicalDeclaration| Contains |UsingConst|, return ~contains-using-const~.
+        1. Return HasCallInTailPosition of |Statement| with argument _call_.
+      </emu-alg>
+      </ins>
 
       <emu-grammar>
         LabelledStatement :
@@ -159,29 +208,29 @@
       <ins class="block">
       <emu-grammar>CaseBlock : `{` CaseClauses? `}`</emu-grammar>
       <emu-alg>
-        1. Let _has_ be ~not-found~.
-        1. If |CaseClauses| is present, set _has_ to HasCallInTailPosition of the first |CaseClauses| with argument _call_.
-        1. If _has_ is ~contains-using-const~, return ~not-found~.
+        1. Let _has_ be ~tail-call-not-found~.
+        1. If |CaseClauses| is present, set _has_ to HasCallInTailPosition of |CaseClauses| with argument _call_.
+        1. If _has_ is ~contains-using-const~, return ~tail-call-not-found~.
         1. Return _has_.
       </emu-alg>
       </ins>
 
       <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
       <emu-alg>
-        1. Let <del>_has_</del><ins>_firstHas_</ins> be <del>*false*</del><ins>~not-found~</ins>.
+        1. Let <del>_has_</del><ins>_firstHas_</ins> be <del>*false*</del><ins>~tail-call-not-found~</ins>.
         1. If the first |CaseClauses| is present, <del>let _has_ be</del><ins>set _firstHas_ to</ins> HasCallInTailPosition of the first |CaseClauses| with argument _call_.
         1. <del>If _has_ is *true*, return *true*.</del>
-        1. <ins>If _firstHas_ is ~contains-using-const~, return ~not-found~.</ins>
+        1. <ins>If _firstHas_ is ~contains-using-const~, return ~tail-call-not-found~.</ins>
         1. Let <del>_has_</del><ins>_defaultHas_</ins> be HasCallInTailPosition of |DefaultClause| with argument _call_.
         1. <del>If _has_ is *true*, return *true*.</del>
-        1. <ins>If _defaultHas_ is ~contains-using-const~, return ~not-found~.</ins>
-        1. <ins>Let _secondHas_ be ~not-found~.</ins>
+        1. <ins>If _defaultHas_ is ~contains-using-const~, return ~tail-call-not-found~.</ins>
+        1. <ins>Let _secondHas_ be ~tail-call-not-found~.</ins>
         1. If the second |CaseClauses| is present, <del>let _has_ be</del><ins>set _secondHas_ to</ins> HasCallInTailPosition of the second |CaseClauses| with argument _call_.
-        1. <ins>If _secondHas_ is ~contains-using-const~, return ~not-found~.</ins>
-        1. <ins>If _firstHas_ is ~found~, return ~found~.</ins>
-        1. <ins>If _defaultHas_ is ~found~, return ~found~.</ins>
-        1. <ins>If _secondHas_ is ~found~, return ~found~.</ins>
-        1. Return <del>_has_</del><ins>~not-found~</ins>.
+        1. <ins>If _secondHas_ is ~contains-using-const~, return ~tail-call-not-found~.</ins>
+        1. <ins>If _firstHas_ is ~tail-call-found~, return ~tail-call-found~.</ins>
+        1. <ins>If _defaultHas_ is ~tail-call-found~, return ~tail-call-found~.</ins>
+        1. <ins>If _secondHas_ is ~tail-call-found~, return ~tail-call-found~.</ins>
+        1. Return <del>_has_</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <ins class="block">
       <emu-note>
@@ -192,7 +241,7 @@
       <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of |CaseClauses| with argument _call_.
-        1. If _has_ is <del>*true*</del><ins>~found~</ins>, return <del>*true*</del><ins>~found~</ins>.
+        1. If _has_ is <del>*true*</del><ins>~tail-call-found~</ins>, return <del>*true*</del><ins>~tail-call-found~</ins>.
         1. <ins>If _has_ is ~contains-using-const~, return ~contains-using-const~.</ins>
         1. Return HasCallInTailPosition of |CaseClause| with argument _call_.
       </emu-alg>
@@ -325,7 +374,7 @@
           TemplateLiteral
       </emu-grammar>
       <emu-alg>
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <emu-grammar>
         Expression :
@@ -338,7 +387,7 @@
       <emu-grammar>ConditionalExpression : ShortCircuitExpression `?` AssignmentExpression `:` AssignmentExpression</emu-grammar>
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of the first |AssignmentExpression| with argument _call_.
-        1. If _has_ is <del>*true*</del><ins>~found~</ins>, return <del>*true*</del><ins>~found~</ins>.
+        1. If _has_ is <del>*true*</del><ins>~tail-call-found~</ins>, return <del>*true*</del><ins>~tail-call-found~</ins>.
         1. Return HasCallInTailPosition of the second |AssignmentExpression| with argument _call_.
       </emu-alg>
       <emu-grammar>LogicalANDExpression : LogicalANDExpression `&amp;&amp;` BitwiseORExpression</emu-grammar>
@@ -360,8 +409,8 @@
           CallExpression TemplateLiteral
       </emu-grammar>
       <emu-alg>
-        1. If this |CallExpression| is _call_, return <del>*true*</del><ins>~found~</ins>.
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. If this |CallExpression| is _call_, return <del>*true*</del><ins>~tail-call-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <emu-grammar>
         OptionalExpression :
@@ -382,7 +431,7 @@
           OptionalChain `.` PrivateIdentifier
       </emu-grammar>
       <emu-alg>
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <emu-grammar>
         OptionalChain :
@@ -390,16 +439,16 @@
           OptionalChain Arguments
       </emu-grammar>
       <emu-alg>
-        1. If this |OptionalChain| is _call_, return <del>*true*</del><ins>~found~</ins>.
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. If this |OptionalChain| is _call_, return <del>*true*</del><ins>~tail-call-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <emu-grammar>
         MemberExpression :
           MemberExpression TemplateLiteral
       </emu-grammar>
       <emu-alg>
-        1. If this |MemberExpression| is _call_, return <del>*true*</del><ins>~found~</ins>.
-        1. Return <del>*false*</del><ins>~not-found~</ins>.
+        1. If this |MemberExpression| is _call_, return <del>*true*</del><ins>~tail-call-found~</ins>.
+        1. Return <del>*false*</del><ins>~tail-call-not-found~</ins>.
       </emu-alg>
       <emu-grammar>PrimaryExpression : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
       <emu-alg>
