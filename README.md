@@ -265,7 +265,7 @@ representation:
       throw new AggregateError($$errors, undefined, $$try.exception);
     }
     if ($$try.exception) {
-      throw $$try.exception.error;
+      throw $$try.exception.cause;
     }
   }
 }
@@ -336,7 +336,7 @@ representation:
       throw new AggregateError($$errors, undefined, $$try.exception);
     }
     if ($$try.exception) {
-      throw $$try.exception.error;
+      throw $$try.exception.cause;
     }
   }
 }
