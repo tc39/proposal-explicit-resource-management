@@ -34,10 +34,10 @@
       <p>mean the same thing as:</p>
       <emu-alg>
         1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-        1. Let _hygenicTemp_ be AbstractOperation().
-        1. If _hygenicTemp_ is an abrupt completion, set _hygenicTemp_ to DisposeResources(_disposable_, _hygenicTemp_).
+        1. Let _hygienicTemp_ be AbstractOperation().
+        1. If _hygienicTemp_ is an abrupt completion, set _hygienicTemp_ to DisposeResources(_disposable_, _hygienicTemp_).
       </emu-alg>
-      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
+      <p>Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
 
       <p>Algorithm steps that say or are otherwise equivalent to:</p>
       <emu-alg>
@@ -47,10 +47,10 @@
       <emu-alg>
         1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
         1. Assert: _errors_ is a List.
-        1. Let _hygenicTemp_ be AbstractOperation().
-        1. If _hygenicTemp_ is an abrupt completion, set _hygenicTemp_ to DisposeResources(_disposable_, _hygenicTemp_, _errors_).
+        1. Let _hygienicTemp_ be AbstractOperation().
+        1. If _hygienicTemp_ is an abrupt completion, set _hygienicTemp_ to DisposeResources(_disposable_, _hygienicTemp_, _errors_).
       </emu-alg>
-      <p>Where _hygenicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
+      <p>Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
 
       <p>Algorithm steps that say or are otherwise equivalent to:</p>
       <emu-alg>

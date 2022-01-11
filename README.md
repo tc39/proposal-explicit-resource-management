@@ -234,7 +234,7 @@ representation:
 
 ```js
 {
-  const $$try = { stack: [], errors: [] };
+  const $$try = { stack: [], exception: undefined };
   try {
     ...
 
@@ -248,23 +248,24 @@ representation:
     ...
   }
   catch ($$error) {
-    $$try.errors.push($$error);
+    $$try.exception = { cause: $$error };
   }
   finally {
+    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
         $$dispose.call($$expr);
       }
       catch ($$error) {
-        $$try.errors.push($$error);
+        $$errors.push($$error);
       }
     }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
+    if ($$errors.length > 0) {
+      throw new AggregateError($$errors, undefined, $$try.exception);
     }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
+    if ($$try.exception) {
+      throw $$try.exception.error;
     }
   }
 }
@@ -304,7 +305,7 @@ representation:
 
 ```js
 { 
-  const $$try = { stack: [], errors: [] };
+  const $$try = { stack: [], exception: undefined };
   try {
     ...
 
@@ -318,23 +319,24 @@ representation:
     ...
   }
   catch ($$error) {
-    $$try.errors.push($$error);
+    $$try.exception = { cause: $$error };
   }
   finally {
+    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
         $$dispose.call($$expr);
       }
       catch ($$error) {
-        $$try.errors.push($$error);
+        $$errors.push($$error);
       }
     }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
+    if ($$errors.length > 0) {
+      throw new AggregateError($$errors, undefined, $$try.exception);
     }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
+    if ($$try.exception) {
+      throw $$try.exception.error;
     }
   }
 }
@@ -378,7 +380,7 @@ representation:
 
 ```js
 {
-  const $$try = { stack: [], errors: [] };
+  const $$try = { stack: [], exception: undefined };
   try {
     ...
 
@@ -406,23 +408,24 @@ representation:
     ...
   }
   catch ($$error) {
-    $$try.errors.push($$error);
+    $$try.exception = { cause: $$error };
   }
   finally {
+    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
         $$dispose.call($$expr);
       }
       catch ($$error) {
-        $$try.errors.push($$error);
+        $$errors.push($$error);
       }
     }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
+    if ($$errors.length > 0) {
+      throw new AggregateError($$errors, undefined, $$try.exception);
     }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
+    if ($$try.exception) {
+      throw $$try.exception.cause;
     }
   }
 }
@@ -488,7 +491,7 @@ Is semantically equivalent to the following transposed representation:
 
 ```js
 {
-  const $$try = { stack: [], errors: [] };
+  const $$try = { stack: [], exception: undefined };
   try {
     ...
 
@@ -505,9 +508,10 @@ Is semantically equivalent to the following transposed representation:
     ...
   }
   catch ($$error) {
-    $$try.errors.push($$error);
+    $$try.exception = { cause: $$error };
   }
   finally {
+    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
@@ -517,14 +521,14 @@ Is semantically equivalent to the following transposed representation:
         }
       }
       catch ($$error) {
-        $$try.errors.push($$error);
+        $$errors.push($$error);
       }
     }
-    if ($$try.errors.length > 1) {
-      throw new AggregateError($$try.errors);
+    if ($$errors.length > 0) {
+      throw new AggregateError($$errors, undefined, $$try.exception);
     }
-    if ($$try.errors.length === 1) {
-      throw $$try.errors[0];
+    if ($$try.exception) {
+      throw $$try.exception.cause;
     }
   }
 }

@@ -230,7 +230,7 @@
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
           1. If IsCallable(_onAsyncDispose_) is *false*, throw a *TypeError* exception.
           1. Let _disposableRec_ be the DisposableResource { [[ResourceValue]]: *null*, [[Hint]]: ~async~, [[DisposeMethod]]: _onAsyncDispose_ }.
-          1. Let _disposable_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%Disposable.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
+          1. Let _disposable_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%AsyncDisposable.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
           1. Set _disposable_.[[DisposableState]] to ~pending~.
           1. Set _disposable_.[[DisposableResourceStack]] to a List containing _disposableRec_.
           1. Return _disposable_.
@@ -250,7 +250,7 @@
         <emu-alg>
           1. Let _C_ be the *this* value.
           1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
-          1. Let _asyncDisposable_ be ? OrdinaryCreateFromConstructor(_C_, *"%Disposable.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
+          1. Let _asyncDisposable_ be ? OrdinaryCreateFromConstructor(_C_, *"%AsyncDisposable.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
           1. Set _asyncDisposable_.[[DisposableState]] to ~pending~.
           1. Set _asyncDisposable_.[[DisposableResourceStack]] to a new empty List.
           1. Let _iteratorRecord_ be GetIterator(_iterable_).
