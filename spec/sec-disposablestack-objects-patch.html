@@ -1,0 +1,228 @@
+<ins class="block">
+<emu-clause id="sec-disposablestack-objects">
+  <h1>DisposableStack Objects</h1>
+  <p>A DisposableStack is an object that can be used to contain one or more resources that should be disposed together.</p>
+  <p>Any DisposableStack object is in one of two mutually exclusive states: <em>disposed</em> or <em>pending</em>:</p>
+  <ul>
+    <li>A disposable stack `d` is pending if `d[Symbol.dispose]()` has yet to be invoked for `d`.</li>
+    <li>A disposable stack `d` is disposed if `d[Symbol.dispose]()` has already been invoked once for `d`.</li>
+  </ul>
+
+  <emu-clause id="sec-disposablestack-constructor">
+    <h1>The DisposableStack Constructor</h1>
+    <p>The DisposableStack constructor:</p>
+    <ul>
+      <li>is <dfn>%DisposableStack%</dfn>.</li>
+      <li>is the initial value of the *"DisposableStack"* property of the global object.</li>
+      <li>creates and initializes a new DisposableStack when called as a constructor.</li>
+      <li>is not intended to be called as a function and will throw an exception when called in that manner.</li>
+      <li>may be used as the value in an `extends` clause of a class definition. Subclass constructors that intend to inherit the specified DisposableStack behaviour must include a `super` call to the DisposableStack constructor to create and initialize the subclass instance with the internal state necessary to support the `DisposableStack` and `DisposableStack.prototype` built-in methods.</li>
+    </ul>
+    <emu-clause id="sec-disposablestack">
+      <h1>DisposableStack ( )</h1>
+      <p>When the `DisposableStack` function is called, the following steps are taken:</p>
+      <emu-alg>
+        1. If NewTarget is *undefined*, throw a *TypeError* exception.
+        1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]], [[BoundDispose]] &raquo;).
+        1. Set _disposableStack_.[[DisposableState]] to ~pending~.
+        1. Set _disposableStack_.[[DisposableResourceStack]] to a new empty List.
+        1. Set _disposableStack_.[[BoundDispose]] to *undefined*.
+        1. Return _disposableStack_.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-the-disposablestack-constructor">
+    <h1>Properties of the DisposableStack Constructor</h1>
+    <p>The DisposableStack constructor:</p>
+    <ul>
+      <li>Has a [[Prototype]] internal slot whose value is %Function.prototype%.</li>
+    </ul>
+
+    <!--
+    NOTE: If we decide not to support @@species, the following clause should be removed:
+    -->
+    <emu-clause id="sec-get-disposablestack-@@species">
+      <h1>get DisposableStack [ @@species ]</h1>
+      <p>`DisposableStack[@@species]` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
+      <emu-alg>
+        1. Return the *this* value.
+      </emu-alg>
+      <p>The value of the *"name"* property of this function is *"get [Symbol.species]"*.</p>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-the-disposablestack-prototype-object">
+    <h1>Properties of the DisposableStack Prototype Object</h1>
+    <p>The <dfn>DisposableStack prototype object</dfn>:</p>
+    <ul>
+      <li>is <dfn>%DisposableStack.prototype%</dfn>.</li>
+      <li>has a [[Prototype]] internal slot whose value is %Object.prototype%.</li>
+      <li>is an ordinary object.</li>
+      <li>does not have a [[DisposableState]] internal slot or any of the other internal slots of DisposableStack instances.</li>
+    </ul>
+
+    <emu-clause id="sec-get-disposablestack.prototype.dispose">
+      <h1>get DisposableStack.prototype.dispose</h1>
+      <p>`DisposableStack.prototype.dispose` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
+      <emu-alg>
+        1. Let _disposableStack_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+        1. If _disposableStack_.[[BoundDispose]] is *undefined*, then
+          1. Let _dispose_ be GetMethod(_disposableStack_, @@dispose).
+          1. If _dispose_ is *undefined*, throw a *TypeError* exception.
+          1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-disposablestack-dispose-functions"></emu-xref>.
+          1. Set _F_.[[DisposableStack]] to _disposableStack_.
+          1. Set _F_.[[DisposeMethod]] to _dispose_.
+          1. Set _disposableStack_.[[BoundDispose]] to _F_.
+        1. Return _disposableStack_.[[BoundDispose]].
+      </emu-alg>
+
+      <emu-clause id="sec-disposablestack-dispose-functions">
+        <h1>DisposableStack Dispose Functions</h1>
+        <p>A <dfn>DisposableStack dispose function</dfn> is an anonymous built-in function object that has [[DisposableStack]] and [[DisposeMethod]] internal slots.</p>
+        <p>When a DisposableStack dispose function is called, the following steps are taken:</p>
+        <emu-alg>
+          1. Let _F_ be the active function object.
+          1. Let _disposableStack_ be _F_.[[DisposableStack]].
+          1. Let _dispose_ be _F_.[[DisposeMethod]].
+          1. Assert: Type(_disposableStack_) is Object and _disposableStack_ has a [[DisposableState]] internal slot.
+          1. Assert: IsCallable(_dispose_) is *true*.
+          1. Return Call(_dispose_, _disposableStack_, &laquo; &raquo;).
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-disposablestack.prototype.use">
+      <h1>DisposableStack.prototype.use( _value_ [, _onDispose_ ] )</h1>
+      <p>When the `use` function is called with one or two arguments, the following steps are taken:</p>
+      <emu-note>
+        <p>The _onDispose_ argument is optional. If it is not provided, *undefined* is used.</p>
+      </emu-note>
+      <emu-alg>
+        1. Let _disposableStack_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+        1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
+        1. If _onDispose_ is not *undefined*, then
+          1. If IsCallable(_onDispose_) is *false*, throw a *TypeError* exception.
+          1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-disposablestack-callback-functions"></emu-xref>.
+          1. Set _F_.[[Argument]] to _value_.
+          1. Set _F_.[[OnDisposeCallback]] to _onDispose_.
+          1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync~, _F_).
+        1. Else, if _value_ is neither *null* nor *undefined*, then
+          1. If Type(_value_) is not Object, throw a *TypeError* exception.
+          1. Let _method_ be GetDisposeMethod(_value_, ~sync~).
+          1. If _method_ is *undefined*, then
+            1. If IsCallable(_value_) is *true*, then
+              1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync~, _value_).
+            1. Else,
+              1. Throw a *TypeError* exception.
+          1. Else,
+            1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~sync~, _method_).
+        1. Return _value_.
+      </emu-alg>
+
+      <emu-clause id="sec-disposablestack-callback-functions">
+        <h1>DisposableStack Callback Functions</h1>
+        <p>A <dfn>DisposableStack callback function</dfn> is an anonymous built-in function object that has [[Argument]] and [[OnDisposeCallback]] internal slots.</p>
+        <p>When a DisposableStack callback function is called, the following steps are taken:</p>
+        <emu-alg>
+          1. Let _F_ be the active function object.
+          1. Assert: IsCallable(_F_.[[OnDisposeCallback]]) is *true*.
+          1. Return Call(_F_.[[OnDisposeCallback]], *undefined*, &laquo; _F_.[[Argument]] &raquo;).
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-disposablestack.prototype.move">
+      <h1>DisposableStack.prototype.move()</h1>
+      <p>When the `move` function is called, the following steps are taken:</p>
+      <emu-alg>
+        1. Let _disposableStack_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+        1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
+        <!--
+        NOTE: If we decide not to support @@species, the following steps should be removed:
+        -->
+        1. Let _C_ be ? SpeciesConstructor(_disposableStack_, %DisposableStack%).
+        1. Assert: IsConstructor(_C_) is *true*.
+        1. Let _newDisposableStack_ be ? Construct(_C_, &laquo; &raquo;).
+        1. Perform ? RequireInternalSlot(_newDisposableStack_, [[DisposableState]]).
+        1. If _newDisposableStack_.[[DisposableState]] is not ~pending~, throw a *TypeError* exception.
+        1. Append each element of _disposableStack_.[[DisposableResourceStack]] to _newDisposableStack_.[[DisposableResourceStack]].
+        <!--
+        NOTE: If we decide not to support @@species, we can use these steps instead:
+
+        1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]], [[BoundDispose]] &raquo;).
+        1. Set _newDisposableStack_.[[DisposableState]] to ~pending~.
+        1. Set _newDisposableStack_.[[DisposableResourceStack]] to _disposableStack_.[[DisposableResourceStack]].
+        1. Set _newDisposableStack_.[[BoundDispose]] to *undefined*.
+        -->
+        1. Set _disposableStack_.[[DisposableResourceStack]] to a new empty List.
+        1. Return _newDisposableStack_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-disposablestack.prototype-@@dispose">
+      <h1>DisposableStack.prototype [ @@dispose ] ()</h1>
+      <p>When the `@@dispose` method is called, the following steps are taken:</p>
+      <emu-alg>
+        1. Let _disposableStack_ be the *this* value.
+        1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+        1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *undefined*.
+        1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
+        1. Return DisposeResources(_disposableStack_, NormalCompletion(*undefined*)).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-disposablestack.prototype-@@toStringTag">
+      <h1>DisposableStack.prototype [ @@toStringTag ]</h1>
+      <p>The initial value of the `@@toStringTag` property is the String value *"DisposableStack"*.</p>
+      <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.</p>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-properties-of-disposablestack-instances">
+    <h1>Properties of DisposableStack Instances</h1>
+    <p>DisposableStack instances are ordinary objects that inherit properties from the DisposableStack prototype object (the intrinsic %DisposableStack.prototype%). DisposableStack instances are initially created with internal slots described in <emu-xref href="#table-internal-slots-of-disposablestack-instances"></emu-xref>.</p>
+    <emu-table id="table-internal-slots-of-disposablestack-instances" caption="Internal Slots of DisposableStack Instances">
+      <table>
+        <tbody>
+        <tr>
+          <th>
+            Internal Slot
+          </th>
+          <th>
+            Description
+          </th>
+        </tr>
+        <tr>
+          <td>
+            [[DisposableState]]
+          </td>
+          <td>
+            One of ~pending~ or ~disposed~. Governs how a disposable stack will react to incoming calls to its `@@dispose` method.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            [[DisposableResourceStack]]
+          </td>
+          <td>
+            A List of DisposableResource Records.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            [[BoundDispose]]
+          </td>
+          <td>
+            Either *undefined* or a function object that caches the function returned by the `DisposableStack.prototype.dispose` accessor (<emu-xref href="#sec-get-disposablestack.prototype.dispose"></emu-xref>).
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </emu-table>
+  </emu-clause>
+</emu-clause>
+</ins>

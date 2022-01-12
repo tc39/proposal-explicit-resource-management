@@ -25,7 +25,7 @@
             [[ResourceValue]]
           </td>
           <td>
-            An Object.
+            An Object or *undefined*.
           </td>
           <td>
             The value to be disposed.
@@ -58,19 +58,27 @@
     </emu-table>
   </emu-clause>
 
-  <emu-clause id="sec-adddisposableresource-disposable-v-hint" type="abstract operation">
+  <emu-clause id="sec-adddisposableresource-disposable-v-hint-disposemethod" type="abstract operation">
     <h1>
       AddDisposableResource (
         _disposable_ : an object with a [[DisposableResourceStack]] internal slot,
         _V_ : an ECMAScript language value,
         _hint_ : either ~sync~ or ~async~,
+        optional _method_ : a function object,
       )
     </h1>
     <dl class="header"></dl>
     <emu-alg>
-      1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
-      1. If Type(_V_) is not Object, throw a *TypeError* exception.
-      1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
+      1. If _method_ is not present then,
+        1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
+        1. If Type(_V_) is not Object, throw a *TypeError* exception.
+        1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
+      1. Else,
+        1. If _V_ is *null* or *undefined*, then
+          1. Let _resource_ be ? CreateDisposableResource(*undefined*, _hint_, _method_).
+        1. Else,
+          1. If Type(_V_) is not Object, throw a *TypeError* exception.
+          1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_, _method_).
       1. Append _resource_ to _disposable_.[[DisposableResourceStack]].
       1. Return NormalCompletion(~empty~).
     </emu-alg>
@@ -79,14 +87,20 @@
   <emu-clause id="sec-createdisposableresource" type="abstract operation">
     <h1>
       CreateDisposableResource (
-        _V_ : an Object,
+        _V_ : an Object or *undefined*,
         _hint_ : either ~sync~ or ~async~,
+        optional _method_ : a function object,
       )
     </h1>
     <dl class="header"></dl>
     <emu-alg>
-      1. Let _disposeMethod_ be ? GetDisposeMethod(_V_, _hint_).
-      1. Return the DisposableResource Record { [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _disposeMethod_ }.
+      1. If _method_ is not present, then
+        1. If _V_ is *undefined*, throw a *TypeError* exception.
+        1. Set _method_ to ? GetDisposeMethod(_V_, _hint_).
+        1. If _method_ is *undefined*, throw a *TypeError* exception.
+      1. Else,
+        1. If IsCallable(_method_) is *false*, throw a *TypeError* exception.
+      1. Return the DisposableResource Record { [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _method_ }.
     </emu-alg>
   </emu-clause>
 
@@ -105,7 +119,6 @@
           1. Set _method_ to ? GetMethod(_V_, @@dispose).
       1. Else,
         1. Let _method_ be ? GetMethod(_V_, @@dispose).
-      1. If _method_ is *undefined*, throw a *TypeError* exception.
       1. Return _method_.
     </emu-alg>
   </emu-clause>
@@ -113,7 +126,7 @@
   <emu-clause id="sec-dispose" type="abstract operation">
     <h1>
       Dispose (
-        _V_ : an Object,
+        _V_ : an Object or *undefined*,
         _hint_ : either ~sync~ or ~async~,
         _method_ : a function object,
       )
@@ -140,9 +153,9 @@
       1. If _errors_ is not present, let _errors_ be a new empty List.
       1. If _disposable_ is not *undefined*, then
         1. For each _resource_ of _disposable_.[[DisposableResourceStack]], in reverse list order, do
-        1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
-          1. If _result_.[[Type]] is ~throw~, then
-            1. Append _result_.[[Value]] to _errors_.
+          1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
+            1. If _result_.[[Type]] is ~throw~, then
+              1. Append _result_.[[Value]] to _errors_.
       1. Let _errorsLength_ be the number of elements in _errors_.
       1. If _errorsLength_ &gt; 0, then
         1. Let _error_ be a newly created `AggregateError` object.
