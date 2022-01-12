@@ -2,7 +2,7 @@
 
 This proposal intends to address a common pattern in software development regarding
 the lifetime and management of various resources (memory, I/O, etc.). This pattern
-generally includes the allocation of a resource and the ability to explicitly 
+generally includes the allocation of a resource and the ability to explicitly
 release critical resources.
 
 For example, ECMAScript Generator Functions expose this pattern through the
@@ -37,7 +37,7 @@ function * g() {
   using const handle = acquireFileHandle(); // block-scoped critical resource
 
   // or, if `handle` binding is unused:
-  using const (acquireFileHandle()); // block-scoped critical resource
+  using const void = acquireFileHandle(); // block-scoped critical resource
 } // cleanup
 
 {
@@ -48,8 +48,8 @@ function * g() {
 
 ## Status
 
-**Stage:** 2  
-**Champion:** Ron Buckton (@rbuckton)  
+**Stage:** 2
+**Champion:** Ron Buckton (@rbuckton)
 **Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-TkeB6DLlm_TQxuD-sPQ?e=SwMLMY), [notes](https://github.com/tc39/notes/blob/master/meetings/2020-02/february-5.md#updates-on-explicit-resource-management))
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
@@ -127,19 +127,19 @@ This proposal is motivated by a number of cases:
 - Non-blocking memory/IO applications:
   ```js
   import { ReaderWriterLock } from "...";
-  const lock = new ReaderWriterLock(); 
-  
+  const lock = new ReaderWriterLock();
+
   export async function readData() {
     // wait for outstanding writer and take a read lock
-    using const (await lock.read());
+    using const void = await lock.read();
     ... // any number of readers
-    await ...; 
+    await ...;
     ... // still in read lock after `await`
   } // release the read lock
-  
+
   export async function writeData(data) {
     // wait for all readers and take a write lock
-    using const (await lock.write());
+    using const void = await lock.write();
     ... // only one writer
     await ...;
     ... // still in write lock after `await`
@@ -150,11 +150,11 @@ This proposal is motivated by a number of cases:
 
 <!-- Links to similar concepts in existing languages, prior proposals, etc. -->
 
-- C#: 
-  - [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)  
-  - [`using` declaration](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/using#using-declaration)  
-- Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)  
-- Python: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement) 
+- C#:
+  - [`using` statement](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement)
+  - [`using` declaration](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/using#using-declaration)
+- Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)
+- Python: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement)
 
 # Syntax
 
@@ -163,18 +163,18 @@ This proposal is motivated by a number of cases:
 ```js
 // for a synchronously-disposed resource (block scoped):
 using const x = expr1;                              // resource w/ local binding
-using const (expr);                                 // resource w/o local binding
-using const y = expr2, (expr3), z = expr4;          // multiple resources
+using const void = expr;                            // resource w/o local binding
+using const y = expr2, void = expr3, z = expr4;     // multiple resources
 
 // for an asynchronously-disposed resource (block scoped):
-using await const x = expr1;                        // resource w/ local binding
-using await const (expr);                           // resource w/o local binding
-using await const y = expr2, (expr3), z = expr3;    // multiple resources
+using await const x = expr1;                          // resource w/ local binding
+using await const void = expr;                        // resource w/o local binding
+using await const y = expr2, void = expr3, z = expr3; // multiple resources
 ```
 
 # Grammar
 
-<!-- Grammar for the proposal. Please use grammarkdown (github.com/rbuckton/grammarkdown#readme) 
+<!-- Grammar for the proposal. Please use grammarkdown (github.com/rbuckton/grammarkdown#readme)
      syntax in fenced code blocks as grammarkdown is the grammar format used by ecmarkup. -->
 
 ```grammarkdown
@@ -218,7 +218,7 @@ LexicalBinding :
     BindingIdentifier Initializer
 ```
 
-When `using const` is parsed with _BindingIdentifier_ _Initializer_, the bindings created in the declaration 
+When `using const` is parsed with _BindingIdentifier_ _Initializer_, the bindings created in the declaration
 are tracked for disposal at the end of the containing _Block_, _Script_, or _Module_:
 
 ```js
@@ -229,7 +229,7 @@ are tracked for disposal at the end of the containing _Block_, _Script_, or _Mod
 }
 ```
 
-The above example has similar runtime semantics as the following transposed 
+The above example has similar runtime semantics as the following transposed
 representation:
 
 ```js
@@ -271,13 +271,13 @@ representation:
 }
 ```
 
-If exceptions are thrown both in the block following the `using const` declaration and in the call to 
+If exceptions are thrown both in the block following the `using const` declaration and in the call to
 `[Symbol.dispose]()`, all exceptions are reported.
 
 ### `using const` with Existing Resources
 
 ```grammarkdown
-LexicalDeclaration : 
+LexicalDeclaration :
     `using` `const` BindingList `;`
     `using` `await` `const` BindingList `;`
 
@@ -300,11 +300,11 @@ an `AggregateError` containing both errors will be thrown instead.
 }
 ```
 
-The above example has similar runtime semantics as the following transposed 
+The above example has similar runtime semantics as the following transposed
 representation:
 
 ```js
-{ 
+{
   const $$try = { stack: [], exception: undefined };
   try {
     ...
@@ -342,12 +342,12 @@ representation:
 }
 ```
 
-The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close 
+The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close
 the resource we are explicitly tracking.
 
 ### `using const` with Multiple Resources
 
-A `using const` declaration can mix multiple explicit (i.e., `using const x = expr`) and implicit (i.e., 
+A `using const` declaration can mix multiple explicit (i.e., `using const x = expr`) and implicit (i.e.,
 `using const void = expr`) bindings in the same declaration:
 
 ```js
@@ -358,20 +358,17 @@ A `using const` declaration can mix multiple explicit (i.e., `using const x = ex
 }
 ```
 
-These bindings are again used to perform resource disposal when the _Block_, _Script_, or _Module_ 
+These bindings are again used to perform resource disposal when the _Block_, _Script_, or _Module_
 exits, however in this case `[Symbol.dispose]()` is invoked in the reverse order of their
 declaration. This is _approximately_ equivalent to the following:
 
 ```js
 {
+  ...
   using const x = expr1;
-  {
-    using const void = expr2;
-    {
-      using const y = expr2;
-      ...
-    }
-  }
+  using const void = expr2;
+  using const y = expr2;
+  ...
 }
 ```
 
@@ -431,16 +428,16 @@ representation:
 }
 ```
 
-Since we must always ensure that we properly release resources, we must ensure that any abrupt 
-completion that might occur during binding initialization results in evaluation of the cleanup 
-step. When there are multiple declarations in the list, we track each resource in the order they 
+Since we must always ensure that we properly release resources, we must ensure that any abrupt
+completion that might occur during binding initialization results in evaluation of the cleanup
+step. When there are multiple declarations in the list, we track each resource in the order they
 are declared. As a result, we must release these resources in reverse order.
 
 ### `using const` on `null` or `undefined` Values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the `using const` 
-declaration. This is similar to the behavior of `using` in C#, which also allows `null`. One 
-primary reason for this behavior is to simplify a common case where a resource might be optional, 
+This proposal has opted to ignore `null` and `undefined` values provided to the `using const`
+declaration. This is similar to the behavior of `using` in C#, which also allows `null`. One
+primary reason for this behavior is to simplify a common case where a resource might be optional,
 without requiring duplication of work or needless allocations:
 
 ```js
@@ -468,14 +465,14 @@ resource?.doSomething();
 
 ### `using const` on Values Without `[Symbol.dispose]`
 
-If a resource does not have a callable `[Symbol.dispose]` member (or `[Symbol.asyncDispose]` in the 
+If a resource does not have a callable `[Symbol.dispose]` member (or `[Symbol.asyncDispose]` in the
 case of a `using await const`), a `TypeError` would be thrown **immediately** when the resource is tracked.
 
 ### `using await const` in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
 
-In an _AsyncFunction_ or an _AsyncGeneratorFunction_, or the top-level of a _Module_, when we evaluate a 
-`using await const` declaration we first look for a `[Symbol.asyncDispose]` method before looking for a 
-`[Symbol.dispose]` method. At the end of the containing _Block_ or _Module_ if the method 
+In an _AsyncFunction_ or an _AsyncGeneratorFunction_, or the top-level of a _Module_, when we evaluate a
+`using await const` declaration we first look for a `[Symbol.asyncDispose]` method before looking for a
+`[Symbol.dispose]` method. At the end of the containing _Block_ or _Module_ if the method
 returns a value other than `undefined`, we Await the value before exiting:
 
 ```js
@@ -563,8 +560,8 @@ The following show examples of using this proposal with various APIs, assuming t
 **NodeJS FileHandle**
 ```js
 {
-  using const f1 = fs.promises.open(s1, constants.O_RDONLY),
-              f2 = fs.promises.open(s2, constants.O_WRONLY);
+  using const f1 = await fs.promises.open(s1, constants.O_RDONLY),
+              f2 = await fs.promises.open(s2, constants.O_WRONLY);
   const buffer = Buffer.alloc(4092);
   const { bytesRead } = await f1.read(buffer);
   await f2.write(buffer, 0, bytesRead);
@@ -575,7 +572,7 @@ The following show examples of using this proposal with various APIs, assuming t
 ```js
 // roll back transaction if either action fails
 {
-  using const tx = transactionManager.startTransaction(account1, account2);
+  using await const tx = transactionManager.startTransaction(account1, account2);
   await account1.debit(amount);
   await account2.credit(amount);
 
@@ -608,7 +605,7 @@ export async function tryUpdate(record) {
 
 ## Additions to `Symbol`
 
-This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose 
+This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose
 values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
 
 **Well-known Symbols**
