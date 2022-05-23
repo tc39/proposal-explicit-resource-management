@@ -4,18 +4,19 @@
   <emu-grammar type="definition">
     ForInOfStatement[Yield, Await, Return] :
       `for` `(` [lookahead != `let` `[`] LeftHandSideExpression[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` `var` ForBinding[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` [lookahead != `using` `const`] ForDeclaration[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` ForDeclaration[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
       `for` `(` [lookahead &notin; {`let`, `async` `of`}] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` ForDeclaration[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
       [+Await] `for` `await` `(` [lookahead != `let`] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      [+Await] `for` `await` `(` ForDeclaration[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      [+Await] `for` `await` `(` ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
 
-    ForDeclaration[Yield, Await] :
+    ForDeclaration[Yield, Await, <ins>Using</ins>] :
       LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-      <ins>UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]</ins>
+      <ins>[+Using] `using` [no LineTerminatorHere here] `const` ForBinding[?Yield, ?Await, +Using]</ins>
+      <ins>[+Using, +Await] `using` [no LineTerminatorHere here] `await` `const` ForBinding[?Yield, ?Await, +Using]</ins>
 
     ForBinding[Yield, Await, <ins>Using</ins>] :
       BindingIdentifier[?Yield, ?Await]
@@ -49,16 +50,16 @@
         1. Return the Record { [[Iterator]]: _iterator_, [[NextMethod]]: _nextMethod_, [[Done]]: *false* }.
       1. Else,
         1. Assert: _iterationKind_ is ~iterate~ or ~async-iterate~.
-        1. If _iterationKind_ is ~async-iterate~, let _iteratorHint_ be ~async~.
-        1. Else, let _iteratorHint_ be ~sync~.
+        1. If _iterationKind_ is ~async-iterate~, let _iteratorHint_ be ~async-dispose~.
+        1. Else, let _iteratorHint_ be ~sync-dispose~.
         1. Return ? GetIterator(_exprValue_, _iteratorHint_).
     </emu-alg>
   </emu-clause>
   <emu-clause id="sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset" aoid="ForIn/OfBodyEvaluation">
     <h1>ForIn/OfBodyEvaluation ( _lhs_, _stmt_, _iteratorRecord_, _iterationKind_, _lhsKind_, _labelSet_ [ , _iteratorKind_ ] )</h1>
-    <p>The abstract operation ForIn/OfBodyEvaluation takes arguments _lhs_, _stmt_, _iteratorRecord_, _iterationKind_, _lhsKind_ (either ~assignment~, ~varBinding~ or ~lexicalBinding~), and _labelSet_ and optional argument _iteratorKind_ (either ~sync~ or ~async~). It performs the following steps when called:</p>
+    <p>The abstract operation ForIn/OfBodyEvaluation takes arguments _lhs_, _stmt_, _iteratorRecord_, _iterationKind_, _lhsKind_ (either ~assignment~, ~varBinding~ or ~lexicalBinding~), and _labelSet_ and optional argument _iteratorKind_ (either ~sync-dispose~ or ~async-dispose~). It performs the following steps when called:</p>
     <emu-alg>
-      1. If _iteratorKind_ is not present, set _iteratorKind_ to ~sync~.
+      1. If _iteratorKind_ is not present, set _iteratorKind_ to ~sync-dispose~.
       1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
       1. Let _V_ be *undefined*.
       1. Let _destructuring_ be IsDestructuring of _lhs_.
@@ -67,7 +68,7 @@
         1. Let _assignmentPattern_ be the |AssignmentPattern| that is covered by _lhs_.
       1. Repeat,
         1. Let _nextResult_ be ? Call(_iteratorRecord_.[[NextMethod]], _iteratorRecord_.[[Iterator]]).
-        1. If _iteratorKind_ is ~async~, set _nextResult_ to ? Await(_nextResult_).
+        1. If _iteratorKind_ is ~async-dispose~, set _nextResult_ to ? Await(_nextResult_).
         1. If Type(_nextResult_) is not Object, throw a *TypeError* exception.
         1. Let _done_ be ? IteratorComplete(_nextResult_).
         1. If _done_ is *true*, return NormalCompletion(_V_).
@@ -106,7 +107,7 @@
         1. If _status_ is an abrupt completion, then
           1. <ins>Set _status_ to be DisposeResources(_iterationEnv_, _status_)</ins>
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-          1. If _iteratorKind_ is ~async~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
+          1. If _iteratorKind_ is ~async-dispose~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
           1. If _iterationKind_ is ~enumerate~, then
             1. Return _status_.
           1. Else,
@@ -121,7 +122,7 @@
           1. Else,
             1. Assert: _iterationKind_ is ~iterate~.
             1. Set _status_ to UpdateEmpty(_result_, _V_).
-            1. If _iteratorKind_ is ~async~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
+            1. If _iteratorKind_ is ~async-dispose~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
             1. Return ? IteratorClose(_iteratorRecord_, _status_).
         1. If _result_.[[Value]] is not ~empty~, set _V_ to _result_.[[Value]].
     </emu-alg>

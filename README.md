@@ -46,6 +46,12 @@ function * g() {
 } // calls finally blocks in `g`
 ```
 
+In addition, we propose the addition of two disposable container objects to assist
+with managing multiple resources:
+
+- `DisposableStack` &mdash; A stack-based container of disposable resources.
+- `AsyncDisposableStack` &mdash; A stack-based container of asynchronously disposable resources.
+
 ## Status
 
 **Stage:** 2
@@ -156,6 +162,17 @@ This proposal is motivated by a number of cases:
 - Java: [`try`-with-resources statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)
 - Python: [`with` statement](https://docs.python.org/3/reference/compound_stmts.html#the-with-statement)
 
+# Definitions
+
+- Resource &mdash; An object with a specific lifetime, at the end of which either a lifetime-sensitive operation should be performed or a non-gargbage-collected reference (such as a file handle, socket, etc.) should be closed or freed.
+- Resource Management &mdash; A process whereby "resources" are released, triggering any lifetime-sensitive operations or freeing any related non-garbage-collected references.
+- Implicit Resource Management &mdash; Indicates a system whereby the lifetime of a "resource" is managed implicitly by the runtime as part of garbage collection, such as:
+  - `WeakMap` keys
+  - `WeakSet` values
+  - `WeakRef` values
+  - `FinalizationRegistry` entries
+- Explicit Resource Management &mdash; Indicates a system whereby the lifetime of a "resource" is managed explicitly by the user either imperatively (by directly calling a method like `Symbol.dispose`) or declaratively (through a block-scoped declaration like `using const`).
+
 # Syntax
 
 ## `using const` Declarations
@@ -241,7 +258,9 @@ representation:
     const x = expr1;
     if (x !== null && x !== undefined) {
       const $$dispose = x[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
@@ -549,15 +568,15 @@ Neither `using const` nor `using await const` can be used in a `for-in` loop.
 
 The following show examples of using this proposal with various APIs, assuming those APIs adopted this proposal.
 
-**WHATWG Streams API**
+### WHATWG Streams API
 ```js
 {
   using const reader = stream.getReader();
   const { value, done } = reader.read();
-}
+} // reader is disposed
 ```
 
-**NodeJS FileHandle**
+### NodeJS FileHandle
 ```js
 {
   using const f1 = await fs.promises.open(s1, constants.O_RDONLY),
@@ -568,7 +587,7 @@ The following show examples of using this proposal with various APIs, assuming t
 } // both handles are closed
 ```
 
-**Transactional Consistency (ACID)**
+### Transactional Consistency (ACID/3PC)
 ```js
 // roll back transaction if either action fails
 {
@@ -581,7 +600,7 @@ The following show examples of using this proposal with various APIs, assuming t
 } // transaction is committed
 ```
 
-**Logging and tracing**
+### Logging and tracing
 ```js
 // audit privileged function call entry and exit
 function privilegedActivity() {
@@ -590,7 +609,7 @@ function privilegedActivity() {
 } // log activity end
 ```
 
-**Async Coordination**
+### Async Coordination
 ```js
 import { Semaphore } from "...";
 const sem = new Semaphore(1); // allow one participant at a time
@@ -599,6 +618,93 @@ export async function tryUpdate(record) {
   using const void = await sem.wait(); // asynchronously block until we are the sole participant
   ...
 } // synchronously release semaphore and notify the next participant
+```
+
+### Shared Structs
+**main_thread.js**
+```js
+// main_thread.js
+shared struct Data {
+  mut;
+  cv;
+  ready = 0;
+  processed = 0;
+  // ...
+}
+
+const data = Data();
+data.mut = Atomics.Mutex();
+data.cv = Atomics.ConditionVariable();
+
+// start two workers
+startWorker1(data);
+startWorker2(data);
+```
+
+**worker1.js**
+```js
+const data = ...;
+const { mut, cv } = data;
+
+{
+  // lock mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // load content into data and signal we're ready
+  // ...
+  Atomics.store(data, "ready", 1);
+
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
+
+// notify worker 2 that it should wake
+Atomics.ConditionVariable.notifyOne(cv);
+
+{
+  // reacquire lock on mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // release mutex and wait until condition is met to reacquire it
+  Atomics.ConditionVariable.wait(mut, () => Atomics.load(data, "processed") === 1);
+
+  // NOTE: at this point we currently own the lock
+
+  // Do something with the processed data
+  // ...
+    
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
+```
+
+**worker2.js**
+```js
+const data = ...;
+const { mut, cv } = data;
+
+{
+  // lock mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // release mutex and wait until condition is met to reacquire it
+  Atomics.ConditionVariable.wait(mut, () => Atomics.load(data, "ready") === 1);
+
+  // NOTE: at this point we currently own the lock
+
+  // read in values from data, perform our processing, then indicate we are done
+  // ...
+  Atomics.store(data, "processed", 1);
+
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
 ```
 
 # API
@@ -611,14 +717,14 @@ values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
 **Well-known Symbols**
 | Specification Name | \[\[Description]] | Value and Purpose |
 |:-|:-|:-|
-| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of the `using const`statements. |
+| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of the `using const` statements. |
 | _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Called by the semantics of the `using await const` statement. |
 
 **TypeScript Definition**
 ```ts
 interface SymbolConstructor {
-  readonly dispose: symbol;
-  readonly asyncDispose: symbol;
+  readonly dispose: unique symbol;
+  readonly asyncDispose: unique symbol;
 }
 ```
 
@@ -675,7 +781,7 @@ An object is _async disposable_ if it conforms to the following interface:
 
 | Property | Value | Requirements |
 |:-|:-|:-|
-| `@@asyncDispose` | An async function that performs explicit cleanup. | The function must return a `Promise`. |
+| `@@asyncDispose` | An async function that performs explicit cleanup. | The function should return a `Promise`. |
 
 **TypeScript Definition**
 ```ts
@@ -687,134 +793,346 @@ interface AsyncDisposable {
 }
 ```
 
-## `Disposable` and `AsyncDisposable` container objects
+## `DisposableStack` and `AsyncDisposableStack` container objects
 
-This proposal adds two global objects that can as containers to aggregate disposables, guaranteeing 
-that every disposable resource in the container is disposed when the respective disposal method is 
-called. If any disposable in the container throws an error, they would be collected and an 
+This proposal adds two global objects that can as containers to aggregate disposables, guaranteeing
+that every disposable resource in the container is disposed when the respective disposal method is
+called. If any disposable in the container throws an error, they would be collected and an
 `AggregateError` would be thrown at the end:
 
 ```js
-class Disposable {
-  /**
-   * @param {Iterable<Disposable>} disposables - An iterable containing objects to be disposed 
-   * when this object is disposed.
-   * @returns {Disposable}
-   */
-  static from(disposables);
+class DisposableStack {
+  constructor();
 
   /**
-   * @param {() => void} onDispose - A callback to execute when this object is disposed.
+   * Gets a bound function that when called invokes `Symbol.dispose` on this object.
+   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
-  constructor(onDispose);
+  get dispose();
+
+  /**
+   * Adds a resource to the top of the stack.
+   * @template {Disposable | (() => void) | null | undefined} T
+   * @param {T} value - A `Disposable` object, or a callback to evaluate
+   * when this object is disposed.
+   * @returns {T} The provided value.
+   */
+  use(value);
+  /**
+   * Adds a resource to the top of the stack.
+   * @template T
+   * @param {T} value - A resource to be disposed.
+   * @param {(value: T) => void} onDispose - A callback invoked to dispose the provided value.
+   * @returns {T} The provided value.
+   */
+  use(value, onDispose);
+
+  /**
+   * Moves all resources currently in this stack into a new `DisposableStack`.
+   * @returns {DisposableStack} The new `DisposableStack`.
+   */
+  move();
 
   /**
    * Disposes of resources within this object.
+   * @returns {void}
    */
   [Symbol.dispose]();
+
+  [Symbol.toStringTag];
+  static get [Symbol.species]();
 }
 
-class AsyncDisposable {
-  /**
-   * @param {Iterable<Disposable | AsyncDisposable>} disposables - An iterable containing objects 
-   * to be disposed when this object is disposed.
-   */
-  static from(disposables);
+class AsyncDisposableStack {
+  constructor();
 
   /**
-   * @param {() => void | Promise<void>} onAsyncDispose - A callback to execute when this object is
-   * disposed.
+   * Gets a bound function that when called invokes `Symbol.disposeAsync` on this object.
+   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
-  constructor(onAsyncDispose);
+  get disposeAsync();
+
+  /**
+   * Adds a resource to the top of the stack.
+   * @template {AsyncDisposable | Disposable | (() => void | Promise<void>) | null | undefined} T
+   * @param {T} value - An `AsyncDisposable` or `Disposable` object, or a callback to evaluate
+   * when this object is disposed.
+   * @returns {T} The provided value.
+   */
+  use(value);
+  /**
+   * Adds a resource to the top of the stack.
+   * @template T
+   * @param {T} value - A resource to be disposed.
+   * @param {(value: T) => void | Promise<void>} onDisposeAsync - A callback invoked to dispose the provided value.
+   * @returns {T} The provided value.
+   */
+  use(value, onDisposeAsync);
+
+  /**
+   * Moves all resources currently in this stack into a new `AsyncDisposableStack`.
+   * @returns {AsyncDisposableStack} The new `AsyncDisposableStack`.
+   */
+  move();
 
   /**
    * Asynchronously disposes of resources within this object.
    * @returns {Promise<void>}
    */
   [Symbol.asyncDispose]();
+
+  [Symbol.toStringTag];
+  static get [Symbol.species]();
 }
 ```
 
-The `Disposable` and `AsyncDisposable` classes each provide two capabilities:
+These classes provided the following capabilities:
 - Aggregation
-- Interoperation and Customization
+- Interoperation and customization
+- Assist in complex construction
+
+NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's 
+[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and 
+[`AsyncExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack).
 
 ### Aggregation
 
-The `Disposable` and `AsyncDisposable` classes provide the ability to aggregate multiple disposable resources into a 
-single container. When the `Disposable` container is disposed, each object in the container is also guaranteed to be 
+The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources into a
+single container. When the `DisposableStack` container is disposed, each object in the container is also guaranteed to be
 disposed (barring early termination of the program). Any exceptions thrown as resources in the container are disposed
 will be collected and rethrown as an `AggregateError`.
 
+For example:
+
+```js
+const stack = new DisposableStack();
+stack.use(getResource1());
+stack.use(getResource2());
+stack[Symbol.dispose](); // disposes of resource2, then resource1
+```
+
 ### Interoperation and Customization
 
-The `Disposable` and `AsyncDisposable` classes also provide the ability to create a disposable resource from a simple 
-callback. This callback will be executed when the resource's `Symbol.dispose` method (or `Symbol.asyncDispose` method, for an `AsyncDisposable`) is executed.
+The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a simple
+callback. This callback will be executed when the stack's disposal method is executed.
 
 The ability to create a disposable resource from a callback has several benefits:
 
-- It allows developers to leverage `using const` while working with existing resources that do not conform to the 
+- It allows developers to leverage `using const` while working with existing resources that do not conform to the
   `Symbol.dispose` mechanic:
   ```js
   {
+    using const stack = new DisposableStack();
     const reader = ...;
-    using const void = new Disposable(() => reader.releaseLock());
+    stack.use(() => reader.releaseLock());
     ...
   }
   ```
-- It grants user the ability to schedule other cleanup work to evaluate at the end of the block similar to Go's 
+- It grants user the ability to schedule other cleanup work to evaluate at the end of the block similar to Go's
   `defer` statement:
   ```js
   function f() {
+    using const stack = new DisposableStack();
     console.log("enter");
-    using const void = new Disposable(() => console.log("exit"));
+    stack.use(() => console.log("exit"));
     ...
+  }
+  ```
+
+### Assist in Complex Construction
+
+A user-defined disposable class might need to allocate and track multiple nested resources that should be disposed when
+the class instance is disposed. However, properly managing the lifetime of these nested resources in the class constructor
+can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage 
+lifetime in these scenarios:
+
+```js
+class PluginHost {
+  #disposables;
+  #channel;
+  #socket;
+
+  constructor() {
+    // Create a DisposableStack that is disposed when the constructor exits.
+    // If construction succeeds, we move everything out of `stack` and into
+    // `#disposables` to be disposed later.
+    using const stack = new DisposableStack();
+
+    // Create an IPC adapter around process.send/process.on("message").
+    // When disposed, it unsubscribes from process.on("message").
+    this.#channel = stack.use(new NodeProcessIpcChannelAdapter(process));
+
+    // Create a pseudo-websocket that sends and receives messages over
+    // a NodeJS IPC channel.
+    this.#socket = stack.use(new NodePluginHostIpcSocket(this.#channel));
+
+    // If we made it here, then there were no errors during construction and
+    // we can safely move the disposables out of `stack` and into `#disposables`.
+    this.#disposables = stack.move();
+
+    // If construction failed, then `stack` would be disposed before reaching
+    // the line above. Event handlers would be removed, allowing `#channel` and
+    // `#socket` to be GC'd.
+  }
+
+  [Symbol.dispose]() {
+    this.#disposables[Symbol.dispose]();
+  }
+}
+```
+
+# Relation to `Iterator` and `for..of`
+
+Iterators in ECMAScript also employ a "cleanup" step by way of supplying a `return` method. This means that there is some similarity between a
+`using const` declaration and a `for..of` statement:
+
+```js
+// using const
+function f() {
+  using const x = ...;
+  // use x
+} // x is disposed
+
+// for..of
+function makeDisposableScope() {
+  const resources = [];
+  let state = 0;
+  return {
+    next() {
+      switch (state) {
+        case 0:
+          state++;
+          return {
+            done: false,
+            value: {
+              use(value) {
+                resources.unshift(value);
+                return value;
+              }
+            }
+          };
+        case 1:
+          state++;
+          for (const value of resources) {
+            value?.[Symbol.dispose]();
+          }
+        default:
+          state = -1;
+          return { done: true };
+      }
+    },
+    return() {
+      switch (state) {
+        case 1:
+          state++;
+          for (const value of resources) {
+            value?.[Symbol.dispose]();
+          }
+        default:
+          state = -1;
+          return { done: true };
+      }
+    },
+    [Symbol.iterator]() { return this; }
+  }
+}
+
+function f() {
+  for (const { use } of makeDisposableScope()) {
+    const x = use(...);
+    // use x
+  } // x is disposed
+}
+```
+
+However there are a number drawbacks to using `for..of` as an alternative:
+
+- Exceptions in the body are swallowed by exceptions from disposables.
+- `for..of` implies iteration, which can be confusing when reading code.
+- Conflating `for..of` and resource management could make it harder to find documentation, examples, StackOverflow answers, etc.
+- A `for..of` implementation like the one above cannot control the scope of `use`, which can make lifetimes confusing:
+  ```js
+  for (const { use } of ...) {
+    const x = use(...); // ok
+    setImmediate(() => {
+      const y = use(...); // wrong lifetime
+    });
+  }
+  ```
+- Significantly more boilerplate compared to `using const`.
+- Mandates introduction of a new block scope, even at the top level of a function body.
+- Control flow analysis of a `for..of` loop cannot infer definite assignment since a loop could potentially have zero elements:
+  ```js
+  // using const
+  function f1() {
+    /** @type {string | undefined} */
+    let x;
+    {
+      using const y = ...;
+      x = y.text;
+    }
+    x.toString(); // x is definitely assigned
+  }
+
+  // for..of
+  function f2() {
+    /** @type {string | undefined} */
+    let x;
+    for (const { use } of ...) {
+      const y = use(...);
+      x = y.text;
+    }
+    x.toString(); // possibly an error in a static analyzer since `x` is not guaranteed to have been assigned.
   }
   ```
 
 # Meeting Notes
 
-* [TC39 July 24th, 2018](https://tc39.es/tc39-notes/2018-07_july-24.html#explicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2018-07_july-24.html#conclusionresolution-explicit-resource-management)
+* [TC39 July 24th, 2018](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#explicit-resource-management)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#conclusionresolution-7)
     - Stage 1 acceptance
-* [TC39 July 23rd, 2019](https://tc39.es/tc39-notes/2019-07_july-23.html#explicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-23.html#conclusionresolution-explicit-resource-management)
+* [TC39 July 23rd, 2019](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-23.md#explicit-resource-management)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-23.md#conclusionresolution-7)
     - Table until Thursday, inconclusive.
-* [TC39 July 25th, 2019](https://tc39.es/tc39-notes/2019-07_july-25.html#explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-25.html#conclusionresolution-explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management):
+* [TC39 July 25th, 2019](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-25.md#explicit-resource-management-for-stage-2-continuation-from-tuesday)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-25.md#conclusionresolution-7):
     - Investigate Syntax
     - Approved for Stage 2
     - YK (@wycatz) & WH (@waldemarhorwat) will be stage 3 reviewers
+* [TC39 October 10th, 2021](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#conclusionresolution-1)
+      - Status Update only
+      - WH Continuing to review
+      - SYG (@syg) added as reviewer
 
 # TODO
-
 
 The following is a high-level list of tasks to progress through each stage of the [TC39 proposal process](https://tc39.github.io/process-document/):
 
 ### Stage 1 Entrance Criteria
 
-* [x] Identified a "[champion][Champion]" who will advance the addition.  
-* [x] [Prose][Prose] outlining the problem or need and the general shape of a solution.  
-* [x] Illustrative [examples][Examples] of usage.  
-* [x] High-level [API][API].  
+* [x] Identified a "[champion][Champion]" who will advance the addition.
+* [x] [Prose][Prose] outlining the problem or need and the general shape of a solution.
+* [x] Illustrative [examples][Examples] of usage.
+* [x] High-level [API][API].
 
 ### Stage 2 Entrance Criteria
 
-* [x] [Initial specification text][Specification].  
-* [ ] [Transpiler support][Transpiler] (_Optional_).  
+* [x] [Initial specification text][Specification].
+* [ ] [Transpiler support][Transpiler] (_Optional_).
 
 ### Stage 3 Entrance Criteria
 
-* [x] [Complete specification text][Specification].  
-* [ ] Designated reviewers have [signed off][Stage3ReviewerSignOff] on the current spec text.  
-* [ ] The ECMAScript editor has [signed off][Stage3EditorSignOff] on the current spec text.  
+* [x] [Complete specification text][Specification].
+* [ ] Designated reviewers have [signed off][Stage3ReviewerSignOff] on the current spec text.
+* [ ] The ECMAScript editor has [signed off][Stage3EditorSignOff] on the current spec text.
 
 ### Stage 4 Entrance Criteria
 
-* [ ] [Test262](https://github.com/tc39/test262) acceptance tests have been written for mainline usage scenarios and [merged][Test262PullRequest].  
-* [ ] Two compatible implementations which pass the acceptance tests: [\[1\]][Implementation1], [\[2\]][Implementation2].  
-* [ ] A [pull request][Ecma262PullRequest] has been sent to tc39/ecma262 with the integrated spec text.  
-* [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].  
+* [ ] [Test262](https://github.com/tc39/test262) acceptance tests have been written for mainline usage scenarios and [merged][Test262PullRequest].
+* [ ] Two compatible implementations which pass the acceptance tests: [\[1\]][Implementation1], [\[2\]][Implementation2].
+* [ ] A [pull request][Ecma262PullRequest] has been sent to tc39/ecma262 with the integrated spec text.
+* [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].
 
 
 

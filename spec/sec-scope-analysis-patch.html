@@ -5,12 +5,13 @@
     <h1>Static Semantics: BoundNames</h1>
     <ins class="block">
     <emu-grammar>
-      LexicalDeclaration : UsingConst BindingList `;`
+      UsingDeclaration :
+        `using` `const` BindingList `;`
+        `using` `await` `const` BindingList `;`
     </emu-grammar>
     <emu-alg>
       1. Return the BoundNames of |BindingList|.
     </emu-alg>
-
     <emu-grammar>
       LexicalBinding : `void` Initializer
     </emu-grammar>
@@ -18,14 +19,15 @@
       1. Return a new empty List.
     </emu-alg>
     </ins>
-
   </emu-clause>
 
   <emu-clause id="sec-static-semantics-isconstantdeclaration" oldids="sec-let-and-const-declarations-static-semantics-isconstantdeclaration,sec-function-definitions-static-semantics-isconstantdeclaration,sec-generator-function-definitions-static-semantics-isconstantdeclaration,sec-async-generator-function-definitions-static-semantics-isconstantdeclaration,sec-class-definitions-static-semantics-isconstantdeclaration,sec-async-function-definitions-static-semantics-IsConstantDeclaration,sec-exports-static-semantics-isconstantdeclaration" type="sdo" aoid="IsConstantDeclaration">
     <h1>Static Semantics: IsConstantDeclaration</h1>
     <ins class="block">
     <emu-grammar>
-      LexicalDeclaration : UsingConst BindingList `;`
+      UsingDeclaration :
+        `using` `const` BindingList `;`
+        `using` `await` `const` BindingList `;`
       </emu-grammar>
       <emu-alg>
         1. Return *true*.

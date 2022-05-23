@@ -47,7 +47,7 @@
             InitializeBinding(N, V<ins>, _hint_</ins>)
           </td>
           <td>
-            Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` statement (~sync~), a `using await const` statement (~async~), or a regular variable declaration (~normal~).</ins>
+            Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` statement (~sync-dispose~), a `using await const` statement (~async-dispose~), or a regular variable declaration (~normal~).</ins>
           </td>
         </tr>
         <tr>
@@ -110,7 +110,7 @@
 
       <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
         <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-        <p>The InitializeBinding concrete method of a declarative Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+        <p>The InitializeBinding concrete method of a declarative Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
         <emu-alg>
           1. Assert: _envRec_ must have an uninitialized binding for _N_.
           1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _V_, _hint_).</ins>
@@ -125,7 +125,7 @@
       <h1>Object Environment Records</h1>
       <emu-clause id="sec-object-environment-records-initializebinding-n-v">
         <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-        <p>The InitializeBinding concrete method of an object Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. It performs the following steps when called:</p>
+        <p>The InitializeBinding concrete method of an object Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. It performs the following steps when called:</p>
         <emu-alg>
           1. Assert: _hint_ is ~normal~.
           1. Return ? _envRec_.SetMutableBinding(_N_, _V_, *false*).
@@ -140,7 +140,7 @@
       <h1>Global Environment Records</h1>
       <emu-clause id="sec-global-environment-records-initializebinding-n-v">
         <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-        <p>The InitializeBinding concrete method of a global Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync~, or ~async~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+        <p>The InitializeBinding concrete method of a global Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
         <emu-alg>
           1. Let _DclRec_ be _envRec_.[[DeclarativeRecord]].
           1. If _DclRec_.HasBinding(_N_) is *true*, then
