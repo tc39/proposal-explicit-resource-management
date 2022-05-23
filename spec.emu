@@ -32,6 +32,8 @@ stage: 2
 contributors: Ron Buckton, Ecma International
 </pre>
 
+<emu-biblio href="node_modules/@tc39/ecma262-biblio/biblio.json"></emu-biblio>
+
 <emu-intro id="intro">
   <h1>Introduction</h1>
   <p>This proposal introduces syntax and semantics around explicit resource management.</p>
@@ -277,7 +279,8 @@ contributors: Ron Buckton, Ecma International
           optional _method_ : a function object,
         )
       </h1>
-      <dl class="header"></dl>
+      <dl class="header">
+      </dl>
       <emu-alg>
         1. If _method_ is not present then,
           1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).

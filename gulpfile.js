@@ -9,7 +9,15 @@ gulp.task("clean", () => del("docs/**/*"));
 
 gulp.task("build", () => gulp
     .src(["spec.emu"])
-    .pipe(emu())
+    .pipe(emu({
+        log: require("ecmarkup/lib/utils").logVerbose,
+        warn: err => {
+            const file = path.resolve(err.file || "spec.emu");
+            const message = `Warning: ${file}:${typeof err.line === "number" ? `${err.line}:${err.column}:` : ""} ${err.message}`;
+            require("ecmarkup/lib/utils").logWarning(message);
+        },
+        ecma262Biblio: false,
+    }))
     .pipe(rename("index.html"))
     .pipe(gulp.dest("docs")));
 
