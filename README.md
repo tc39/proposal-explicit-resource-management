@@ -694,7 +694,7 @@ An object is _async disposable_ if it conforms to the following interface:
 
 | Property | Value | Requirements |
 |:-|:-|:-|
-| `@@asyncDispose` | An async function that performs explicit cleanup. | The function must return a `Promise`. |
+| `@@asyncDispose` | An async function that performs explicit cleanup. | The function should return a `Promise`. |
 
 **TypeScript Definition**
 ```ts
@@ -719,6 +719,7 @@ class DisposableStack {
 
   /**
    * Gets a bound function that when called invokes `Symbol.dispose` on this object.
+   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
   get dispose();
 
@@ -741,7 +742,7 @@ class DisposableStack {
 
   /**
    * Moves all resources currently in this stack into a new `DisposableStack`.
-   * @returns The new `DisposableStack`.
+   * @returns {DisposableStack} The new `DisposableStack`.
    */
   move();
 
@@ -760,6 +761,7 @@ class AsyncDisposableStack {
 
   /**
    * Gets a bound function that when called invokes `Symbol.disposeAsync` on this object.
+   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
   get disposeAsync();
 
@@ -782,7 +784,7 @@ class AsyncDisposableStack {
 
   /**
    * Moves all resources currently in this stack into a new `AsyncDisposableStack`.
-   * @returns The new `AsyncDisposableStack`.
+   * @returns {AsyncDisposableStack} The new `AsyncDisposableStack`.
    */
   move();
 
@@ -894,17 +896,22 @@ class PluginHost {
 
 # Meeting Notes
 
-* [TC39 July 24th, 2018](https://tc39.es/tc39-notes/2018-07_july-24.html#explicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2018-07_july-24.html#conclusionresolution-explicit-resource-management)
+* [TC39 July 24th, 2018](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#explicit-resource-management)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#conclusionresolution-7)
     - Stage 1 acceptance
-* [TC39 July 23rd, 2019](https://tc39.es/tc39-notes/2019-07_july-23.html#explicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-23.html#conclusionresolution-explicit-resource-management)
+* [TC39 July 23rd, 2019](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-23.md#explicit-resource-management)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-23.md#conclusionresolution-7)
     - Table until Thursday, inconclusive.
-* [TC39 July 25th, 2019](https://tc39.es/tc39-notes/2019-07_july-25.html#explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management)
-  - [Conclusion](https://tc39.es/tc39-notes/2019-07_july-25.html#conclusionresolution-explicit-resource-management-for-stage-2-continuation-from-tuesdayhttpsgithubcomtc39tc39-notesblobmastermeetings2019-07july-23mdexplicit-resource-management):
+* [TC39 July 25th, 2019](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-25.md#explicit-resource-management-for-stage-2-continuation-from-tuesday)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2019-07/july-25.md#conclusionresolution-7):
     - Investigate Syntax
     - Approved for Stage 2
     - YK (@wycatz) & WH (@waldemarhorwat) will be stage 3 reviewers
+* [TC39 October 10th, 2021](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#conclusionresolution-1)
+      - Status Update only
+      - WH Continuing to review
+      - SYG (@syg) added as reviewer
 
 # TODO
 
