@@ -1086,6 +1086,68 @@ However there are a number drawbacks to using `for..of` as an alternative:
   }
   ```
 
+# Relation to DOM APIs
+
+This proposal does not necessarily require immediate support in the HTML DOM specification, as existing APIs can still be adapted by
+using `DisposableStack`. However, there are a number of APIs that could benefit from this proposal and should be considered by the
+relevant standards bodies. The following is by no means a complete list, and primarily offers suggestions for consideration. The actual
+implementation is at the discretion of the relevant standards bodies.
+
+- `AudioContext` &mdash; `@@asyncDispose()` as an alias for `close()`.
+  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
+- `BroadcastChannel` &mdash; `@@dispose()` as an alias for `close()`.
+- `EventSource` &mdash; `@@dispose()` as an alias for `close()`.
+- `FileReader` &mdash; `@@dispose()` as an alias for `abort()`.
+- `IDbTransaction` &mdash; `@@dispose()` could invoke `abort()` if the transaction is still in the active state:
+  ```js
+  {
+    using const tx = db.transaction(storeNames);
+    // ...
+    if (...) throw new Error();
+    // ...
+    tx.commit();
+  } // implicit tx.abort() if we don't reach the explicit tx.commit()
+  ```
+- `ImageBitmap` &mdash; `@@dispose()` as an alias for `close()`.
+- `IntersectionObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
+- `MediaKeySession` &mdash; `@@asyncDispose()` as an alias for `close()`.
+  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
+- `MessagePort` &mdash; `@@dispose()` as an alias for `close()`.
+- `MutationObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
+- `PaymentRequest` &mdash; `@@asyncDispose()` as an alias for `abort()`.
+  - NOTE: `abort()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
+- `PerformanceObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
+- `PushSubscription` &mdash; `@@asyncDispose()` as an alias for `unsubscribe()`.
+- `RTCPeerConnection` &mdash; `@@dispose()` as an alias for `close()`.
+- `RTCRtpTransceiver` &mdash; `@@dispose()` as an alias for `stop()`.
+- `ReadableStream` &mdash; `@@asyncDispose()` as an alias for `cancel()`.
+- `ReadableStreamDefaultController` &mdash; `@@dispose()` as an alias for `close()`.
+- `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a wrapper for `cancel()` (but probably not both).
+- `ResizeObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
+- `ServiceWorkerRegistration` &mdash; `@@asyncDispose()` as a wrapper for `unregister()`.
+- `SourceBuffer` &mdash; `@@dispose()` as a wrapper for `abort()`.
+- `TransformStreamDefaultController` &mdash; `@@dispose()` as an alias for `terminate()`.
+- `WebSocket` &mdash; `@@dispose()` as a wrapper for `close()`.
+- `Worker` &mdash; `@@dispose()` as an alias for `terminate()`.
+- `WritableStream` &mdash; `@@asyncDispose()` as an alias for `close()`.
+  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
+- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a wrapper for `close()` (but probably not both).
+- `XMLHttpRequest` &mdash; `@@dispose()` as an alias for `abort()`.
+
+In addition, several new APIs could be considered that leverage this functionality:
+
+- `EventTarget.prototype.addEventListener(type, listener, { subscription: true }) -> Disposable` &mdash; An option passed to `addEventListener` could
+  return a `Disposable` that removes the event listener when disposed.
+- `Performance.prototype.measureBlock(measureName, options) -> Disposable` &mdash; Combines `mark` and `measure` into a block-scoped disposable:
+  ```js
+  function f() {
+    using const void = performance.measureBlock("f"); // marks on entry
+    // ...
+  } // marks and measures on exit
+  ```
+- A wrapper for `pauseAnimations()` and `unpauseAnimations()` in `SVGSVGElement`.
+- A wrapper for `lock()` and `unlock()` in `ScreenOrientation`.
+
 # Meeting Notes
 
 * [TC39 July 24th, 2018](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#explicit-resource-management)
