@@ -568,15 +568,15 @@ Neither `using const` nor `using await const` can be used in a `for-in` loop.
 
 The following show examples of using this proposal with various APIs, assuming those APIs adopted this proposal.
 
-**WHATWG Streams API**
+### WHATWG Streams API
 ```js
 {
   using const reader = stream.getReader();
   const { value, done } = reader.read();
-}
+} // reader is disposed
 ```
 
-**NodeJS FileHandle**
+### NodeJS FileHandle
 ```js
 {
   using const f1 = await fs.promises.open(s1, constants.O_RDONLY),
@@ -587,7 +587,7 @@ The following show examples of using this proposal with various APIs, assuming t
 } // both handles are closed
 ```
 
-**Transactional Consistency (ACID)**
+### Transactional Consistency (ACID/3PC)
 ```js
 // roll back transaction if either action fails
 {
@@ -600,7 +600,7 @@ The following show examples of using this proposal with various APIs, assuming t
 } // transaction is committed
 ```
 
-**Logging and tracing**
+### Logging and tracing
 ```js
 // audit privileged function call entry and exit
 function privilegedActivity() {
@@ -609,7 +609,7 @@ function privilegedActivity() {
 } // log activity end
 ```
 
-**Async Coordination**
+### Async Coordination
 ```js
 import { Semaphore } from "...";
 const sem = new Semaphore(1); // allow one participant at a time
@@ -618,6 +618,93 @@ export async function tryUpdate(record) {
   using const void = await sem.wait(); // asynchronously block until we are the sole participant
   ...
 } // synchronously release semaphore and notify the next participant
+```
+
+### Shared Structs
+**main_thread.js**
+```js
+// main_thread.js
+shared struct Data {
+  mut;
+  cv;
+  ready = 0;
+  processed = 0;
+  // ...
+}
+
+const data = Data();
+data.mut = Atomics.Mutex();
+data.cv = Atomics.ConditionVariable();
+
+// start two workers
+startWorker1(data);
+startWorker2(data);
+```
+
+**worker1.js**
+```js
+const data = ...;
+const { mut, cv } = data;
+
+{
+  // lock mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // load content into data and signal we're ready
+  // ...
+  Atomics.store(data, "ready", 1);
+
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
+
+// notify worker 2 that it should wake
+Atomics.ConditionVariable.notifyOne(cv);
+
+{
+  // reacquire lock on mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // release mutex and wait until condition is met to reacquire it
+  Atomics.ConditionVariable.wait(mut, () => Atomics.load(data, "processed") === 1);
+
+  // NOTE: at this point we currently own the lock
+
+  // Do something with the processed data
+  // ...
+    
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
+```
+
+**worker2.js**
+```js
+const data = ...;
+const { mut, cv } = data;
+
+{
+  // lock mutex
+  using const void = Atomics.Mutex.lock(mut);
+
+  // NOTE: at this point we currently own the lock
+
+  // release mutex and wait until condition is met to reacquire it
+  Atomics.ConditionVariable.wait(mut, () => Atomics.load(data, "ready") === 1);
+
+  // NOTE: at this point we currently own the lock
+
+  // read in values from data, perform our processing, then indicate we are done
+  // ...
+  Atomics.store(data, "processed", 1);
+
+} // release mutex
+
+// NOTE: at this point we no longer own the lock
 ```
 
 # API
@@ -636,8 +723,8 @@ values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
 **TypeScript Definition**
 ```ts
 interface SymbolConstructor {
-  readonly dispose: symbol;
-  readonly asyncDispose: symbol;
+  readonly dispose: unique symbol;
+  readonly asyncDispose: unique symbol;
 }
 ```
 
@@ -1019,7 +1106,6 @@ However there are a number drawbacks to using `for..of` as an alternative:
       - SYG (@syg) added as reviewer
 
 # TODO
-
 
 The following is a high-level list of tasks to progress through each stage of the [TC39 proposal process](https://tc39.github.io/process-document/):
 
