@@ -970,8 +970,8 @@ contributors: Ron Buckton, Ecma International
 
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
           LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-          <ins>[+Using] `using` [no LineTerminatorHere here] `const` ForBinding[?Yield, ?Await, +Using]</ins>
-          <ins>[+Using, +Await] `using` [no LineTerminatorHere here] `await` `const` ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using] `using` [no LineTerminator here] `const` ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using, +Await] `using` [no LineTerminator here] `await` `const` ForBinding[?Yield, ?Await, +Using]</ins>
 
         ForBinding[Yield, Await, <ins>Using</ins>] :
           BindingIdentifier[?Yield, ?Await]
