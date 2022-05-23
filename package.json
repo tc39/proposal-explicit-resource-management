@@ -22,7 +22,8 @@
     "ecmarkup": "^9.3.0",
     "gulp": "^4.0.2",
     "gulp-emu": "^2.1.0",
-    "gulp-live-server": "0.0.31"
+    "gulp-live-server": "0.0.31",
+    "gulp-rename": "^2.0.0"
   },
   "repository": "tc39/proposal-explicit-resource-management"
 }

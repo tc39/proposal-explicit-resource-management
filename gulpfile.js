@@ -2,17 +2,19 @@ const del = require("del");
 const path = require("path");
 const gulp = require("gulp");
 const emu = require("gulp-emu");
+const rename = require("gulp-rename");
 const gls = require("gulp-live-server");
 
 gulp.task("clean", () => del("docs/**/*"));
 
 gulp.task("build", () => gulp
-    .src(["spec/index.html"])
+    .src(["spec.emu"])
     .pipe(emu())
+    .pipe(rename("index.html"))
     .pipe(gulp.dest("docs")));
 
 gulp.task("watch", () => gulp
-    .watch(["spec/**/*"], gulp.task("build")));
+    .watch(["spec.emu"], gulp.task("build")));
 
 gulp.task("start", gulp.parallel("watch", () => {
     const server = gls.static("docs", 8080);
