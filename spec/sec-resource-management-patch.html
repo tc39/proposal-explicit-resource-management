@@ -29,7 +29,7 @@
               A function.
             </td>
             <td>
-              <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handled, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
+              <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
               <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
               <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using const` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
             </td>
@@ -63,7 +63,7 @@
               A function that returns a promise.
             </td>
             <td>
-              <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handled, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
+              <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
               <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
               <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await const` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
             </td>

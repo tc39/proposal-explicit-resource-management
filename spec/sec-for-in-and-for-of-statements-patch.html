@@ -4,18 +4,18 @@
   <emu-grammar type="definition">
     ForInOfStatement[Yield, Await, Return] :
       `for` `(` [lookahead != `let` `[`] LeftHandSideExpression[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` `var` ForBinding[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` [lookahead != `using` `const`] ForDeclaration[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` ForDeclaration[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
       `for` `(` [lookahead &notin; {`let`, `async` `of`}] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      `for` `(` ForDeclaration[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      `for` `(` ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
       [+Await] `for` `await` `(` [lookahead != `let`] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-      [+Await] `for` `await` `(` ForDeclaration[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await, <ins>~Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+      [+Await] `for` `await` `(` ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
 
-    ForDeclaration[Yield, Await] :
+    ForDeclaration[Yield, Await, <ins>Using</ins>] :
       LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-      <ins>UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]</ins>
+      <ins>[+Using] UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]</ins>
 
     ForBinding[Yield, Await, <ins>Using</ins>] :
       BindingIdentifier[?Yield, ?Await]
