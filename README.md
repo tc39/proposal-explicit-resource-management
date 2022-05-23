@@ -894,6 +894,111 @@ class PluginHost {
 }
 ```
 
+# Relation to `Iterator` and `for..of`
+
+Iterators in ECMAScript also employ a "cleanup" step by way of supplying a `return` method. This means that there is some similarity between a
+`using const` declaration and a `for..of` statement:
+
+```js
+// using const
+function f() {
+  using const x = ...;
+  // use x
+} // x is disposed
+
+// for..of
+function makeDisposableScope() {
+  const resources = [];
+  let state = 0;
+  return {
+    next() {
+      switch (state) {
+        case 0:
+          state++;
+          return {
+            done: false,
+            value: {
+              use(value) {
+                resources.unshift(value);
+                return value;
+              }
+            }
+          };
+        case 1:
+          state++;
+          for (const value of resources) {
+            value?.[Symbol.dispose]();
+          }
+        default:
+          state = -1;
+          return { done: true };
+      }
+    },
+    return() {
+      switch (state) {
+        case 1:
+          state++;
+          for (const value of resources) {
+            value?.[Symbol.dispose]();
+          }
+        default:
+          state = -1;
+          return { done: true };
+      }
+    },
+    [Symbol.iterator]() { return this; }
+  }
+}
+
+function f() {
+  for (const { use } of makeDisposableScope()) {
+    const x = use(...);
+    // use x
+  } // x is disposed
+}
+```
+
+However there are a number drawbacks to using `for..of` as an alternative:
+
+- Exceptions in the body are swallowed by exceptions from disposables.
+- `for..of` implies iteration, which can be confusing when reading code.
+- Conflating `for..of` and resource management could make it harder to find documentation, examples, StackOverflow answers, etc.
+- A `for..of` implementation like the one above cannot control the scope of `use`, which can make lifetimes confusing:
+  ```js
+  for (const { use } of ...) {
+    const x = use(...); // ok
+    setImmediate(() => {
+      const y = use(...); // wrong lifetime
+    });
+  }
+  ```
+- Significantly more boilerplate compared to `using const`.
+- Mandates introduction of a new block scope, even at the top level of a function body.
+- Control flow analysis of a `for..of` loop cannot infer definite assignment since a loop could potentially have zero elements:
+  ```js
+  // using const
+  function f1() {
+    /** @type {string | undefined} */
+    let x;
+    {
+      using const y = ...;
+      x = y.text;
+    }
+    x.toString(); // x is definitely assigned
+  }
+
+  // for..of
+  function f2() {
+    /** @type {string | undefined} */
+    let x;
+    for (const { use } of ...) {
+      const y = use(...);
+      x = y.text;
+    }
+    x.toString(); // possibly an error in a static analyzer since `x` is not guaranteed to have been assigned.
+  }
+  ```
+
 # Meeting Notes
 
 * [TC39 July 24th, 2018](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#explicit-resource-management)
