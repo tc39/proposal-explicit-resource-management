@@ -43,14 +43,14 @@
         It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
       </li>
       <li>
-        It is a Syntax Error if the goal symbol is |Script| and |LexicalDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassBody|.
+        It is a Syntax Error if the goal symbol is |Script| and |LexicalDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, |ClassStaticBlockBody|, or |ClassBody|.
       </li>
     </ul>
     <emu-note>
       Draft Note: This behavior is currently under discussion in <a href="https://github.com/tc39/proposal-explicit-resource-management/issues/66">#66</a>. The above boundaries have been chosen for the following reasons:
       <ul>
         <li>
-          |Block|, |CaseBlock|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, and |ClassBody| each introduce an explicit block scope.
+          |Block|, |CaseBlock|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, |ClassStaticBlockBody|, and |ClassBody| each introduce an explicit block scope.
         </li>
         <li>
           |ForStatement| and |ForInOfStatement| both introduce an implicit block scope per iteration.
