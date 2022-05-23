@@ -1,19 +1,19 @@
 <emu-clause id="sec-let-and-const-declarations">
-  <h1>Let and Const Declarations</h1>
+  <h1>Let<del> and Const</del><ins>, Const, and Using Const</ins> Declarations</h1>
   <h2>Syntax</h2>
   <emu-grammar type="definition">
     LexicalDeclaration[In, Yield, Await] :
       LetOrConst BindingList[?In, ?Yield, ?Await, <ins>~Using</ins>] `;`
-      <ins>UsingConst[?Await] BindingList[?In, ?Yield, ?Await, +Using] `;`</ins>
+      <ins>UsingDeclaration[?In, ?Yield, ?Await]</ins>
 
     LetOrConst :
       `let`
       `const`
 
     <ins>
-    UsingConst[Await] :
-      `using` [no LineTerminator here] `const`
-      [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const`
+    UsingDeclaration[In, Yield, Await] :
+      `using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`
+      [+Await] `using` [no LineTerminator here] `await` `const` BindingList[?In, ?Yield, +Await, +Using] `;`
     </ins>
 
     BindingList[In, Yield, Await, <ins>Using</ins>] :
@@ -31,7 +31,9 @@
     <h1>Static Semantics: Early Errors</h1>
     <ins class="block">
     <emu-grammar>
-      LexicalDeclaration : UsingConst BindingList `;`
+      UsingDeclaration :
+        `using` `const` BindingList `;`
+        `using` `await` `const` BindingList `;`
     </emu-grammar>
     <ul>
       <li>
@@ -68,11 +70,15 @@
     </emu-alg>
 
     <ins class="block">
-    <emu-grammar>LexicalDeclaration : UsingConst BindingList `;`</emu-grammar>
+    <emu-grammar>UsingDeclaration : `using` `const` BindingList `;`</emu-grammar>
     <emu-alg>
-      1. If |UsingConst| Contains `await`, let _hint_ be ~async~.
-      1. Otherwise, Let _hint_ be ~sync~.
-      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter _hint_.
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~sync-dispose~.
+      1. ReturnIfAbrupt(_next_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-grammar>UsingDeclaration : `using` `await` `const` BindingList `;`</emu-grammar>
+    <emu-alg>
+      1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~async-dispose~.
       1. ReturnIfAbrupt(_next_).
       1. Return NormalCompletion(~empty~).
     </emu-alg>
@@ -117,7 +123,7 @@
   <ins class="block">
   <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation">
     <h1>Runtime Semantics: BindingEvaluation</h1>
-    <p>With parameter _hint_ (either ~normal~, ~sync~, or ~async~).</p>
+    <p>With parameter _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~).</p>
     <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
     <emu-alg>
       1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter _hint_.
@@ -154,7 +160,7 @@
     </emu-alg>
     <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
     <emu-alg>
-      1. Assert: _hint_ is ~sync~ or ~async~.
+      1. Assert: _hint_ is ~sync-dispose~ or ~async-dispose~.
       1. Let _expr_ be the result of evaluating |Initializer|.
       1. Let _value_ be ? GetValue(_expr_).
       1. Let _env_ be the running execution context's LexicalEnvironment.

@@ -36,10 +36,10 @@
             [[Hint]]
           </td>
           <td>
-            ~sync~ or ~async~.
+            ~sync-dispose~ or ~async-dispose~.
           </td>
           <td>
-            Indicates whether the resources was added by a `using const` statement (~sync~) or a `using await const` statement (~async~).
+            Indicates whether the resources was added by a `using const` statement (~sync-dispose~) or a `using await const` statement (~async-dispose~).
           </td>
         </tr>
         <tr>
@@ -63,7 +63,7 @@
       AddDisposableResource (
         _disposable_ : an object with a [[DisposableResourceStack]] internal slot,
         _V_ : an ECMAScript language value,
-        _hint_ : either ~sync~ or ~async~,
+        _hint_ : either ~sync-dispose~ or ~async-dispose~,
         optional _method_ : a function object,
       )
     </h1>
@@ -88,7 +88,7 @@
     <h1>
       CreateDisposableResource (
         _V_ : an Object or *undefined*,
-        _hint_ : either ~sync~ or ~async~,
+        _hint_ : either ~sync-dispose~ or ~async-dispose~,
         optional _method_ : a function object,
       )
     </h1>
@@ -108,12 +108,12 @@
     <h1>
       GetDisposeMethod (
         _V_ : an Object,
-        _hint_ : either ~sync~ or ~async~,
+        _hint_ : either ~sync-dispose~ or ~async-dispose~,
       )
     </h1>
     <dl class="header"></dl>
     <emu-alg>
-      1. If _hint_ is ~async~, then
+      1. If _hint_ is ~async-dispose~, then
         1. Let _method_ be ? GetMethod(_V_, @@asyncDispose).
         1. If _method_ is *undefined*, then
           1. Set _method_ to ? GetMethod(_V_, @@dispose).
@@ -127,14 +127,14 @@
     <h1>
       Dispose (
         _V_ : an Object or *undefined*,
-        _hint_ : either ~sync~ or ~async~,
+        _hint_ : either ~sync-dispose~ or ~async-dispose~,
         _method_ : a function object,
       )
     </h1>
     <dl class="header"></dl>
     <emu-alg>
       1. Let _result_ be ? Call(_method_, _V_).
-      1. If _hint_ is ~async~ and _result_ is not *undefined*, then
+      1. If _hint_ is ~async-dispose~ and _result_ is not *undefined*, then
         1. Perform ? Await(_result_).
       1. Return *undefined*.
     </emu-alg>

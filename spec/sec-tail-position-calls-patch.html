@@ -42,7 +42,7 @@
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of |StatementList| with argument _call_.
         1. If _has_ is *true*, return *true*.
-        1. <ins>If HasUnterminatedUsingConst of |StatementList| is *true*, return *false*.</ins>
+        1. <ins>If HasUnterminatedUsingDeclaration of |StatementList| is *true*, return *false*.</ins>
         1. Return HasCallInTailPosition of |StatementListItem| with argument _call_.
       </emu-alg>
 
@@ -131,11 +131,11 @@
         1. If the first |CaseClauses| is present, <del>let _has_ be HasCallInTailPosition of the first |CaseClauses| with argument _call_.</del><ins>then</ins>
           1. <ins>Let _has_ be HasCallInTailPosition of the first |CaseClauses| with argument _call_.</del>
           1. <ins>If _has_ is *true*, return *true*.</ins>
-          1. <ins>If HasUnterminatedUsingConst of the first |CaseClauses| is *true*, return *false*.</ins>
+          1. <ins>If HasUnterminatedUsingDeclaration of the first |CaseClauses| is *true*, return *false*.</ins>
         1. <del>If _has_ is *true*, return *true*.</del>
         1. Let _has_ be HasCallInTailPosition of |DefaultClause| with argument _call_.
         1. If _has_ is *true*, return *true*.
-        1. <ins>If HasUnterminatedUsingConst of |DefaultClause| is *true*, return *false*.</ins>
+        1. <ins>If HasUnterminatedUsingDeclaration of |DefaultClause| is *true*, return *false*.</ins>
         1. If the second |CaseClauses| is present, let _has_ be HasCallInTailPosition of the second |CaseClauses| with argument _call_.
         1. Return _has_.
       </emu-alg>
@@ -144,7 +144,7 @@
       <emu-alg>
         1. Let _has_ be HasCallInTailPosition of |CaseClauses| with argument _call_.
         1. If _has_ is *true*, return *true*.
-        1. <ins>If HasUnterminatedUsingConst of |CaseClauses| is *true*, return *false*.</ins>
+        1. <ins>If HasUnterminatedUsingDeclaration of |CaseClauses| is *true*, return *false*.</ins>
         1. Return HasCallInTailPosition of |CaseClause| with argument _call_.
       </emu-alg>
 
@@ -368,14 +368,14 @@
   </emu-clause>
 
   <ins class="block">
-  <emu-clause id="sec-static-semantics-hasunterminatedusingconst" type="sdo" aoid="HasUnterminatedUsingConst">
-    <h1>Static Semantics: HasUnterminatedUsingConst</h1>
+  <emu-clause id="sec-static-semantics-hasunterminatedusingdeclaration" type="sdo" aoid="HasUnterminatedUsingDeclaration">
+    <h1>Static Semantics: HasUnterminatedUsingDeclaration</h1>
 
     <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
     <emu-alg>
-      1. Let _has_ be HasUnterminatedUsingConst of |StatementList|.
+      1. Let _has_ be HasUnterminatedUsingDeclaration of |StatementList|.
       1. If _has_ is *true*, return *true*.
-      1. Return HasUnterminatedUsingConst of |StatementListItem|.
+      1. Return HasUnterminatedUsingDeclaration of |StatementListItem|.
     </emu-alg>
 
     <emu-grammar>
@@ -395,16 +395,16 @@
       1. Return *false*.
     </emu-alg>
 
-    <emu-grammar>LexicalDeclaration : UsingConst BindingList `;`</emu-grammar>
+    <emu-grammar>LexicalDeclaration : UsingDeclaration</emu-grammar>
     <emu-alg>
       1. Return *true*.
     </emu-alg>
 
     <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
     <emu-alg>
-      1. Let _has_ be HasUnterminatedUsingConst of |CaseClauses|.
+      1. Let _has_ be HasUnterminatedUsingDeclaration of |CaseClauses|.
       1. If _has_ is *true*, return *true*.
-      1. Return HasUnterminatedUsingConst of |CaseClause| with argument _call_.
+      1. Return HasUnterminatedUsingDeclaration of |CaseClause| with argument _call_.
     </emu-alg>
 
     <emu-grammar>
@@ -413,7 +413,7 @@
       DefaultClause : `default` `:` StatementList?
     </emu-grammar>
     <emu-alg>
-      1. If |StatementList| is present, return HasUnterminatedUsingConst of |StatementList|.
+      1. If |StatementList| is present, return HasUnterminatedUsingDeclaration of |StatementList|.
     </emu-alg>
   </emu-clause>
   </ins>

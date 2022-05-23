@@ -108,17 +108,17 @@
           1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-disposablestack-callback-functions"></emu-xref>.
           1. Set _F_.[[Argument]] to _value_.
           1. Set _F_.[[OnDisposeCallback]] to _onDispose_.
-          1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync~, _F_).
+          1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _F_).
         1. Else, if _value_ is neither *null* nor *undefined*, then
           1. If Type(_value_) is not Object, throw a *TypeError* exception.
-          1. Let _method_ be GetDisposeMethod(_value_, ~sync~).
+          1. Let _method_ be GetDisposeMethod(_value_, ~sync-dispose~).
           1. If _method_ is *undefined*, then
             1. If IsCallable(_value_) is *true*, then
-              1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync~, _value_).
+              1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _value_).
             1. Else,
               1. Throw a *TypeError* exception.
           1. Else,
-            1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~sync~, _method_).
+            1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~sync-dispose~, _method_).
         1. Return _value_.
       </emu-alg>
 
