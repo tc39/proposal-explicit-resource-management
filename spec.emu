@@ -391,17 +391,53 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-syntax-directed-operations-scope-analysis">
     <h1>Scope Analysis</h1>
 
-    <emu-clause id="sec-static-semantics-boundnames" oldids="sec-identifiers-static-semantics-boundnames,sec-let-and-const-declarations-static-semantics-boundnames,sec-variable-statement-static-semantics-boundnames,sec-destructuring-binding-patterns-static-semantics-boundnames,sec-for-in-and-for-of-statements-static-semantics-boundnames,sec-function-definitions-static-semantics-boundnames,sec-arrow-function-definitions-static-semantics-boundnames,sec-generator-function-definitions-static-semantics-boundnames,sec-async-generator-function-definitions-static-semantics-boundnames,sec-class-definitions-static-semantics-boundnames,sec-async-function-definitions-static-semantics-BoundNames,sec-async-arrow-function-definitions-static-semantics-BoundNames,sec-imports-static-semantics-boundnames,sec-exports-static-semantics-boundnames" type="sdo" aoid="BoundNames">
-      <h1>Static Semantics: BoundNames</h1>
+    <emu-clause id="sec-static-semantics-boundnames" oldids="sec-identifiers-static-semantics-boundnames,sec-let-and-const-declarations-static-semantics-boundnames,sec-variable-statement-static-semantics-boundnames,sec-destructuring-binding-patterns-static-semantics-boundnames,sec-for-in-and-for-of-statements-static-semantics-boundnames,sec-function-definitions-static-semantics-boundnames,sec-arrow-function-definitions-static-semantics-boundnames,sec-generator-function-definitions-static-semantics-boundnames,sec-async-generator-function-definitions-static-semantics-boundnames,sec-class-definitions-static-semantics-boundnames,sec-async-function-definitions-static-semantics-BoundNames,sec-async-arrow-function-definitions-static-semantics-BoundNames,sec-imports-static-semantics-boundnames,sec-exports-static-semantics-boundnames" type="sdo">
+      <h1>Static Semantics: BoundNames ( ): a List of Strings</h1>
+      <dl class="header">
+      </dl>
+      <emu-note id="note-star-default-star">
+        <p>*"\*default\*"* is used within this specification as a synthetic name for a module's default export when it does not have another name. An entry in the module's [[Environment]] is created with that name and holds the corresponding value, and resolving the export named *"default"* by calling <emu-xref href="#sec-resolveexport" title></emu-xref> for the module will return a ResolvedBinding Record whose [[BindingName]] is *"\*default\*"*, which will then resolve in the module's [[Environment]] to the above-mentioned value. This is done only for ease of specification, so that anonymous default exports can be resolved like any other export. The string *"\*default\*"* is never accessible to user code or to the module linking algorithm.</p>
+      </emu-note>
+      <emu-grammar>BindingIdentifier : Identifier</emu-grammar>
+      <emu-alg>
+        1. Return a List whose sole element is the StringValue of |Identifier|.
+      </emu-alg>
+      <emu-grammar>BindingIdentifier : `yield`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"yield"* &raquo;.
+      </emu-alg>
+      <emu-grammar>BindingIdentifier : `await`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"await"* &raquo;.
+      </emu-alg>
+      <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingList|.
+      </emu-alg>
       <ins class="block">
       <emu-grammar>
         UsingDeclaration :
           `using` `const` BindingList `;`
-          `using` `await` `const` BindingList `;`
       </emu-grammar>
       <emu-alg>
         1. Return the BoundNames of |BindingList|.
       </emu-alg>
+      </ins>
+      <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |BindingList|.
+        1. Let _names2_ be the BoundNames of |LexicalBinding|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>LexicalBinding : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <ins class="block">
       <emu-grammar>
         LexicalBinding : `void` Initializer
       </emu-grammar>
@@ -409,20 +445,1322 @@ contributors: Ron Buckton, Ecma International
         1. Return a new empty List.
       </emu-alg>
       </ins>
+      <emu-grammar>VariableDeclarationList : VariableDeclarationList `,` VariableDeclaration</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |VariableDeclarationList|.
+        1. Let _names2_ be BoundNames of |VariableDeclaration|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>VariableDeclaration : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>VariableDeclaration : BindingPattern Initializer</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <emu-grammar>ObjectBindingPattern : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ObjectBindingPattern : `{` BindingPropertyList `,` BindingRestProperty `}`</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingPropertyList|.
+        1. Let _names2_ be BoundNames of |BindingRestProperty|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision? `]`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingRestElement|.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision? `]`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingElementList|.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingElementList|.
+        1. Let _names2_ be BoundNames of |BindingRestElement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingPropertyList : BindingPropertyList `,` BindingProperty</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingPropertyList|.
+        1. Let _names2_ be BoundNames of |BindingProperty|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingElementList : BindingElementList `,` BindingElisionElement</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingElementList|.
+        1. Let _names2_ be BoundNames of |BindingElisionElement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingElisionElement : Elision? BindingElement</emu-grammar>
+      <emu-alg>
+        1. Return BoundNames of |BindingElement|.
+      </emu-alg>
+      <emu-grammar>BindingProperty : PropertyName `:` BindingElement</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingElement|.
+      </emu-alg>
+      <emu-grammar>SingleNameBinding : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>BindingElement : BindingPattern Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <emu-grammar>ForDeclaration : LetOrConst ForBinding</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |ForBinding|.
+      </emu-alg>
+      <emu-grammar>FunctionDeclaration : `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>FunctionDeclaration : `function` `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>FormalParameters : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>FormalParameters : FormalParameterList `,` FunctionRestParameter</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |FormalParameterList|.
+        1. Let _names2_ be BoundNames of |FunctionRestParameter|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>FormalParameterList : FormalParameterList `,` FormalParameter</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |FormalParameterList|.
+        1. Let _names2_ be BoundNames of |FormalParameter|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
+      <emu-alg>
+        1. Let _formals_ be the |ArrowFormalParameters| that is covered by |CoverParenthesizedExpressionAndArrowParameterList|.
+        1. Return the BoundNames of _formals_.
+      </emu-alg>
+      <emu-grammar>GeneratorDeclaration : `function` `*` BindingIdentifier `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>GeneratorDeclaration : `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>ClassDeclaration : `class` BindingIdentifier ClassTail</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>
+        AsyncFunctionDeclaration : `async` `function` BindingIdentifier `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+      </emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>
+        AsyncFunctionDeclaration : `async` `function` `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+      </emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>
+        CoverCallExpressionAndAsyncArrowHead : MemberExpression Arguments
+      </emu-grammar>
+      <emu-alg>
+        1. Let _head_ be the |AsyncArrowHead| that is covered by |CoverCallExpressionAndAsyncArrowHead|.
+        1. Return the BoundNames of _head_.
+      </emu-alg>
+      <emu-grammar>ImportDeclaration : `import` ImportClause FromClause `;`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |ImportClause|.
+      </emu-alg>
+      <emu-grammar>ImportDeclaration : `import` ModuleSpecifier `;`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ImportClause : ImportedDefaultBinding `,` NameSpaceImport</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |ImportedDefaultBinding|.
+        1. Let _names2_ be the BoundNames of |NameSpaceImport|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ImportClause : ImportedDefaultBinding `,` NamedImports</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |ImportedDefaultBinding|.
+        1. Let _names2_ be the BoundNames of |NamedImports|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>NamedImports : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ImportsList : ImportsList `,` ImportSpecifier</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |ImportsList|.
+        1. Let _names2_ be the BoundNames of |ImportSpecifier|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ImportSpecifier : ModuleExportName `as` ImportedBinding</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |ImportedBinding|.
+      </emu-alg>
+      <emu-grammar>
+        ExportDeclaration :
+          `export` ExportFromClause FromClause `;`
+          `export` NamedExports `;`
+      </emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ExportDeclaration : `export` VariableStatement</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |VariableStatement|.
+      </emu-alg>
+      <emu-grammar>ExportDeclaration : `export` Declaration</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |Declaration|.
+      </emu-alg>
+      <emu-grammar>ExportDeclaration : `export` `default` HoistableDeclaration</emu-grammar>
+      <emu-alg>
+        1. Let _declarationNames_ be the BoundNames of |HoistableDeclaration|.
+        1. If _declarationNames_ does not include the element *"\*default\*"*, append *"\*default\*"* to _declarationNames_.
+        1. Return _declarationNames_.
+      </emu-alg>
+      <emu-grammar>ExportDeclaration : `export` `default` ClassDeclaration</emu-grammar>
+      <emu-alg>
+        1. Let _declarationNames_ be the BoundNames of |ClassDeclaration|.
+        1. If _declarationNames_ does not include the element *"\*default\*"*, append *"\*default\*"* to _declarationNames_.
+        1. Return _declarationNames_.
+      </emu-alg>
+      <emu-grammar>ExportDeclaration : `export` `default` AssignmentExpression `;`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-static-semantics-isconstantdeclaration" oldids="sec-let-and-const-declarations-static-semantics-isconstantdeclaration,sec-function-definitions-static-semantics-isconstantdeclaration,sec-generator-function-definitions-static-semantics-isconstantdeclaration,sec-async-generator-function-definitions-static-semantics-isconstantdeclaration,sec-class-definitions-static-semantics-isconstantdeclaration,sec-async-function-definitions-static-semantics-IsConstantDeclaration,sec-exports-static-semantics-isconstantdeclaration" type="sdo" aoid="IsConstantDeclaration">
-      <h1>Static Semantics: IsConstantDeclaration</h1>
+    <emu-clause id="sec-static-semantics-isconstantdeclaration" oldids="sec-let-and-const-declarations-static-semantics-isconstantdeclaration,sec-function-definitions-static-semantics-isconstantdeclaration,sec-generator-function-definitions-static-semantics-isconstantdeclaration,sec-async-generator-function-definitions-static-semantics-isconstantdeclaration,sec-class-definitions-static-semantics-isconstantdeclaration,sec-async-function-definitions-static-semantics-IsConstantDeclaration,sec-exports-static-semantics-isconstantdeclaration" type="sdo">
+      <h1>Static Semantics: IsConstantDeclaration ( ): a Boolean</h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
+      <emu-alg>
+        1. Return IsConstantDeclaration of |LetOrConst|.
+      </emu-alg>
+      <emu-grammar>LetOrConst : `let`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LetOrConst : `const`</emu-grammar>
+      <emu-alg>
+        1. Return *true*.
+      </emu-alg>
       <ins class="block">
       <emu-grammar>
         UsingDeclaration :
           `using` `const` BindingList `;`
-          `using` `await` `const` BindingList `;`
-        </emu-grammar>
-        <emu-alg>
-          1. Return *true*.
-        </emu-alg>
-        </ins>
+      </emu-grammar>
+      <emu-alg>
+        1. Return *true*.
+      </emu-alg>
+      </ins>
+      <emu-grammar>
+        FunctionDeclaration :
+          `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`
+          `function` `(` FormalParameters `)` `{` FunctionBody `}`
+
+        GeneratorDeclaration :
+          `function` `*` BindingIdentifier `(` FormalParameters `)` `{` GeneratorBody `}`
+          `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`
+
+        AsyncGeneratorDeclaration :
+          `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+          `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+
+        AsyncFunctionDeclaration :
+          `async` `function` BindingIdentifier `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+          `async` `function` `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>
+        ClassDeclaration :
+          `class` BindingIdentifier ClassTail
+          `class` ClassTail
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>
+        ExportDeclaration :
+          `export` ExportFromClause FromClause `;`
+          `export` NamedExports `;`
+          `export` `default` AssignmentExpression `;`
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-note>
+        <p>It is not necessary to treat `export default` |AssignmentExpression| as a constant declaration because there is no syntax that permits assignment to the internal bound name used to reference a module's default object.</p>
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id="sec-static-semantics-vardeclarednames" oldids="sec-statement-semantics-static-semantics-vardeclarednames,sec-block-static-semantics-vardeclarednames,sec-variable-statement-static-semantics-vardeclarednames,sec-if-statement-static-semantics-vardeclarednames,sec-do-while-statement-static-semantics-vardeclarednames,sec-while-statement-static-semantics-vardeclarednames,sec-for-statement-static-semantics-vardeclarednames,sec-for-in-and-for-of-statements-static-semantics-vardeclarednames,sec-with-statement-static-semantics-vardeclarednames,sec-switch-statement-static-semantics-vardeclarednames,sec-labelled-statements-static-semantics-vardeclarednames,sec-try-statement-static-semantics-vardeclarednames,sec-function-definitions-static-semantics-vardeclarednames,sec-arrow-function-definitions-static-semantics-vardeclarednames,sec-async-arrow-function-definitions-static-semantics-VarDeclaredNames,sec-scripts-static-semantics-vardeclarednames,sec-module-semantics-static-semantics-vardeclarednames" type="sdo">
+      <h1>Static Semantics: VarDeclaredNames ( ): a List of Strings</h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>
+        Statement :
+          EmptyStatement
+          ExpressionStatement
+          ContinueStatement
+          BreakStatement
+          ReturnStatement
+          ThrowStatement
+          DebuggerStatement
+      </emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>Block : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |StatementList|.
+        1. Let _names2_ be VarDeclaredNames of |StatementListItem|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>StatementListItem : Declaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>VariableStatement : `var` VariableDeclarationList `;`</emu-grammar>
+      <emu-alg>
+        1. Return BoundNames of |VariableDeclarationList|.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of the first |Statement|.
+        1. Let _names2_ be VarDeclaredNames of the second |Statement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>WhileStatement : `while` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |VariableDeclarationList|.
+        1. Let _names2_ be VarDeclaredNames of |Statement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+          `for` `(` ForDeclaration `in` Expression `)` Statement
+          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+          `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` `var` ForBinding `in` Expression `)` Statement
+          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `await` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |ForBinding|.
+        1. Let _names2_ be the VarDeclaredNames of |Statement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>WithStatement : `with` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Statement|.
+      </emu-alg>
+      <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |CaseBlock|.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
+      <emu-alg>
+        1. If the first |CaseClauses| is present, let _names1_ be the VarDeclaredNames of the first |CaseClauses|.
+        1. Else, let _names1_ be a new empty List.
+        1. Let _names2_ be VarDeclaredNames of |DefaultClause|.
+        1. If the second |CaseClauses| is present, let _names3_ be the VarDeclaredNames of the second |CaseClauses|.
+        1. Else, let _names3_ be a new empty List.
+        1. Return the list-concatenation of _names1_, _names2_, and _names3_.
+      </emu-alg>
+      <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |CaseClauses|.
+        1. Let _names2_ be VarDeclaredNames of |CaseClause|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>CaseClause : `case` Expression `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return the VarDeclaredNames of |StatementList|.
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>DefaultClause : `default` `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return the VarDeclaredNames of |StatementList|.
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |LabelledItem|.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |Block|.
+        1. Let _names2_ be VarDeclaredNames of |Catch|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Finally</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |Block|.
+        1. Let _names2_ be VarDeclaredNames of |Finally|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch Finally</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |Block|.
+        1. Let _names2_ be VarDeclaredNames of |Catch|.
+        1. Let _names3_ be VarDeclaredNames of |Finally|.
+        1. Return the list-concatenation of _names1_, _names2_, and _names3_.
+      </emu-alg>
+      <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Block|.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` AssignmentExpression `)` Block
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Return the VarDeclaredNames of |Block|.
+      </emu-alg>
+      </ins>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>FunctionStatementList : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return TopLevelVarDeclaredNames of |StatementList|.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return the TopLevelVarDeclaredNames of |StatementList|.
+      </emu-alg>
+      <emu-grammar>ConciseBody : ExpressionBody</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>
+        AsyncConciseBody : ExpressionBody
+      </emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>Script : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ScriptBody : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return TopLevelVarDeclaredNames of |StatementList|.
+      </emu-alg>
+      <emu-grammar>ModuleItemList : ModuleItemList ModuleItem</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be VarDeclaredNames of |ModuleItemList|.
+        1. Let _names2_ be VarDeclaredNames of |ModuleItem|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ModuleItem : ImportDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ModuleItem : ExportDeclaration</emu-grammar>
+      <emu-alg>
+        1. If |ExportDeclaration| is `export` |VariableStatement|, return BoundNames of |ExportDeclaration|.
+        1. Return a new empty List.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-static-semantics-varscopeddeclarations" oldids="sec-statement-semantics-static-semantics-varscopeddeclarations,sec-block-static-semantics-varscopeddeclarations,sec-variable-statement-static-semantics-varscopeddeclarations,sec-if-statement-static-semantics-varscopeddeclarations,sec-do-while-statement-static-semantics-varscopeddeclarations,sec-while-statement-static-semantics-varscopeddeclarations,sec-for-statement-static-semantics-varscopeddeclarations,sec-for-in-and-for-of-statements-static-semantics-varscopeddeclarations,sec-with-statement-static-semantics-varscopeddeclarations,sec-switch-statement-static-semantics-varscopeddeclarations,sec-labelled-statements-static-semantics-varscopeddeclarations,sec-try-statement-static-semantics-varscopeddeclarations,sec-function-definitions-static-semantics-varscopeddeclarations,sec-arrow-function-definitions-static-semantics-varscopeddeclarations,sec-async-arrow-function-definitions-static-semantics-VarScopedDeclarations,sec-scripts-static-semantics-varscopeddeclarations,sec-module-semantics-static-semantics-varscopeddeclarations" type="sdo">
+      <h1>Static Semantics: VarScopedDeclarations ( ): a List of Parse Nodes</h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>
+        Statement :
+          EmptyStatement
+          ExpressionStatement
+          ContinueStatement
+          BreakStatement
+          ReturnStatement
+          ThrowStatement
+          DebuggerStatement
+      </emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>Block : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |StatementList|.
+        1. Let _declarations2_ be VarScopedDeclarations of |StatementListItem|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>StatementListItem : Declaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>VariableDeclarationList : VariableDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; |VariableDeclaration| &raquo;.
+      </emu-alg>
+      <emu-grammar>VariableDeclarationList : VariableDeclarationList `,` VariableDeclaration</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |VariableDeclarationList|.
+        1. Return the list-concatenation of _declarations1_ and &laquo; |VariableDeclaration| &raquo;.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of the first |Statement|.
+        1. Let _declarations2_ be VarScopedDeclarations of the second |Statement|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>WhileStatement : `while` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |VariableDeclarationList|.
+        1. Let _declarations2_ be VarScopedDeclarations of |Statement|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>ForStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+          `for` `(` ForDeclaration `in` Expression `)` Statement
+          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+          `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` `var` ForBinding `in` Expression `)` Statement
+          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `await` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be &laquo; |ForBinding| &raquo;.
+        1. Let _declarations2_ be VarScopedDeclarations of |Statement|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>WithStatement : `with` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Statement|.
+      </emu-alg>
+      <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |CaseBlock|.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
+      <emu-alg>
+        1. If the first |CaseClauses| is present, let _declarations1_ be the VarScopedDeclarations of the first |CaseClauses|.
+        1. Else, let _declarations1_ be a new empty List.
+        1. Let _declarations2_ be VarScopedDeclarations of |DefaultClause|.
+        1. If the second |CaseClauses| is present, let _declarations3_ be the VarScopedDeclarations of the second |CaseClauses|.
+        1. Else, let _declarations3_ be a new empty List.
+        1. Return the list-concatenation of _declarations1_, _declarations2_, and _declarations3_.
+      </emu-alg>
+      <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |CaseClauses|.
+        1. Let _declarations2_ be VarScopedDeclarations of |CaseClause|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>CaseClause : `case` Expression `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return the VarScopedDeclarations of |StatementList|.
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>DefaultClause : `default` `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return the VarScopedDeclarations of |StatementList|.
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |LabelledItem|.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |Block|.
+        1. Let _declarations2_ be VarScopedDeclarations of |Catch|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Finally</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |Block|.
+        1. Let _declarations2_ be VarScopedDeclarations of |Finally|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch Finally</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |Block|.
+        1. Let _declarations2_ be VarScopedDeclarations of |Catch|.
+        1. Let _declarations3_ be VarScopedDeclarations of |Finally|.
+        1. Return the list-concatenation of _declarations1_, _declarations2_, and _declarations3_.
+      </emu-alg>
+      <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Block|.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` AssignmentExpression `)` Block
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Return the VarScopedDeclarations of |Block|.
+      </emu-alg>
+      </ins>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>FunctionStatementList : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return the TopLevelVarScopedDeclarations of |StatementList|.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return the TopLevelVarScopedDeclarations of |StatementList|.
+      </emu-alg>
+      <emu-grammar>ConciseBody : ExpressionBody</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>
+        AsyncConciseBody : ExpressionBody
+      </emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>Script : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ScriptBody : StatementList</emu-grammar>
+      <emu-alg>
+        1. Return TopLevelVarScopedDeclarations of |StatementList|.
+      </emu-alg>
+      <emu-grammar>Module : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ModuleItemList : ModuleItemList ModuleItem</emu-grammar>
+      <emu-alg>
+        1. Let _declarations1_ be VarScopedDeclarations of |ModuleItemList|.
+        1. Let _declarations2_ be VarScopedDeclarations of |ModuleItem|.
+        1. Return the list-concatenation of _declarations1_ and _declarations2_.
+      </emu-alg>
+      <emu-grammar>ModuleItem : ImportDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ModuleItem : ExportDeclaration</emu-grammar>
+      <emu-alg>
+        1. If |ExportDeclaration| is `export` |VariableStatement|, return VarScopedDeclarations of |VariableStatement|.
+        1. Return a new empty List.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-syntax-directed-operations-labels">
+    <h1>Labels</h1>
+
+    <emu-clause id="sec-static-semantics-containsduplicatelabels" oldids="sec-statement-semantics-static-semantics-containsduplicatelabels,sec-block-static-semantics-containsduplicatelabels,sec-if-statement-static-semantics-containsduplicatelabels,sec-do-while-statement-static-semantics-containsduplicatelabels,sec-while-statement-static-semantics-containsduplicatelabels,sec-for-statement-static-semantics-containsduplicatelabels,sec-for-in-and-for-of-statements-static-semantics-containsduplicatelabels,sec-with-statement-static-semantics-containsduplicatelabels,sec-switch-statement-static-semantics-containsduplicatelabels,sec-labelled-statements-static-semantics-containsduplicatelabels,sec-try-statement-static-semantics-containsduplicatelabels,sec-function-definitions-static-semantics-containsduplicatelabels,sec-module-semantics-static-semantics-containsduplicatelabels" type="sdo">
+      <h1>
+        Static Semantics: ContainsDuplicateLabels (
+          _labelSet_: unknown,
+        ): a Boolean
+      </h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>
+        Statement :
+          VariableStatement
+          EmptyStatement
+          ExpressionStatement
+          ContinueStatement
+          BreakStatement
+          ReturnStatement
+          ThrowStatement
+          DebuggerStatement
+
+        Block :
+          `{` `}`
+
+        StatementListItem :
+          Declaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicates_ be ContainsDuplicateLabels of |StatementList| with argument _labelSet_.
+        1. If _hasDuplicates_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |StatementListItem| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicate_ be ContainsDuplicateLabels of the first |Statement| with argument _labelSet_.
+        1. If _hasDuplicate_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of the second |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>WhileStatement : `while` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ForStatement :
+          `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
+          `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement
+          `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+          `for` `(` `var` ForBinding `in` Expression `)` Statement
+          `for` `(` ForDeclaration `in` Expression `)` Statement
+          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+          `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `await` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>WithStatement : `with` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |CaseBlock| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
+      <emu-alg>
+        1. If the first |CaseClauses| is present, then
+          1. If ContainsDuplicateLabels of the first |CaseClauses| with argument _labelSet_ is *true*, return *true*.
+        1. If ContainsDuplicateLabels of |DefaultClause| with argument _labelSet_ is *true*, return *true*.
+        1. If the second |CaseClauses| is not present, return *false*.
+        1. Return ContainsDuplicateLabels of the second |CaseClauses| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicates_ be ContainsDuplicateLabels of |CaseClauses| with argument _labelSet_.
+        1. If _hasDuplicates_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |CaseClause| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseClause : `case` Expression `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsDuplicateLabels of |StatementList| with argument _labelSet_.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>DefaultClause : `default` `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsDuplicateLabels of |StatementList| with argument _labelSet_.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Let _label_ be the StringValue of |LabelIdentifier|.
+        1. If _label_ is an element of _labelSet_, return *true*.
+        1. Let _newLabelSet_ be the list-concatenation of _labelSet_ and &laquo; _label_ &raquo;.
+        1. Return ContainsDuplicateLabels of |LabelledItem| with argument _newLabelSet_.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicates_ be ContainsDuplicateLabels of |Block| with argument _labelSet_.
+        1. If _hasDuplicates_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |Catch| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Finally</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicates_ be ContainsDuplicateLabels of |Block| with argument _labelSet_.
+        1. If _hasDuplicates_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |Finally| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch Finally</emu-grammar>
+      <emu-alg>
+        1. If ContainsDuplicateLabels of |Block| with argument _labelSet_ is *true*, return *true*.
+        1. If ContainsDuplicateLabels of |Catch| with argument _labelSet_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |Finally| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Block| with argument _labelSet_.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` AssignmentExpression `)` Block
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsDuplicateLabels of |Block| with argument _labelSet_.
+      </emu-alg>
+      </ins>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ModuleItemList : ModuleItemList ModuleItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasDuplicates_ be ContainsDuplicateLabels of |ModuleItemList| with argument _labelSet_.
+        1. If _hasDuplicates_ is *true*, return *true*.
+        1. Return ContainsDuplicateLabels of |ModuleItem| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ModuleItem :
+          ImportDeclaration
+          ExportDeclaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-static-semantics-containsundefinedbreaktarget" oldids="sec-statement-semantics-static-semantics-containsundefinedbreaktarget,sec-block-static-semantics-containsundefinedbreaktarget,sec-if-statement-static-semantics-containsundefinedbreaktarget,sec-do-while-statement-static-semantics-containsundefinedbreaktarget,sec-while-statement-static-semantics-containsundefinedbreaktarget,sec-for-statement-static-semantics-containsundefinedbreaktarget,sec-for-in-and-for-of-statements-static-semantics-containsundefinedbreaktarget,sec-break-statement-static-semantics-containsundefinedbreaktarget,sec-with-statement-static-semantics-containsundefinedbreaktarget,sec-switch-statement-static-semantics-containsundefinedbreaktarget,sec-labelled-statements-static-semantics-containsundefinedbreaktarget,sec-try-statement-static-semantics-containsundefinedbreaktarget,sec-function-definitions-static-semantics-containsundefinedbreaktarget,sec-module-semantics-static-semantics-containsundefinedbreaktarget" type="sdo">
+      <h1>
+        Static Semantics: ContainsUndefinedBreakTarget (
+          _labelSet_: unknown,
+        ): a Boolean
+      </h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>
+        Statement :
+          VariableStatement
+          EmptyStatement
+          ExpressionStatement
+          ContinueStatement
+          ReturnStatement
+          ThrowStatement
+          DebuggerStatement
+
+        Block :
+          `{` `}`
+
+        StatementListItem :
+          Declaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of |StatementList| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |StatementListItem| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of the first |Statement| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of the second |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>WhileStatement : `while` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ForStatement :
+          `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
+          `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement
+          `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+          `for` `(` `var` ForBinding `in` Expression `)` Statement
+          `for` `(` ForDeclaration `in` Expression `)` Statement
+          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+          `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `await` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>BreakStatement : `break` `;`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>BreakStatement : `break` LabelIdentifier `;`</emu-grammar>
+      <emu-alg>
+        1. If the StringValue of |LabelIdentifier| is not an element of _labelSet_, return *true*.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>WithStatement : `with` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |CaseBlock| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
+      <emu-alg>
+        1. If the first |CaseClauses| is present, then
+          1. If ContainsUndefinedBreakTarget of the first |CaseClauses| with argument _labelSet_ is *true*, return *true*.
+        1. If ContainsUndefinedBreakTarget of |DefaultClause| with argument _labelSet_ is *true*, return *true*.
+        1. If the second |CaseClauses| is not present, return *false*.
+        1. Return ContainsUndefinedBreakTarget of the second |CaseClauses| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of |CaseClauses| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |CaseClause| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>CaseClause : `case` Expression `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsUndefinedBreakTarget of |StatementList| with argument _labelSet_.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>DefaultClause : `default` `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsUndefinedBreakTarget of |StatementList| with argument _labelSet_.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Let _label_ be the StringValue of |LabelIdentifier|.
+        1. Let _newLabelSet_ be the list-concatenation of _labelSet_ and &laquo; _label_ &raquo;.
+        1. Return ContainsUndefinedBreakTarget of |LabelledItem| with argument _newLabelSet_.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |Catch| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Finally</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |Finally| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch Finally</emu-grammar>
+      <emu-alg>
+        1. If ContainsUndefinedBreakTarget of |Block| with argument _labelSet_ is *true*, return *true*.
+        1. If ContainsUndefinedBreakTarget of |Catch| with argument _labelSet_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |Finally| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` AssignmentExpression `)` Block
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
+      </emu-alg>
+      </ins>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ModuleItemList : ModuleItemList ModuleItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedBreakTarget of |ModuleItemList| with argument _labelSet_.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedBreakTarget of |ModuleItem| with argument _labelSet_.
+      </emu-alg>
+      <emu-grammar>
+        ModuleItem :
+          ImportDeclaration
+          ExportDeclaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-static-semantics-containsundefinedcontinuetarget" oldids="sec-statement-semantics-static-semantics-containsundefinedcontinuetarget,sec-block-static-semantics-containsundefinedcontinuetarget,sec-if-statement-static-semantics-containsundefinedcontinuetarget,sec-do-while-statement-static-semantics-containsundefinedcontinuetarget,sec-while-statement-static-semantics-containsundefinedcontinuetarget,sec-for-statement-static-semantics-containsundefinedcontinuetarget,sec-for-in-and-for-of-statements-static-semantics-containsundefinedcontinuetarget,sec-continue-statement-static-semantics-containsundefinedcontinuetarget,sec-with-statement-static-semantics-containsundefinedcontinuetarget,sec-switch-statement-static-semantics-containsundefinedcontinuetarget,sec-labelled-statements-static-semantics-containsundefinedcontinuetarget,sec-try-statement-static-semantics-containsundefinedcontinuetarget,sec-function-definitions-static-semantics-containsundefinedcontinuetarget,sec-module-semantics-static-semantics-containsundefinedcontinuetarget" type="sdo">
+      <h1>
+        Static Semantics: ContainsUndefinedContinueTarget (
+          _iterationSet_: unknown,
+          _labelSet_: unknown,
+        ): a Boolean
+      </h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>
+        Statement :
+          VariableStatement
+          EmptyStatement
+          ExpressionStatement
+          BreakStatement
+          ReturnStatement
+          ThrowStatement
+          DebuggerStatement
+
+        Block :
+          `{` `}`
+
+        StatementListItem :
+          Declaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>Statement : BlockStatement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |BlockStatement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>BreakableStatement : IterationStatement</emu-grammar>
+      <emu-alg>
+        1. Let _newIterationSet_ be the list-concatenation of _iterationSet_ and _labelSet_.
+        1. Return ContainsUndefinedContinueTarget of |IterationStatement| with arguments _newIterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of |StatementList| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |StatementListItem| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of the first |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of the second |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>IfStatement : `if` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>WhileStatement : `while` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>
+        ForStatement :
+          `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
+          `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement
+          `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>
+        ForInOfStatement :
+          `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+          `for` `(` `var` ForBinding `in` Expression `)` Statement
+          `for` `(` ForDeclaration `in` Expression `)` Statement
+          `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+          `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+          `for` `await` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
+          `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>ContinueStatement : `continue` `;`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ContinueStatement : `continue` LabelIdentifier `;`</emu-grammar>
+      <emu-alg>
+        1. If the StringValue of |LabelIdentifier| is not an element of _iterationSet_, return *true*.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>WithStatement : `with` `(` Expression `)` Statement</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Statement| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |CaseBlock| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>CaseBlock : `{` CaseClauses? DefaultClause CaseClauses? `}`</emu-grammar>
+      <emu-alg>
+        1. If the first |CaseClauses| is present, then
+          1. If ContainsUndefinedContinueTarget of the first |CaseClauses| with arguments _iterationSet_ and &laquo; &raquo; is *true*, return *true*.
+        1. If ContainsUndefinedContinueTarget of |DefaultClause| with arguments _iterationSet_ and &laquo; &raquo; is *true*, return *true*.
+        1. If the second |CaseClauses| is not present, return *false*.
+        1. Return ContainsUndefinedContinueTarget of the second |CaseClauses| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>CaseClauses : CaseClauses CaseClause</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of |CaseClauses| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |CaseClause| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>CaseClause : `case` Expression `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsUndefinedContinueTarget of |StatementList| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>DefaultClause : `default` `:` StatementList?</emu-grammar>
+      <emu-alg>
+        1. If the |StatementList| is present, return ContainsUndefinedContinueTarget of |StatementList| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Let _label_ be the StringValue of |LabelIdentifier|.
+        1. Let _newLabelSet_ be the list-concatenation of _labelSet_ and &laquo; _label_ &raquo;.
+        1. Return ContainsUndefinedContinueTarget of |LabelledItem| with arguments _iterationSet_ and _newLabelSet_.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of |Block| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |Catch| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Finally</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of |Block| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |Finally| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>TryStatement : `try` Block Catch Finally</emu-grammar>
+      <emu-alg>
+        1. If ContainsUndefinedContinueTarget of |Block| with arguments _iterationSet_ and &laquo; &raquo; is *true*, return *true*.
+        1. If ContainsUndefinedContinueTarget of |Catch| with arguments _iterationSet_ and &laquo; &raquo; is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |Finally| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Block| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` AssignmentExpression `)` Block
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Return ContainsUndefinedContinueTarget of |Block| with argument _labelSet_ and &laquo; &raquo;.
+      </emu-alg>
+      </ins>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ClassStaticBlockStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>ModuleItemList : ModuleItemList ModuleItem</emu-grammar>
+      <emu-alg>
+        1. Let _hasUndefinedLabels_ be ContainsUndefinedContinueTarget of |ModuleItemList| with arguments _iterationSet_ and &laquo; &raquo;.
+        1. If _hasUndefinedLabels_ is *true*, return *true*.
+        1. Return ContainsUndefinedContinueTarget of |ModuleItem| with arguments _iterationSet_ and &laquo; &raquo;.
+      </emu-alg>
+      <emu-grammar>
+        ModuleItem :
+          ImportDeclaration
+          ExportDeclaration
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
     </emu-clause>
   </emu-clause>
 
@@ -641,6 +1979,41 @@ contributors: Ron Buckton, Ecma International
 
 <emu-clause id="sec-ecmascript-language-statements-and-declarations">
   <h1>ECMAScript Language: Statements and Declarations</h1>
+  <h2>Syntax</h2>
+  <emu-grammar type="definition">
+    Statement[Yield, Await, Return] :
+      BlockStatement[?Yield, ?Await, ?Return]
+      VariableStatement[?Yield, ?Await]
+      EmptyStatement
+      ExpressionStatement[?Yield, ?Await]
+      <ins>UsingStatement[?Yield, ?Await]</ins>
+      IfStatement[?Yield, ?Await, ?Return]
+      BreakableStatement[?Yield, ?Await, ?Return]
+      ContinueStatement[?Yield, ?Await]
+      BreakStatement[?Yield, ?Await]
+      [+Return] ReturnStatement[?Yield, ?Await]
+      WithStatement[?Yield, ?Await, ?Return]
+      LabelledStatement[?Yield, ?Await, ?Return]
+      ThrowStatement[?Yield, ?Await]
+      TryStatement[?Yield, ?Await, ?Return]
+      DebuggerStatement
+
+    Declaration[Yield, Await] :
+      HoistableDeclaration[?Yield, ?Await, ~Default]
+      ClassDeclaration[?Yield, ?Await, ~Default]
+      LexicalDeclaration[+In, ?Yield, ?Await]
+
+    HoistableDeclaration[Yield, Await, Default] :
+      FunctionDeclaration[?Yield, ?Await, ?Default]
+      GeneratorDeclaration[?Yield, ?Await, ?Default]
+      AsyncFunctionDeclaration[?Yield, ?Await, ?Default]
+      AsyncGeneratorDeclaration[?Yield, ?Await, ?Default]
+
+    BreakableStatement[Yield, Await, Return] :
+      IterationStatement[?Yield, ?Await, ?Return]
+      SwitchStatement[?Yield, ?Await, ?Return]
+  </emu-grammar>
+
   <emu-clause id="sec-block">
     <h1>Block</h1>
     <emu-clause id="sec-block-runtime-semantics-evaluation">
@@ -661,6 +2034,7 @@ contributors: Ron Buckton, Ecma International
       </emu-note>
     </emu-clause>
   </emu-clause>
+
   <emu-clause id="sec-declarations-and-the-variable-statement">
     <h1>Declarations and the Variable Statement</h1>
     <emu-clause id="sec-let-and-const-declarations">
@@ -698,7 +2072,6 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>
           UsingDeclaration :
             `using` `const` BindingList `;`
-            `using` `await` `const` BindingList `;`
         </emu-grammar>
         <ul>
           <li>
@@ -729,7 +2102,7 @@ contributors: Ron Buckton, Ecma International
         <h1>Runtime Semantics: Evaluation</h1>
         <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
         <emu-alg>
-          1. Let _next_ be the result of <del>evaluating</del><ins>BindingEvaluation for</ins> |BindingList|<ins> with parameter ~normal~</ins>.
+          1. Let _next_ be the result of <del>evaluating |BindingList|</del><ins>BindingEvaluation for |BindingList| with parameter ~normal~</ins>.
           1. ReturnIfAbrupt(_next_).
           1. Return NormalCompletion(~empty~).
         </emu-alg>
@@ -738,12 +2111,6 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>UsingDeclaration : `using` `const` BindingList `;`</emu-grammar>
         <emu-alg>
           1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~sync-dispose~.
-          1. ReturnIfAbrupt(_next_).
-          1. Return NormalCompletion(~empty~).
-        </emu-alg>
-        <emu-grammar>UsingDeclaration : `using` `await` `const` BindingList `;`</emu-grammar>
-        <emu-alg>
-          1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~async-dispose~.
           1. ReturnIfAbrupt(_next_).
           1. Return NormalCompletion(~empty~).
         </emu-alg>
@@ -786,7 +2153,7 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
 
       <ins class="block">
-      <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation">
+      <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation" aoid="BindingEvaluation" type="sdo">
         <h1>Runtime Semantics: BindingEvaluation</h1>
         <p>With parameter _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~).</p>
         <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
@@ -873,6 +2240,51 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
     </emu-clause>
   </emu-clause>
+
+  <emu-clause id="sec-expression-statement">
+    <h1>Expression Statement</h1>
+    <h2>Syntax</h2>
+    <emu-grammar type="definition">
+      ExpressionStatement[Yield, Await] :
+        <del>[lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await] `;`</del>
+        <ins>[lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] `;`</ins>
+
+      <ins>
+      CoverOutermostExpressionAndUsingStatementHead[Yield, Await] :
+        [lookahead ∉ { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await]
+      </ins>
+    </emu-grammar>
+    <emu-note>
+      <p>An |ExpressionStatement| cannot start with a U+007B (LEFT CURLY BRACKET) because that might make it ambiguous with a |Block|. An |ExpressionStatement| cannot start with the `function` or `class` keywords because that would make it ambiguous with a |FunctionDeclaration|, a |GeneratorDeclaration|, or a |ClassDeclaration|. An |ExpressionStatement| cannot start with `async function` because that would make it ambiguous with an |AsyncFunctionDeclaration| or a |AsyncGeneratorDeclaration|. An |ExpressionStatement| cannot start with the two token sequence `let [` because that would make it ambiguous with a `let` |LexicalDeclaration| whose first |LexicalBinding| was an |ArrayBindingPattern|.</p>
+    </emu-note>
+    <ins class="block">
+    <h2>Supplemental Syntax</h2>
+    <p>
+      When processing an instance of the production<br>
+      <emu-grammar>ExpressionStatement : CoverOutermostExpressionAndUsingStatementHead `;`</emu-grammar><br>
+      the interpretation of |CoverOutermostExpressionAndUsingStatementHead| is refined using the following grammar:
+    </p>
+    <emu-grammar type="definition">
+      OutermostExpression[?Yield, ?Await] :
+        Expression[+In, ?Yield, ?Await]
+    </emu-grammar>
+    </ins>
+
+    <emu-clause id="sec-expression-statement-runtime-semantics-evaluation" type="sdo">
+      <h1>Runtime Semantics: Evaluation</h1>
+      <emu-grammar>
+        <del>ExpressionStatement : Expression `;`</del>
+        <ins>ExpressionStatement : CoverOutermostExpressionAndUsingStatementHead `;`</ins>
+      </emu-grammar>
+      <emu-alg>
+        1. <ins>Let _outerExpr_ be the |OutermostExpression| covered by |CoverOutermostExpressionAndUsingStatementHead|.</ins>
+        1. <ins>Let _expr_ be the |Expression| of _outerExpr_.</ins>
+        1. Let _exprRef_ be the result of evaluating <del>|Expression|</del><ins>_expr_</ins>.
+        1. Return ? GetValue(_exprRef_).
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+
   <emu-clause id="sec-iteration-statements">
     <h1>Iteration Statements</h1>
 
@@ -1087,6 +2499,7 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
     </emu-clause>
   </emu-clause>
+
   <emu-clause id="sec-switch-statement">
     <h1>The `switch` Statement</h1>
     <emu-clause id="sec-switch-statement-runtime-semantics-evaluation">
@@ -1110,6 +2523,198 @@ contributors: Ron Buckton, Ecma International
       </emu-note>
     </emu-clause>
   </emu-clause>
+
+  <emu-clause id="sec-labelled-statements">
+    <h1>Labelled Statements</h1>
+    <emu-clause id="sec-runtime-semantics-labelledevaluation" oldids="sec-statement-semantics-runtime-semantics-labelledevaluation,sec-labelled-statements-runtime-semantics-labelledevaluation" type="sdo">
+      <h1>
+        Runtime Semantics: LabelledEvaluation (
+          _labelSet_: unknown,
+        ): either a normal completion containing an ECMAScript language value or an abrupt completion
+      </h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>BreakableStatement : IterationStatement</emu-grammar>
+      <emu-alg>
+        1. Let _stmtResult_ be Completion(LoopEvaluation of |IterationStatement| with argument _labelSet_).
+        1. If _stmtResult_.[[Type]] is ~break~, then
+          1. If _stmtResult_.[[Target]] is ~empty~, then
+            1. If _stmtResult_.[[Value]] is ~empty~, set _stmtResult_ to NormalCompletion(*undefined*).
+            1. Else, set _stmtResult_ to NormalCompletion(_stmtResult_.[[Value]]).
+        1. Return ? _stmtResult_.
+      </emu-alg>
+      <emu-grammar>BreakableStatement : SwitchStatement</emu-grammar>
+      <emu-alg>
+        1. Let _stmtResult_ be the result of evaluating |SwitchStatement|.
+        1. If _stmtResult_.[[Type]] is ~break~, then
+          1. If _stmtResult_.[[Target]] is ~empty~, then
+            1. If _stmtResult_.[[Value]] is ~empty~, set _stmtResult_ to NormalCompletion(*undefined*).
+            1. Else, set _stmtResult_ to NormalCompletion(_stmtResult_.[[Value]]).
+        1. Return ? _stmtResult_.
+      </emu-alg>
+      <emu-note>
+        <p>A |BreakableStatement| is one that can be exited via an unlabelled |BreakStatement|.</p>
+      </emu-note>
+      <emu-grammar>LabelledStatement : LabelIdentifier `:` LabelledItem</emu-grammar>
+      <emu-alg>
+        1. Let _label_ be the StringValue of |LabelIdentifier|.
+        1. Let _newLabelSet_ be the list-concatenation of _labelSet_ and &laquo; _label_ &raquo;.
+        1. Let _stmtResult_ be Completion(LabelledEvaluation of |LabelledItem| with argument _newLabelSet_).
+        1. If _stmtResult_.[[Type]] is ~break~ and SameValue(_stmtResult_.[[Target]], _label_) is *true*, then
+          1. Set _stmtResult_ to NormalCompletion(_stmtResult_.[[Value]]).
+        1. Return ? _stmtResult_.
+      </emu-alg>
+      <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return the result of evaluating |FunctionDeclaration|.
+      </emu-alg>
+      <emu-grammar>
+        Statement :
+          BlockStatement
+          VariableStatement
+          EmptyStatement
+          ExpressionStatement
+          <ins>UsingStatement</ins>
+          IfStatement
+          ContinueStatement
+          BreakStatement
+          ReturnStatement
+          WithStatement
+          ThrowStatement
+          TryStatement
+          DebuggerStatement
+      </emu-grammar>
+      <emu-alg>
+        1. Return the result of evaluating |Statement|.
+      </emu-alg>
+      <emu-note>
+        <p>The only two productions of |Statement| which have special semantics for LabelledEvaluation are |BreakableStatement| and |LabelledStatement|.</p>
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+
+  <ins class="block">
+  <emu-clause id="sec-using-statement">
+    <h1>Using Statement</h1>
+    <h2>Syntax</h2>
+    <emu-grammar type="definition">
+      UsingStatement[Yield, Await] :
+        `using` `(` `const` BindingList[+In, ?Yield, ?Await, +Using] `)` [no LineTerminator here] Block[?Yield, ?Await]
+        CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] [no LineTerminator here] Block[?Yield, ?Await]
+        [+Await] `using` `await` `(` `const` BindingList[+In, ?Yield, +Await, +Using] `)` [no LineTerminator here] Block[?Yield, +Await]
+        [+Await] `using` `await` `(` AssignmentExpression[+In, ?Yield, +Await] `)` [no LineTerminator here] Block[?Yield, +Await]
+    </emu-grammar>
+    <h2>Supplemental Syntax</h2>
+    <p>
+      When processing an instance of the production<br>
+      <emu-grammar>UsingStatement : CoverOutermostExpressionAndUsingStatementHead Block</emu-grammar><br>
+      the interpretation of |CoverOutermostExpressionAndUsingStatementHead| is refined using the following grammar:
+    </p>
+    <emu-grammar type="definition">
+      UsingStatementHead[?Yield, ?Await] :
+        `using` `(` AssignmentExpression[+In, ?Yield, ?Await] `)`
+    </emu-grammar>
+
+    <emu-clause id="sec-using-statement-static-semantics-early-errors" type="sdo">
+      <h1>Static Semantics: Early Errors</h1>
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+          `using` `await` `(` `const` BindingList `)` Block
+      </emu-grammar>
+      <emu-alg>
+        1. It is a Syntax Error if BoundNames of |BindingList| contains any duplicate entries.
+        1. It is a Syntax Error if any element o fthe BoundNames of |BindingList| also occurs in the VarDeclaredNames of |Block|.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-using-statement-runtime-semantics" type="sdo">
+      <h1>Runtime Semantics: Evaluation</h1>
+      <emu-grammar>
+        UsingStatement :
+          `using` `(` `const` BindingList `)` Block
+      </emu-grammar>
+      <emu-alg>
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. Let _boundNames_ be the BoundNames of |BindingList|.
+        1. For each element _dn_ of _boundNames_, do
+          1. Perform !_usingEnv_.CreateImmutableBinding(_dn_, *true*).
+        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
+        1. Let _usingDecl_ be the result of BindingEvaluation of |BindingList| with parameter ~sync-dispose~.
+        1. If _usingDecl_ is an abrupt completion, then
+          1. Set _usingDecl_ to be DisposeResources(_usingEnv_, _usingDecl_).
+          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+          1. Return ? _usingDecl_.
+        1. Let _bodyResult_ be the result of evaluating |Block|.
+        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return ? _bodyResult_.
+      </emu-alg>
+      <emu-grammar>
+        UsingStatement :
+          `using` `await` `(` `const` BindingList `)` Block
+      </emu-grammar>
+      <emu-alg>
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. Let _boundNames_ be the BoundNames of |BindingList|.
+        1. For each element _dn_ of _boundNames_, do
+          1. Perform !_usingEnv_.CreateImmutableBinding(_dn_, *true*).
+        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
+        1. Let _usingDecl_ be the result of BindingEvaluation of |BindingList| with parameter ~async-dispose~.
+        1. If _usingDecl_ is an abrupt completion, then
+          1. Set _usingDecl_ to be DisposeResources(_usingEnv_, _usingDecl_).
+          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+          1. Return ? _usingDecl_.
+        1. Let _bodyResult_ be the result of evaluating |Block|.
+        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return ? _bodyResult_.
+      </emu-alg>
+      <emu-grammar>
+        UsingStatement :
+          CoverOutermostExpressionAndUsingStatementHead Block
+      </emu-grammar>
+      <emu-alg>
+        1. Let _head_ be the |UsingStatementHead| that is covered by |CoverOutermostExpressionAndUsingStatementHead|.
+        1. Let _expr_ be the |AssignmentExpression| of _head_.
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
+        1. Let _usingExpr_ be the result of evaluationg _expr_.
+        1. Let _usingValue_ be ? GetValue(_usingExpr_).
+        1. If _usingValue_ is an abrupt completion, then
+          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+          1. Return ? _usingValue_.
+        1. Perform ? AddDisposableResource(_usingEnv_, _usingValue_, ~sync-dispose~).
+        1. Let _bodyResult_ be the result of evaluating |Block|.
+        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return ? _bodyResult_.
+      </emu-alg>
+      <emu-grammar>
+        UsingStatement :
+          `using` `await` `(` AssignmentExpression `)` Block
+      </emu-grammar>
+      <emu-alg>
+        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
+        1. Let _usingExpr_ be the result of evaluationg |AssignmentExpression|.
+        1. Let _usingValue_ be ? GetValue(_usingExpr_).
+        1. If _usingValue_ is an abrupt completion, then
+          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+          1. Return ? _usingValue_.
+        1. Perform ? AddDisposableResource(_usingEnv_, _usingValue_, ~async-dispose~).
+        1. Let _bodyResult_ be the result of evaluating |Block|.
+        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
+        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
+        1. Return ? _bodyResult_.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+  </ins>
 </emu-clause>
 
 <emu-clause id="sec-ecmascript-language-functions-and-classes">
@@ -1616,8 +3221,7 @@ contributors: Ron Buckton, Ecma International
             `export` ExportFromClause FromClause `;`
             `export` NamedExports `;`
             `export` VariableStatement[~Yield, +Await]
-            <del>`export` Declaration[~Yield, +Await]</del>
-            <ins>`export` [lookahead &notin; { `using` }] Declaration[~Yield, +Await]</ins>
+            `export` <ins>[lookahead &notin; { `using` }]</ins> Declaration[~Yield, +Await]
             `export` `default` HoistableDeclaration[~Yield, +Await, +Default]
             `export` `default` ClassDeclaration[~Yield, +Await, +Default]
             `export` `default` [lookahead &notin; {`function`, `async` [no |LineTerminator| here] `function`, `class`}] AssignmentExpression[+In, ~Yield, +Await] `;`
