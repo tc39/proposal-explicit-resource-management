@@ -166,7 +166,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.asyncDispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await const` declaration while in an async function, async generator, or the top level of a _Module_.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await` declaration while in an async function, async generator, or the top level of a _Module_.</ins>
               </td>
             </tr>
             <tr>
@@ -177,7 +177,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.dispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using const` declaration.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using` declaration.</ins>
               </td>
             </tr>
             </tbody>
@@ -260,7 +260,7 @@ contributors: Ron Buckton, Ecma International
               ~sync-dispose~ or ~async-dispose~.
             </td>
             <td>
-              Indicates whether the resources was added by a `using const` declaration (~sync-dispose~) or a `using await const` declaration (~async-dispose~).
+              Indicates whether the resources was added by a `using` declaration (~sync-dispose~) or a `using await` declaration (~async-dispose~).
             </td>
           </tr>
           <tr>
@@ -426,8 +426,8 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-grammar>
         UsingDeclaration :
-          `using` `const` BindingList `;`
-          `using` `await` `const` BindingList `;`
+          `using` BindingList `;`
+          `using` `await` BindingList `;`
       </emu-grammar>
       <emu-alg>
         1. Return the BoundNames of |BindingList|.
@@ -966,7 +966,7 @@ contributors: Ron Buckton, Ecma International
               InitializeBinding(N, V<ins>, _hint_</ins>)
             </td>
             <td>
-              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` declaration (~sync-dispose~), a `using await const` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
+              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using` declaration (~sync-dispose~), a `using await` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
             </td>
           </tr>
           <tr>
@@ -1024,7 +1024,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-declarative-environment-records">
         <h1>Declarative Environment Records</h1>
         <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using await const` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using` and `using await` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
@@ -1143,7 +1143,7 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-declarations-and-the-variable-statement">
     <h1>Declarations and the Variable Statement</h1>
     <emu-clause id="sec-let-and-const-declarations">
-      <h1>Let<del> and Const</del><ins>, Const, and Using Const</ins> Declarations</h1>
+      <h1>Let<del> and Const</del><ins>, Const, and Using</ins> Declarations</h1>
       <h2>Syntax</h2>
       <emu-grammar type="definition">
         LexicalDeclaration[In, Yield, Await] :
@@ -1156,8 +1156,8 @@ contributors: Ron Buckton, Ecma International
 
         <ins>
         UsingDeclaration[In, Yield, Await] :
-          `using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`
-          [+Await] `using` [no LineTerminator here] `await` `const` BindingList[?In, ?Yield, +Await, +Using] `;`
+          `using` [no LineTerminator here] BindingList[?In, ?Yield, ?Await, +Using] `;`
+          [+Await] `using` [no LineTerminator here] `await` BindingList[?In, ?Yield, +Await, +Using] `;`
         </ins>
 
         BindingList[In, Yield, Await, <ins>Using</ins>] :
@@ -1176,8 +1176,8 @@ contributors: Ron Buckton, Ecma International
         <ins class="block">
         <emu-grammar>
           UsingDeclaration :
-            `using` `const` BindingList `;`
-            `using` `await` `const` BindingList `;`
+            `using` BindingList `;`
+            `using` `await` BindingList `;`
         </emu-grammar>
         <ul>
           <li>
@@ -1214,13 +1214,13 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
 
         <ins class="block">
-        <emu-grammar>UsingDeclaration : `using` `const` BindingList `;`</emu-grammar>
+        <emu-grammar>UsingDeclaration : `using` BindingList `;`</emu-grammar>
         <emu-alg>
           1. Let _next_ be BindingEvaluation of |BindingList| with parameter ~sync-dispose~.
           1. ReturnIfAbrupt(_next_).
           1. Return ~empty~.
         </emu-alg>
-        <emu-grammar>UsingDeclaration : `using` `await` `const` BindingList `;`</emu-grammar>
+        <emu-grammar>UsingDeclaration : `using` `await` BindingList `;`</emu-grammar>
         <emu-alg>
           1. Let _next_ be BindingEvaluation of |BindingList| with parameter ~async-dispose~.
           1. ReturnIfAbrupt(_next_).
@@ -1514,8 +1514,8 @@ contributors: Ron Buckton, Ecma International
 
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
           LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-          <ins>[+Using] `using` [no LineTerminator here] `const` ForBinding[?Yield, ?Await, +Using]</ins>
-          <ins>[+Using, +Await] `using` [no LineTerminator here] `await` `const` ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using] `using` [no LineTerminator here] ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using, +Await] `using` [no LineTerminator here] `await` ForBinding[?Yield, ?Await, +Using]</ins>
 
         ForBinding[Yield, Await, <ins>Using</ins>] :
           BindingIdentifier[?Yield, ?Await]
@@ -1741,7 +1741,7 @@ contributors: Ron Buckton, Ecma International
       </emu-note>
       <ins class="block">
       <emu-note>
-        <p>A `using const` or `using await const` declaration that precedes a call in the same |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody| prevents that call from being a possible tail position call.</p>
+        <p>A `using` or `using await` declaration that precedes a call in the same |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody| prevents that call from being a possible tail position call.</p>
       </emu-note>
       </ins>
 
@@ -2313,7 +2313,7 @@ contributors: Ron Buckton, Ecma International
               <td>
                 <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using const` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
+                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
@@ -2348,7 +2348,7 @@ contributors: Ron Buckton, Ecma International
               <td>
                 <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await const` declaration, as the resource will be automatically disposed when the |Block| or |Module| containing the declaration has been evaluated.</p>
+                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await` declaration, as the resource will be automatically disposed when the |Block| or |Module| containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
