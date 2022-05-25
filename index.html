@@ -2640,7 +2640,7 @@ li.menu-search-result-term:before {
                 <ins><code>"Symbol.asyncDispose"</code></ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the <code>using await const</code> statement while in an async function, async generator, or the top level of a <var>Module</var>.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the <code>using await const</code> declaration while in an async function, async generator, or the top level of a <var>Module</var>.</ins>
               </td>
             </tr>
             <tr>
@@ -2651,7 +2651,7 @@ li.menu-search-result-term:before {
                 <ins><code>"Symbol.dispose"</code></ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the <code>using const</code> statement.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the <code>using const</code> declaration.</ins>
               </td>
             </tr>
             </tbody>
@@ -2716,7 +2716,7 @@ li.menu-search-result-term:before {
               <emu-const>sync-dispose</emu-const> or <emu-const>async-dispose</emu-const>.
             </td>
             <td>
-              Indicates whether the resources was added by a <code>using const</code> statement (<emu-const>sync-dispose</emu-const>) or a <code>using await const</code> statement (<emu-const>async-dispose</emu-const>).
+              Indicates whether the resources was added by a <code>using const</code> declaration (<emu-const>sync-dispose</emu-const>) or a <code>using await const</code> declaration (<emu-const>async-dispose</emu-const>).
             </td>
           </tr>
           <tr>
@@ -2908,7 +2908,7 @@ li.menu-search-result-term:before {
               InitializeBinding(N, V<ins>, <var>hint</var></ins>)
             </td>
             <td>
-              Set the value of an already existing but uninitialized binding in an <emu-xref href="#sec-environment-records" id="_ref_49"><a href="#sec-environment-records">Environment Record</a></emu-xref>. The String value <var>N</var> is the text of the bound name. <var>V</var> is the value for the binding and is a value of any <emu-xref href="#sec-ecmascript-language-types" id="_ref_50"><a href="#sec-ecmascript-language-types">ECMAScript language type</a></emu-xref>. <ins><var>hint</var> indicates whether the binding came from a <code>using const</code> statement (<emu-const>sync-dispose</emu-const>), a <code>using await const</code> statement (<emu-const>async-dispose</emu-const>), or a regular variable declaration (<emu-const>normal</emu-const>).</ins>
+              Set the value of an already existing but uninitialized binding in an <emu-xref href="#sec-environment-records" id="_ref_49"><a href="#sec-environment-records">Environment Record</a></emu-xref>. The String value <var>N</var> is the text of the bound name. <var>V</var> is the value for the binding and is a value of any <emu-xref href="#sec-ecmascript-language-types" id="_ref_50"><a href="#sec-ecmascript-language-types">ECMAScript language type</a></emu-xref>. <ins><var>hint</var> indicates whether the binding came from a <code>using const</code> declaration (<emu-const>sync-dispose</emu-const>), a <code>using await const</code> declaration (<emu-const>async-dispose</emu-const>), or a regular variable declaration (<emu-const>normal</emu-const>).</ins>
             </td>
           </tr>
           <tr>
@@ -2966,7 +2966,7 @@ li.menu-search-result-term:before {
       <emu-clause id="sec-declarative-environment-records">
         <h1><span class="secnum">5.1.1.1</span> Declarative Environment Records</h1>
         <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> of <emu-xref href="#sec-disposableresource-records" id="_ref_58"><a href="#sec-disposableresource-records">DisposableResource Records</a></emu-xref>. This list is a stack of resources tracked by the <code>using const</code> and <code>using await const</code> statements that must be disposed when the Evaluation step that constructed the <emu-xref href="#sec-environment-records" id="_ref_59"><a href="#sec-environment-records">Environment Record</a></emu-xref> has completed.</ins></p>
+        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> of <emu-xref href="#sec-disposableresource-records" id="_ref_58"><a href="#sec-disposableresource-records">DisposableResource Records</a></emu-xref>. This list is a stack of resources tracked by the <code>using const</code> and <code>using await const</code> declarations that must be disposed when the Evaluation step that constructed the <emu-xref href="#sec-environment-records" id="_ref_59"><a href="#sec-environment-records">Environment Record</a></emu-xref> has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
@@ -4598,7 +4598,7 @@ li.menu-search-result-term:before {
               <td>
                 <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, <emu-xref href="#host"><a href="https://tc39.es/ecma262/#host">host</a></emu-xref> objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a <code>using const</code> statement, as the resource will be automatically disposed when the <emu-nt><a href="https://tc39.es/ecma262/#prod-Block">Block</a></emu-nt>, <emu-nt><a href="https://tc39.es/ecma262/#prod-Script">Script</a></emu-nt>, or <emu-nt><a href="https://tc39.es/ecma262/#prod-Module">Module</a></emu-nt> containing the statement has been evaluated.</p>
+                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a <code>using const</code> declaration, as the resource will be automatically disposed when the <emu-nt><a href="https://tc39.es/ecma262/#prod-Block">Block</a></emu-nt> or <emu-nt><a href="https://tc39.es/ecma262/#prod-Module">Module</a></emu-nt> immediately containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
@@ -4632,7 +4632,7 @@ li.menu-search-result-term:before {
               <td>
                 <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, <emu-xref href="#host"><a href="https://tc39.es/ecma262/#host">host</a></emu-xref> objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a <code>using await const</code> statement, as the resource will be automatically disposed when the <emu-nt><a href="https://tc39.es/ecma262/#prod-Block">Block</a></emu-nt>, <emu-nt><a href="https://tc39.es/ecma262/#prod-Script">Script</a></emu-nt>, or <emu-nt><a href="https://tc39.es/ecma262/#prod-Module">Module</a></emu-nt> containing the statement has been evaluated.</p>
+                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a <code>using await const</code> declaration, as the resource will be automatically disposed when the <emu-nt><a href="https://tc39.es/ecma262/#prod-Block">Block</a></emu-nt> or <emu-nt><a href="https://tc39.es/ecma262/#prod-Module">Module</a></emu-nt> containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
