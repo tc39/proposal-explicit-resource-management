@@ -166,7 +166,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.asyncDispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await const` statement while in an async function, async generator, or the top level of a _Module_.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await const` declaration while in an async function, async generator, or the top level of a _Module_.</ins>
               </td>
             </tr>
             <tr>
@@ -177,7 +177,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.dispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using const` statement.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using const` declaration.</ins>
               </td>
             </tr>
             </tbody>
@@ -251,7 +251,7 @@ contributors: Ron Buckton, Ecma International
               ~sync-dispose~ or ~async-dispose~.
             </td>
             <td>
-              Indicates whether the resources was added by a `using const` statement (~sync-dispose~) or a `using await const` statement (~async-dispose~).
+              Indicates whether the resources was added by a `using const` declaration (~sync-dispose~) or a `using await const` declaration (~async-dispose~).
             </td>
           </tr>
           <tr>
@@ -530,7 +530,7 @@ contributors: Ron Buckton, Ecma International
               InitializeBinding(N, V<ins>, _hint_</ins>)
             </td>
             <td>
-              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` statement (~sync-dispose~), a `using await const` statement (~async-dispose~), or a regular variable declaration (~normal~).</ins>
+              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using const` declaration (~sync-dispose~), a `using await const` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
             </td>
           </tr>
           <tr>
@@ -588,7 +588,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-declarative-environment-records">
         <h1>Declarative Environment Records</h1>
         <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using await const` statements that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using const` and `using await const` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
@@ -1720,7 +1720,7 @@ contributors: Ron Buckton, Ecma International
               <td>
                 <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using const` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
+                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using const` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
@@ -1754,7 +1754,7 @@ contributors: Ron Buckton, Ecma International
               <td>
                 <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await const` statement, as the resource will be automatically disposed when the |Block|, |Script|, or |Module| containing the statement has been evaluated.</p>
+                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await const` declaration, as the resource will be automatically disposed when the |Block| or |Module| containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>

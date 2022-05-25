@@ -54,9 +54,9 @@ with managing multiple resources:
 
 ## Status
 
-**Stage:** 2
-**Champion:** Ron Buckton (@rbuckton)
-**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-TkeB6DLlm_TQxuD-sPQ?e=SwMLMY), [notes](https://github.com/tc39/notes/blob/master/meetings/2020-02/february-5.md#updates-on-explicit-resource-management))
+**Stage:** 2  \
+**Champion:** Ron Buckton (@rbuckton)  \
+**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF), [notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
 
@@ -191,58 +191,31 @@ using await const y = expr2, void = expr3, z = expr3; // multiple resources
 
 # Grammar
 
-<!-- Grammar for the proposal. Please use grammarkdown (github.com/rbuckton/grammarkdown#readme)
-     syntax in fenced code blocks as grammarkdown is the grammar format used by ecmarkup. -->
-
-```grammarkdown
-LexicalDeclaration[In, Yield, Await] :
-  LetOrConst BindingList[?In, ?Yield, ?Await, ~Using] `;`
-  UsingConst[?Await] BindingList[?In, ?Yield, ?Await, +Using] `;`
-
-UsingConst[Await] :
-  `using` [no LineTerminator here] `const`
-  [+Await] `using` [no LineTerminator here] `await` [no LineTerminator here] `const`
-
-BindingList[In, Yield, Await, Using] :
-  LexicalBinding[?In, ?Yield, ?Await, ?Using]
-  BindingList[?In, ?Yield, ?Await, ?Using] `,` LexicalBinding[?In, ?Yield, ?Await, ?Using]
-
-LexicalBinding[In, Yield, Await, Using] :
-  BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
-  [~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
-  [+Using] `void` Initializer[?In, ?Yield, ?Await]
-
-ForDeclaration[Yield, Await] :
-  LetOrConst ForBinding[?Yield, ?Await, ~Using]
-  UsingConst[?Await] ForBinding[?Yield, ?Await, +Using]
-
-ForBinding[Yield, Await, Using] :
-  BindingIdentifier[?Yield, ?Await]
-  [~Using] BindingPattern[?Yield, ?Await]
-```
+Please refer to the [specification text][Specification] for the most recent version of the grammar.
 
 # Semantics
 
 ## `using const` Declarations
 
-### `using const` with Explicit Local Bindings
+### `using const` Declarations with Explicit Local Bindings
 
 ```grammarkdown
-LexicalDeclaration :
+UsingDeclaration :
   `using` `const` BindingList `;`
+  `using` `await` `const` BindingList `;`
 
 LexicalBinding :
     BindingIdentifier Initializer
 ```
 
 When `using const` is parsed with _BindingIdentifier_ _Initializer_, the bindings created in the declaration
-are tracked for disposal at the end of the containing _Block_, _Script_, or _Module_:
+are tracked for disposal at the end of the containing _Block_ or _Module_:
 
 ```js
 {
-  ...
+  ... // (1)
   using const x = expr1;
-  ...
+  ... // (2)
 }
 ```
 
@@ -253,7 +226,7 @@ representation:
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr1;
     if (x !== null && x !== undefined) {
@@ -264,7 +237,7 @@ representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -293,10 +266,10 @@ representation:
 If exceptions are thrown both in the block following the `using const` declaration and in the call to
 `[Symbol.dispose]()`, all exceptions are reported.
 
-### `using const` with Existing Resources
+### `using const` Declarations with Existing Resources
 
 ```grammarkdown
-LexicalDeclaration :
+UsingDeclaration :
     `using` `const` BindingList `;`
     `using` `await` `const` BindingList `;`
 
@@ -305,37 +278,39 @@ LexicalBinding :
 ```
 
 When `using const` is parsed with `void` _Initializer_, an implicit block-scoped binding is
-created for the result of the expression. When the _Block_ (or _Script_/_Module_ at the top level)
-containing the `using const` statement is exited, whether by an abrupt or normal completion,
-`[Symbol.dispose]()` is called on the implicit binding as long as it is neither `null` nor `undefined`.
-If an error is thrown in both the containing _Block_/_Script_/_Module_ and the call to `[Symbol.dispose]()`,
+created for the result of the expression. When the _Block_ or _Module_ immediately
+containing the `using const` declaration is exited, whether by an abrupt or normal completion,
+`[Symbol.dispose]()` (or `[Symbol.asyncDispose]()` in the case of`using await const`) is called
+on the implicit binding as long as it is neither `null` nor `undefined`. If an error is thrown
+in both the containing _Block_/_Module_ and the call to `[Symbol.dispose]()` (`[Symbol.asyncDispose]()`),
 an `AggregateError` containing both errors will be thrown instead.
 
 ```js
 {
-  ...
+  ... // (1)
   using const void = expr; // in Block scope
-  ...
+  ... // (2)
 }
 ```
 
-The above example has similar runtime semantics as the following transposed
-representation:
+The above example has similar runtime semantics as the following transposed representation:
 
 ```js
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const $$expr = expr; // evaluate `expr`
     if ($$expr !== null && $$expr !== undefined) {
       const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: $$expr, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -364,7 +339,7 @@ representation:
 The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close
 the resource we are explicitly tracking.
 
-### `using const` with Multiple Resources
+### `using const` Declarations with Multiple Resources
 
 A `using const` declaration can mix multiple explicit (i.e., `using const x = expr`) and implicit (i.e.,
 `using const void = expr`) bindings in the same declaration:
@@ -377,17 +352,18 @@ A `using const` declaration can mix multiple explicit (i.e., `using const x = ex
 }
 ```
 
-These bindings are again used to perform resource disposal when the _Block_, _Script_, or _Module_
-exits, however in this case `[Symbol.dispose]()` is invoked in the reverse order of their
-declaration. This is _approximately_ equivalent to the following:
+These bindings are again used to perform resource disposal when the _Block_ or _Module_
+exits, however in this case `[Symbol.dispose]()` (or `[Symbol.asyncDispose]()` in the case of
+`using await const`) is invoked in the reverse order of their declaration. This is
+_approximately_ equivalent to the following:
 
 ```js
 {
-  ...
+  ... // (1)
   using const x = expr1;
   using const void = expr2;
   using const y = expr2;
-  ...
+  ... // (2)
 }
 ```
 
@@ -398,30 +374,36 @@ representation:
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr1;
     if (x !== null && x !== undefined) {
       const $$dispose = x[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
     const $$expr = expr2; // evaluate `expr2`
     if ($$expr !== null && $$expr !== undefined) {
       const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: $$expr, dispose: $$dispose });
     }
 
     const y = expr3;
     if (y !== null && y !== undefined) {
       const $$dispose = y[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: y, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -452,19 +434,19 @@ completion that might occur during binding initialization results in evaluation 
 step. When there are multiple declarations in the list, we track each resource in the order they
 are declared. As a result, we must release these resources in reverse order.
 
-### `using const` on `null` or `undefined` Values
+### `using const` Declarations and `null` or `undefined` Values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the `using const`
-declaration. This is similar to the behavior of `using` in C#, which also allows `null`. One
-primary reason for this behavior is to simplify a common case where a resource might be optional,
-without requiring duplication of work or needless allocations:
+This proposal has opted to ignore `null` and `undefined` values provided to the `using const` and
+`using await const` declarations. This is similar to the behavior of `using` in C#, which also
+allows `null`. One primary reason for this behavior is to simplify a common case where a resource
+might be optional, without requiring duplication of work or needless allocations:
 
 ```js
 if (isResourceAvailable()) {
   using const resource = getResource();
-  ... // (1) above
+  ... // (1)
   resource.doSomething()
-  ... // (2) above
+  ... // (2)
 }
 else {
   // duplicate code path above
@@ -482,23 +464,28 @@ resource?.doSomething();
 ... // (2) do some other work with or without resource
 ```
 
-### `using const` on Values Without `[Symbol.dispose]`
+### `using const` Declarations and Values Without `[Symbol.dispose]`
 
-If a resource does not have a callable `[Symbol.dispose]` member (or `[Symbol.asyncDispose]` in the
-case of a `using await const`), a `TypeError` would be thrown **immediately** when the resource is tracked.
+If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown
+**immediately** when the resource is tracked.
 
-### `using await const` in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
+### `using await const` Declarations and Values Without `[Symbol.asyncDispose]`
 
-In an _AsyncFunction_ or an _AsyncGeneratorFunction_, or the top-level of a _Module_, when we evaluate a
-`using await const` declaration we first look for a `[Symbol.asyncDispose]` method before looking for a
-`[Symbol.dispose]` method. At the end of the containing _Block_ or _Module_ if the method
-returns a value other than `undefined`, we Await the value before exiting:
+If a resource does not have either a callable `[Symbol.asyncDispose]` member or a callable 
+`[Symbol.dispose]` member, a `TypeError` would be thrown **immediately** when the resource is tracked.
+
+### `using await const` Declarations in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
+
+In an _AsyncFunction_, _AsyncGeneratorFunction_, _AsyncArrowFunction_, or the top-level of a _Module_,
+when we evaluate a `using await const` declaration we first look for a `[Symbol.asyncDispose]` method
+before looking for a `[Symbol.dispose]` method. At the end of the containing function body, _Block_, or
+_Module_, if the method returns a value other than `undefined`, we **Await** the value before exiting:
 
 ```js
-{
-  ...
+async function f() {
+  ... // (1)
   using await const x = expr;
-  ...
+  ... // (2)
 }
 ```
 
@@ -506,10 +493,10 @@ Is semantically equivalent to the following transposed representation:
 
 
 ```js
-{
+async function f() {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr;
     if (x !== null && x !== undefined) {
@@ -517,11 +504,13 @@ Is semantically equivalent to the following transposed representation:
       if ($$dispose === undefined) {
         $$dispose = x[Symbol.dispose];
       }
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -550,9 +539,9 @@ Is semantically equivalent to the following transposed representation:
 }
 ```
 
-### `using const` in `for-of` and `for-await-of` Loops
+### `using const` Declarations in `for-of` and `for-await-of` Loops
 
-A `using const` or `using await const` declaration can occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
+A `using const` (or `using await const`) declaration can occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
 
 ```js
 for (using const x of iterateResources()) {
@@ -560,7 +549,8 @@ for (using const x of iterateResources()) {
 }
 ```
 
-In this case, the value bound to `x` in each iteration will be disposed at the end of each iteration. This will not dispose resources that are not iterated, such as if iteration is terminated early due to `return`, `break`, or `throw`.
+In this case, the value bound to `x` in each iteration will be disposed at the end of each iteration. This will not dispose
+resources that are not iterated, such as if iteration is terminated early due to `return`, `break`, or `throw`.
 
 Neither `using const` nor `using await const` can be used in a `for-in` loop.
 
@@ -676,7 +666,7 @@ Atomics.ConditionVariable.notifyOne(cv);
 
   // Do something with the processed data
   // ...
-    
+
 } // release mutex
 
 // NOTE: at this point we no longer own the lock
@@ -717,8 +707,8 @@ values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
 **Well-known Symbols**
 | Specification Name | \[\[Description]] | Value and Purpose |
 |:-|:-|:-|
-| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of the `using const` statements. |
-| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Called by the semantics of the `using await const` statement. |
+| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of `using const` declarations. |
+| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Called by the semantics of `using await const` declarations. |
 
 **TypeScript Definition**
 ```ts
@@ -891,8 +881,8 @@ These classes provided the following capabilities:
 - Interoperation and customization
 - Assist in complex construction
 
-NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's 
-[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and 
+NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's
+[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and
 [`AsyncExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack).
 
 ### Aggregation
@@ -943,7 +933,7 @@ The ability to create a disposable resource from a callback has several benefits
 
 A user-defined disposable class might need to allocate and track multiple nested resources that should be disposed when
 the class instance is disposed. However, properly managing the lifetime of these nested resources in the class constructor
-can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage 
+can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage
 lifetime in these scenarios:
 
 ```js
@@ -1093,7 +1083,7 @@ However there are a number drawbacks to using `for..of` as an alternative:
     if (x.done) break;
     ...
   }
-  
+
   // for..of
   outer: for (const x of iterable) {
     for (const { use } of ...) {
