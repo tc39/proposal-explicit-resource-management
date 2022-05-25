@@ -439,7 +439,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <ins class="block">
       <emu-grammar>
-        LexicalBinding : `void` Initializer
+        LexicalBinding : VoidBinding Initializer
       </emu-grammar>
       <emu-alg>
         1. Return a new empty List.
@@ -2062,7 +2062,12 @@ contributors: Ron Buckton, Ecma International
           BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
           <del>BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</del>
           <ins>[~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</ins>
-          <ins>[+Using] `void` Initializer[?In, ?Yield, ?Await]</ins>
+          <ins>[+Using] VoidBinding Initializer[?In, ?Yield, ?Await]</ins>
+
+        <ins>
+        VoidBinding :
+          `void`
+        </ins>
       </emu-grammar>
 
       <emu-clause id="sec-let-and-const-declarations-static-semantics-early-errors">
@@ -2189,7 +2194,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _env_ be the running execution context's LexicalEnvironment.
           1. Return the result of performing BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.
         </emu-alg>
-        <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
+        <emu-grammar>LexicalBinding : VoidBinding Initializer</emu-grammar>
         <emu-alg>
           1. Assert: _hint_ is ~sync-dispose~ or ~async-dispose~.
           1. Let _expr_ be the result of evaluating |Initializer|.
@@ -2620,10 +2625,17 @@ contributors: Ron Buckton, Ecma International
           `using` `(` `const` BindingList `)` Block
           `using` `await` `(` `const` BindingList `)` Block
       </emu-grammar>
-      <emu-alg>
-        1. It is a Syntax Error if BoundNames of |BindingList| contains any duplicate entries.
-        1. It is a Syntax Error if any element o fthe BoundNames of |BindingList| also occurs in the VarDeclaredNames of |Block|.
-      </emu-alg>
+      <ul>
+        <li>
+          It is a Syntax Error if BoundNames of |BindingList| contains any duplicate entries.
+        </li>
+        <li>
+          It is a Syntax Error if any element of the BoundNames of |BindingList| also occurs in the VarDeclaredNames of |Block|.
+        </li>
+        <li>
+          It is a Syntax Error |BindingList| Contains |VoidBinding| is *true*.
+        </li>
+      </ul>
     </emu-clause>
 
     <emu-clause id="sec-using-statement-runtime-semantics" type="sdo">
