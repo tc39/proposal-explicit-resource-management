@@ -1085,6 +1085,25 @@ However there are a number drawbacks to using `for..of` as an alternative:
     x.toString(); // possibly an error in a static analyzer since `x` is not guaranteed to have been assigned.
   }
   ```
+- Using `continue` and `break` is more difficult if you need to dispose of an iterated value:
+  ```js
+  // using const
+  for (using x of iterable) {
+    if (!x.ready) continue;
+    if (x.done) break;
+    ...
+  }
+  
+  // for..of
+  outer: for (const x of iterable) {
+    for (const { use } of ...) {
+      use(x);
+      if (!x.ready) continue outer;
+      if (!x.done) break outer;
+      ...
+    }
+  }
+  ```
 
 # Relation to DOM APIs
 
