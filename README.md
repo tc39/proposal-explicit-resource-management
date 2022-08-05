@@ -151,6 +151,66 @@ This proposal is motivated by a number of cases:
     ... // still in write lock after `await`
   } // release the write lock
   ```
+- Potential for use with the [Fixed Layout Objects Proposal](https://github.com/tc39/proposal-structs) and `shared struct`:
+  ```js
+  // main.js
+  shared struct class SharedData {
+    ready = false;
+    processed = false;
+  }
+
+  const worker = new Worker('worker.js');
+  const m = new Atomics.Mutex();
+  const cv = new Atomics.ConditionVariable();
+  const data = new SharedData();
+  worker.postMessage({ m, cv, data });
+
+  // send data to worker
+  {
+    // wait until main can get a lock on 'm'
+    using void = m.lock();
+
+    // mark data for worker
+    data.ready = true;
+    console.log("main is ready");
+
+  } // unlocks 'm'
+
+  // notify potentially waiting worker
+  cv.notifyOne();
+
+  {
+    // reacquire lock on 'm'
+    using void = m.lock();
+
+    // release the lock on 'm' and wait for the worker to finish processing
+    cv.wait(m, () => data.processed);
+
+  } // unlocks 'm'
+  ```
+
+  ```js
+  // worker.js
+  onmessage = function (e) {
+    const { m, cv, data } = e.data;
+
+    {
+      // wait until worker can get a lock on 'm'
+      using void = m.lock();
+
+      // release the lock on 'm' and wait until main() sends data
+      cv.wait(m, () => data.ready);
+
+      // after waiting we once again own the lock on 'm'
+      console.log("worker thread is processing data");
+
+      // send data back to main
+      data.processed = true;
+      console.log("worker thread is done");
+
+    } // unlocks 'm'
+  }
+  ```
 
 # Prior Art
 
