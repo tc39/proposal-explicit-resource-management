@@ -56,9 +56,9 @@ In addition, we propose the addition of two disposable container objects to assi
 
 ## Status
 
-**Stage:** 2
-**Champion:** Ron Buckton (@rbuckton)
-**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-TkeB6DLlm_TQxuD-sPQ?e=SwMLMY), [notes](https://github.com/tc39/notes/blob/master/meetings/2020-02/february-5.md#updates-on-explicit-resource-management))
+**Stage:** 2  \
+**Champion:** Ron Buckton (@rbuckton)  \
+**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF), [notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
 
@@ -153,6 +153,66 @@ This proposal is motivated by a number of cases:
     ... // still in write lock after `await`
   } // release the write lock
   ```
+- Potential for use with the [Fixed Layout Objects Proposal](https://github.com/tc39/proposal-structs) and `shared struct`:
+  ```js
+  // main.js
+  shared struct class SharedData {
+    ready = false;
+    processed = false;
+  }
+
+  const worker = new Worker('worker.js');
+  const m = new Atomics.Mutex();
+  const cv = new Atomics.ConditionVariable();
+  const data = new SharedData();
+  worker.postMessage({ m, cv, data });
+
+  // send data to worker
+  {
+    // wait until main can get a lock on 'm'
+    using void = m.lock();
+
+    // mark data for worker
+    data.ready = true;
+    console.log("main is ready");
+
+  } // unlocks 'm'
+
+  // notify potentially waiting worker
+  cv.notifyOne();
+
+  {
+    // reacquire lock on 'm'
+    using void = m.lock();
+
+    // release the lock on 'm' and wait for the worker to finish processing
+    cv.wait(m, () => data.processed);
+
+  } // unlocks 'm'
+  ```
+
+  ```js
+  // worker.js
+  onmessage = function (e) {
+    const { m, cv, data } = e.data;
+
+    {
+      // wait until worker can get a lock on 'm'
+      using void = m.lock();
+
+      // release the lock on 'm' and wait until main() sends data
+      cv.wait(m, () => data.ready);
+
+      // after waiting we once again own the lock on 'm'
+      console.log("worker thread is processing data");
+
+      // send data back to main
+      data.processed = true;
+      console.log("worker thread is done");
+
+    } // unlocks 'm'
+  }
+  ```
 
 # Prior Art
 
@@ -221,7 +281,7 @@ using await (expr) { }
 
 # Grammar
 
-Please see the [specification text][Specification] for the most recent version of the grammar.
+Please refer to the [specification text][Specification] for the most recent version of the grammar.
 
 # Semantics
 
@@ -242,9 +302,9 @@ are tracked for disposal at the end of the containing _Block_, _Script_, or _Mod
 
 ```js
 {
-  ...
+  ... // (1)
   using x = expr1;
-  ...
+  ... // (2)
 }
 ```
 
@@ -255,7 +315,7 @@ representation:
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr1;
     if (x !== null && x !== undefined) {
@@ -266,7 +326,7 @@ representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -314,29 +374,30 @@ an `AggregateError` containing both errors will be thrown instead.
 
 ```js
 {
-  ...
+  ... // (1)
   using void = expr; // in Block scope
-  ...
+  ... // (2)
 }
 ```
 
-The above example has similar runtime semantics as the following transposed
-representation:
+The above example has similar runtime semantics as the following transposed representation:
 
 ```js
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const $$expr = expr; // evaluate `expr`
     if ($$expr !== null && $$expr !== undefined) {
       const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: $$expr, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -379,16 +440,17 @@ A `using` declaration can mix multiple explicit (i.e., `using x = expr`) and imp
 ```
 
 These bindings are again used to perform resource disposal when the _Block_ or _Module_
-exits, however in this case `[Symbol.dispose]()` is invoked in the reverse order of their
-declaration. This is _approximately_ equivalent to the following:
+exits, however in this case `[Symbol.dispose]()` (or `[Symbol.asyncDispose]()` in the case of
+`using await`) is invoked in the reverse order of their declaration. This is
+_approximately_ equivalent to the following:
 
 ```js
 {
-  ...
+  ... // (1)
   using x = expr1;
   using void = expr2;
   using y = expr2;
-  ...
+  ... // (2)
 }
 ```
 
@@ -399,30 +461,36 @@ representation:
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr1;
     if (x !== null && x !== undefined) {
       const $$dispose = x[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
     const $$expr = expr2; // evaluate `expr2`
     if ($$expr !== null && $$expr !== undefined) {
       const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: $$expr, dispose: $$dispose });
     }
 
     const y = expr3;
     if (y !== null && y !== undefined) {
       const $$dispose = y[Symbol.dispose];
-      if (typeof $$dispose !== "function") throw new TypeError();
+      if (typeof $$dispose !== "function") {
+        throw new TypeError();
+      }
       $$try.stack.push({ value: y, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -463,9 +531,9 @@ without requiring duplication of work or needless allocations:
 ```js
 if (isResourceAvailable()) {
   using resource = getResource();
-  ... // (1) above
+  ... // (1)
   resource.doSomething()
-  ... // (2) above
+  ... // (2)
 }
 else {
   // duplicate code path above
@@ -1010,7 +1078,7 @@ Is semantically equivalent to the following transposed representation:
 {
   const $$try = { stack: [], exception: undefined };
   try {
-    ...
+    ... // (1)
 
     const x = expr;
     if (x !== null && x !== undefined) {
@@ -1024,7 +1092,7 @@ Is semantically equivalent to the following transposed representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    ...
+    ... // (2)
   }
   catch ($$error) {
     $$try.exception = { cause: $$error };
@@ -1379,8 +1447,8 @@ These classes provided the following capabilities:
 - Interoperation and customization
 - Assist in complex construction
 
-NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's 
-[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and 
+NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's
+[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and
 [`AsyncExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack).
 
 ### Aggregation
@@ -1431,7 +1499,7 @@ The ability to create a disposable resource from a callback has several benefits
 
 A user-defined disposable class might need to allocate and track multiple nested resources that should be disposed when
 the class instance is disposed. However, properly managing the lifetime of these nested resources in the class constructor
-can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage 
+can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage
 lifetime in these scenarios:
 
 ```js
@@ -1571,6 +1639,25 @@ However there are a number drawbacks to using `for..of` as an alternative:
       x = y.text;
     }
     x.toString(); // possibly an error in a static analyzer since `x` is not guaranteed to have been assigned.
+  }
+  ```
+- Using `continue` and `break` is more difficult if you need to dispose of an iterated value:
+  ```js
+  // using
+  for (using x of iterable) {
+    if (!x.ready) continue;
+    if (x.done) break;
+    ...
+  }
+
+  // for..of
+  outer: for (const x of iterable) {
+    for (const { use } of ...) {
+      use(x);
+      if (!x.ready) continue outer;
+      if (!x.done) break outer;
+      ...
+    }
   }
   ```
 

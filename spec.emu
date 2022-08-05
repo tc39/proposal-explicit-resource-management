@@ -190,9 +190,16 @@ contributors: Ron Buckton, Ecma International
     <h1>ECMAScript Specification Types</h1>
     <emu-clause id="sec-reference-record-specification-type" oldids="sec-reference-specification-type">
       <h1>The Reference Record Specification Type</h1>
-      <emu-clause id="sec-initializereferencedbinding" aoid="InitializeReferencedBinding">
-        <h1>InitializeReferencedBinding ( _V_, _W_<ins>, _hint_</ins> )</h1>
-        <p>The abstract operation InitializeReferencedBinding takes arguments _V_<del> and _W_</del><ins>, _W_, and _hint_</ins>. It performs the following steps when called:</p>
+
+      <emu-clause id="sec-initializereferencedbinding" type="abstract operation">
+        <h1>
+          InitializeReferencedBinding (
+            _V_: unknown,
+            _W_: unknown,
+          ): either a normal completion containing ~unused~ or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
           1. ReturnIfAbrupt(_V_).
           1. ReturnIfAbrupt(_W_).
@@ -201,15 +208,17 @@ contributors: Ron Buckton, Ecma International
           1. <ins>Assert: _hint_ is ~normal~, ~sync-dispose~, or ~async-dispose~.</ins>
           1. Let _base_ be _V_.[[Base]].
           1. Assert: _base_ is an Environment Record.
-          1. Return _base_.InitializeBinding(_V_.[[ReferencedName]], _W_<ins>, _hint_</ins>).
+          1. Return ? _base_.InitializeBinding(_V_.[[ReferencedName]], _W_<ins>, _hint_</ins>).
         </emu-alg>
       </emu-clause>
+
     </emu-clause>
   </emu-clause>
 </emu-clause>
 
 <emu-clause id="sec-abstract-operations">
   <h1>Abstract Operations</h1>
+
   <ins class="block">
   <emu-clause id="sec-operations-on-disposable-objects">
     <h1>Operations on Disposable Objects</h1>
@@ -359,7 +368,7 @@ contributors: Ron Buckton, Ecma International
           _disposable_ : an object with a [[DisposableResourceStack]] internal slot or *undefined*,
           _completion_ : a Completion Record,
           optional _errors_ : a List,
-        )
+        ): a Completion Record
       </h1>
       <dl class="header"></dl>
       <emu-alg>
@@ -371,7 +380,7 @@ contributors: Ron Buckton, Ecma International
                 1. Append _result_.[[Value]] to _errors_.
         1. Let _errorsLength_ be the number of elements in _errors_.
         1. If _errorsLength_ &gt; 0, then
-          1. Let _error_ be a newly created `AggregateError` object.
+          1. Let _error_ be a newly created *AggregateError* object.
           1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
           1. If _completion_.[[Type]] is ~throw~, then
             1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, "cause", _completion_.[[Value]]).
@@ -1431,6 +1440,154 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Return ContainsUndefinedBreakTarget of |Statement| with argument _labelSet_.
       </emu-alg>
+      </ins>
+      <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be the BoundNames of |BindingList|.
+        1. Let _names2_ be the BoundNames of |LexicalBinding|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>LexicalBinding : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      </ins>
+      <emu-grammar>VariableDeclarationList : VariableDeclarationList `,` VariableDeclaration</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |VariableDeclarationList|.
+        1. Let _names2_ be BoundNames of |VariableDeclaration|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>VariableDeclaration : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>VariableDeclaration : BindingPattern Initializer</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <emu-grammar>ObjectBindingPattern : `{` `}`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ObjectBindingPattern : `{` BindingPropertyList `,` BindingRestProperty `}`</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingPropertyList|.
+        1. Let _names2_ be BoundNames of |BindingRestProperty|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision? `]`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingRestElement|.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision? `]`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingElementList|.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingElementList|.
+        1. Let _names2_ be BoundNames of |BindingRestElement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingPropertyList : BindingPropertyList `,` BindingProperty</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingPropertyList|.
+        1. Let _names2_ be BoundNames of |BindingProperty|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingElementList : BindingElementList `,` BindingElisionElement</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |BindingElementList|.
+        1. Let _names2_ be BoundNames of |BindingElisionElement|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>BindingElisionElement : Elision? BindingElement</emu-grammar>
+      <emu-alg>
+        1. Return BoundNames of |BindingElement|.
+      </emu-alg>
+      <emu-grammar>BindingProperty : PropertyName `:` BindingElement</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingElement|.
+      </emu-alg>
+      <emu-grammar>SingleNameBinding : BindingIdentifier Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>BindingElement : BindingPattern Initializer?</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingPattern|.
+      </emu-alg>
+      <emu-grammar>ForDeclaration : LetOrConst ForBinding</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |ForBinding|.
+      </emu-alg>
+      <emu-grammar>FunctionDeclaration : `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>FunctionDeclaration : `function` `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>FormalParameters : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      <emu-grammar>FormalParameters : FormalParameterList `,` FunctionRestParameter</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |FormalParameterList|.
+        1. Let _names2_ be BoundNames of |FunctionRestParameter|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>FormalParameterList : FormalParameterList `,` FormalParameter</emu-grammar>
+      <emu-alg>
+        1. Let _names1_ be BoundNames of |FormalParameterList|.
+        1. Let _names2_ be BoundNames of |FormalParameter|.
+        1. Return the list-concatenation of _names1_ and _names2_.
+      </emu-alg>
+      <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
+      <emu-alg>
+        1. Let _formals_ be the |ArrowFormalParameters| that is covered by |CoverParenthesizedExpressionAndArrowParameterList|.
+        1. Return the BoundNames of _formals_.
+      </emu-alg>
+      <emu-grammar>GeneratorDeclaration : `function` `*` BindingIdentifier `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>GeneratorDeclaration : `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
+      <emu-grammar>ClassDeclaration : `class` BindingIdentifier ClassTail</emu-grammar>
+      <emu-alg>
+        1. Return the BoundNames of |BindingIdentifier|.
+      </emu-alg>
+      <emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar>
+      <emu-alg>
+        1. Return &laquo; *"\*default\*"* &raquo;.
+      </emu-alg>
       <emu-grammar>
         ForInOfStatement :
           `for` `(` LeftHandSideExpression `in` Expression `)` Statement
@@ -1728,6 +1885,19 @@ contributors: Ron Buckton, Ecma International
         1. Return ContainsUndefinedContinueTarget of |Block| with arguments _iterationSet_ and &laquo; &raquo;.
       </emu-alg>
       <ins class="block">
+      <emu-grammar>LexicalDeclaration : UsingDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return *true*.
+      </emu-alg>
+      </ins>
+      <emu-grammar>LetOrConst : `let`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LetOrConst : `const`</emu-grammar>
+      <emu-alg>
+        1. Return *true*.
+      </emu-alg>
       <emu-grammar>
         UsingStatement :
           `using` `(` `const` BindingList `)` Block
@@ -1766,31 +1936,94 @@ contributors: Ron Buckton, Ecma International
 
   <emu-clause id="sec-syntax-directed-operations-miscellaneous">
     <h1>Miscellaneous</h1>
-    <emu-clause id="sec-runtime-semantics-iteratorbindinginitialization" oldids="sec-destructuring-binding-patterns-runtime-semantics-iteratorbindinginitialization,sec-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-arrow-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-async-arrow-function-definitions-IteratorBindingInitialization" type="sdo" aoid="IteratorBindingInitialization">
-      <h1>Runtime Semantics: IteratorBindingInitialization</h1>
-      <p>With parameters _iteratorRecord_ and _environment_.</p>
+
+    <emu-clause id="sec-runtime-semantics-iteratorbindinginitialization" oldids="sec-destructuring-binding-patterns-runtime-semantics-iteratorbindinginitialization,sec-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-arrow-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-async-arrow-function-definitions-IteratorBindingInitialization" type="sdo">
+      <h1>
+        Runtime Semantics: IteratorBindingInitialization (
+          _iteratorRecord_: unknown,
+          _environment_: unknown,
+        ): either a normal completion containing ~unused~ or an abrupt completion
+      </h1>
+      <dl class="header">
+      </dl>
+      <emu-note>
+        <p>When *undefined* is passed for _environment_ it indicates that a PutValue operation should be used to assign the initialization value. This is the case for formal parameter lists of non-strict functions. In that case the formal parameter bindings are preinitialized in order to deal with the possibility of multiple parameters with the same name.</p>
+      </emu-note>
+      <emu-grammar>ArrayBindingPattern : `[` `]`</emu-grammar>
+      <emu-alg>
+        1. Return ~unused~.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision `]`</emu-grammar>
+      <emu-alg>
+        1. Return ? IteratorDestructuringAssignmentEvaluation of |Elision| with argument _iteratorRecord_.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. If |Elision| is present, then
+          1. Perform ? IteratorDestructuringAssignmentEvaluation of |Elision| with argument _iteratorRecord_.
+        1. Return ? IteratorBindingInitialization of |BindingRestElement| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision `]`</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorBindingInitialization of |BindingElementList| with arguments _iteratorRecord_ and _environment_.
+        1. Return ? IteratorDestructuringAssignmentEvaluation of |Elision| with argument _iteratorRecord_.
+      </emu-alg>
+      <emu-grammar>ArrayBindingPattern : `[` BindingElementList `,` Elision? BindingRestElement `]`</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorBindingInitialization of |BindingElementList| with arguments _iteratorRecord_ and _environment_.
+        1. If |Elision| is present, then
+          1. Perform ? IteratorDestructuringAssignmentEvaluation of |Elision| with argument _iteratorRecord_.
+        1. Return ? IteratorBindingInitialization of |BindingRestElement| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>BindingElementList : BindingElementList `,` BindingElisionElement</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorBindingInitialization of |BindingElementList| with arguments _iteratorRecord_ and _environment_.
+        1. Return ? IteratorBindingInitialization of |BindingElisionElement| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>BindingElisionElement : Elision BindingElement</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorDestructuringAssignmentEvaluation of |Elision| with argument _iteratorRecord_.
+        1. Return ? IteratorBindingInitialization of |BindingElement| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
       <emu-grammar>SingleNameBinding : BindingIdentifier Initializer?</emu-grammar>
       <emu-alg>
         1. Let _bindingId_ be StringValue of |BindingIdentifier|.
         1. Let _lhs_ be ? ResolveBinding(_bindingId_, _environment_).
+        1. Let _v_ be *undefined*.
         1. If _iteratorRecord_.[[Done]] is *false*, then
-          1. Let _next_ be IteratorStep(_iteratorRecord_).
+          1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
           1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
           1. ReturnIfAbrupt(_next_).
           1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
           1. Else,
-            1. Let _v_ be IteratorValue(_next_).
+            1. Set _v_ to Completion(IteratorValue(_next_)).
             1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
             1. ReturnIfAbrupt(_v_).
-        1. If _iteratorRecord_.[[Done]] is *true*, let _v_ be *undefined*.
         1. If |Initializer| is present and _v_ is *undefined*, then
           1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
-            1. Set _v_ to the result of performing NamedEvaluation for |Initializer| with argument _bindingId_.
+            1. Set _v_ to ? NamedEvaluation of |Initializer| with argument _bindingId_.
           1. Else,
             1. Let _defaultValue_ be the result of evaluating |Initializer|.
             1. Set _v_ to ? GetValue(_defaultValue_).
         1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _v_).
-        1. Return InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
+        1. Return ? InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
+      </emu-alg>
+      <emu-grammar>BindingElement : BindingPattern Initializer?</emu-grammar>
+      <emu-alg>
+        1. Let _v_ be *undefined*.
+        1. If _iteratorRecord_.[[Done]] is *false*, then
+          1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
+          1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+          1. ReturnIfAbrupt(_next_).
+          1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+          1. Else,
+            1. Set _v_ to Completion(IteratorValue(_next_)).
+            1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+            1. ReturnIfAbrupt(_v_).
+        1. If |Initializer| is present and _v_ is *undefined*, then
+          1. Let _defaultValue_ be the result of evaluating |Initializer|.
+          1. Set _v_ to ? GetValue(_defaultValue_).
+        1. Return ? BindingInitialization of |BindingPattern| with arguments _v_ and _environment_.
       </emu-alg>
       <emu-grammar>BindingRestElement : `...` BindingIdentifier</emu-grammar>
       <emu-alg>
@@ -1799,21 +2032,88 @@ contributors: Ron Buckton, Ecma International
         1. Let _n_ be 0.
         1. Repeat,
           1. If _iteratorRecord_.[[Done]] is *false*, then
-            1. Let _next_ be IteratorStep(_iteratorRecord_).
+            1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
             1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
             1. ReturnIfAbrupt(_next_).
             1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
           1. If _iteratorRecord_.[[Done]] is *true*, then
             1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _A_).
-            1. Return InitializeReferencedBinding(_lhs_, _A_<ins>, ~normal~</ins>).
-          1. Let _nextValue_ be IteratorValue(_next_).
+            1. Return ? InitializeReferencedBinding(_lhs_, _A_<ins>, ~normal~</ins>).
+          1. Let _nextValue_ be Completion(IteratorValue(_next_)).
           1. If _nextValue_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
           1. ReturnIfAbrupt(_nextValue_).
           1. Perform ! CreateDataPropertyOrThrow(_A_, ! ToString(𝔽(_n_)), _nextValue_).
           1. Set _n_ to _n_ + 1.
       </emu-alg>
-
+      <emu-grammar>BindingRestElement : `...` BindingPattern</emu-grammar>
+      <emu-alg>
+        1. Let _A_ be ! ArrayCreate(0).
+        1. Let _n_ be 0.
+        1. Repeat,
+          1. If _iteratorRecord_.[[Done]] is *false*, then
+            1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
+            1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+            1. ReturnIfAbrupt(_next_).
+            1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+          1. If _iteratorRecord_.[[Done]] is *true*, then
+            1. Return ? BindingInitialization of |BindingPattern| with arguments _A_ and _environment_.
+          1. Let _nextValue_ be Completion(IteratorValue(_next_)).
+          1. If _nextValue_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+          1. ReturnIfAbrupt(_nextValue_).
+          1. Perform ! CreateDataPropertyOrThrow(_A_, ! ToString(𝔽(_n_)), _nextValue_).
+          1. Set _n_ to _n_ + 1.
+      </emu-alg>
+      <emu-grammar>FormalParameters : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return ~unused~.
+      </emu-alg>
+      <emu-grammar>FormalParameters : FormalParameterList `,` FunctionRestParameter</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorBindingInitialization of |FormalParameterList| with arguments _iteratorRecord_ and _environment_.
+        1. Return ? IteratorBindingInitialization of |FunctionRestParameter| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>FormalParameterList : FormalParameterList `,` FormalParameter</emu-grammar>
+      <emu-alg>
+        1. Perform ? IteratorBindingInitialization of |FormalParameterList| with arguments _iteratorRecord_ and _environment_.
+        1. Return ? IteratorBindingInitialization of |FormalParameter| with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>ArrowParameters : BindingIdentifier</emu-grammar>
+      <emu-alg>
+        1. Let _v_ be *undefined*.
+        1. Assert: _iteratorRecord_.[[Done]] is *false*.
+        1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
+        1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+        1. ReturnIfAbrupt(_next_).
+        1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+        1. Else,
+          1. Set _v_ to Completion(IteratorValue(_next_)).
+          1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+          1. ReturnIfAbrupt(_v_).
+        1. Return ? BindingInitialization of |BindingIdentifier| with arguments _v_ and _environment_.
+      </emu-alg>
+      <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
+      <emu-alg>
+        1. Let _formals_ be the |ArrowFormalParameters| that is covered by |CoverParenthesizedExpressionAndArrowParameterList|.
+        1. Return ? IteratorBindingInitialization of _formals_ with arguments _iteratorRecord_ and _environment_.
+      </emu-alg>
+      <emu-grammar>
+        AsyncArrowBindingIdentifier : BindingIdentifier
+      </emu-grammar>
+      <emu-alg>
+        1. Let _v_ be *undefined*.
+        1. Assert: _iteratorRecord_.[[Done]] is *false*.
+        1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
+        1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+        1. ReturnIfAbrupt(_next_).
+        1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+        1. Else,
+          1. Set _v_ to Completion(IteratorValue(_next_)).
+          1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
+          1. ReturnIfAbrupt(_v_).
+        1. Return ? BindingInitialization of |BindingIdentifier| with arguments _v_ and _environment_.
+      </emu-alg>
     </emu-clause>
+
   </emu-clause>
 </emu-clause>
 
@@ -1929,49 +2229,90 @@ contributors: Ron Buckton, Ecma International
         <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by |UsingDeclaration| and |UsingStatement| that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
-        <emu-clause id="sec-declarative-environment-records-initializebinding-n-v">
-          <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-          <p>The InitializeBinding concrete method of a declarative Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+        <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
+          <h1>
+            InitializeBinding (
+              _N_: a String,
+              _V_: an ECMAScript language value,
+              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+            ): a normal completion containing ~unused~
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a declarative Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist.</dd>
+          </dl>
           <emu-alg>
             1. Assert: _envRec_ must have an uninitialized binding for _N_.
             1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _V_, _hint_).</ins>
             1. Set the bound value for _N_ in _envRec_ to _V_.
             1. <emu-not-ref>Record</emu-not-ref> that the binding for _N_ in _envRec_ has been initialized.
-            1. Return NormalCompletion(~empty~).
+            1. Return ~unused~.
           </emu-alg>
         </emu-clause>
       </emu-clause>
 
       <emu-clause id="sec-object-environment-records">
         <h1>Object Environment Records</h1>
-        <emu-clause id="sec-object-environment-records-initializebinding-n-v">
-          <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-          <p>The InitializeBinding concrete method of an object Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. It performs the following steps when called:</p>
+
+        <emu-clause id="sec-object-environment-records-initializebinding-n-v" type="concrete method">
+          <h1>
+            InitializeBinding (
+              _N_: a String,
+              _V_: an ECMAScript language value,
+              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+            ): either a normal completion containing ~unused~ or a throw completion
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>an object Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_.</dd>
+          </dl>
           <emu-alg>
-            1. Assert: _hint_ is ~normal~.
-            1. Return ? _envRec_.SetMutableBinding(_N_, _V_, *false*).
+            1. <ins>Assert: _hint_ is ~normal~.</ins>
+            1. Perform ? <emu-meta effects="user-code">_envRec_.SetMutableBinding</emu-meta>(_N_, _V_, *false*).
+            1. Return ~unused~.
           </emu-alg>
           <emu-note>
             <p>In this specification, all uses of CreateMutableBinding for object Environment Records are immediately followed by a call to InitializeBinding for the same name. Hence, this specification does not explicitly track the initialization state of bindings in object Environment Records.</p>
           </emu-note>
         </emu-clause>
+
       </emu-clause>
 
       <emu-clause id="sec-global-environment-records" oldids="global-environment">
         <h1>Global Environment Records</h1>
-        <emu-clause id="sec-global-environment-records-initializebinding-n-v">
-          <h1>InitializeBinding ( _N_, _V_<ins>, _hint_</ins> )</h1>
-          <p>The InitializeBinding concrete method of a global Environment Record _envRec_ takes arguments _N_ (a String)<del> and</del><ins>,</ins> _V_ (an ECMAScript language value)<ins>, and _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~)</ins>. It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist. It performs the following steps when called:</p>
+
+        <emu-clause id="sec-global-environment-records-initializebinding-n-v" type="concrete method">
+          <h1>
+            InitializeBinding (
+              _N_: a String,
+              _V_: an ECMAScript language value,
+              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+            ): either a normal completion containing ~unused~ or a throw completion
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a global Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist.</dd>
+          </dl>
           <emu-alg>
             1. Let _DclRec_ be _envRec_.[[DeclarativeRecord]].
-            1. If _DclRec_.HasBinding(_N_) is *true*, then
-              1. Return _DclRec_.InitializeBinding(_N_, _V_, _hint_).
+            1. If ! _DclRec_.HasBinding(_N_) is *true*, then
+              1. Return ! _DclRec_.InitializeBinding(_N_, _V_<ins>, _hint_</ins>).
             1. Assert: If the binding exists, it must be in the object Environment Record.
-            1. Assert: _hint_ is ~normal~.
+            1. <ins>Assert: _hint_ is ~normal~.</ins>
             1. Let _ObjRec_ be _envRec_.[[ObjectRecord]].
-            1. Return ? _ObjRec_.InitializeBinding(_N_, _V_).
+            1. Return ? <emu-meta effects="user-code">_ObjRec_.InitializeBinding</emu-meta>(_N_, _V_).
           </emu-alg>
         </emu-clause>
+
       </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -2025,7 +2366,7 @@ contributors: Ron Buckton, Ecma International
         1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
         1. Set the running execution context's LexicalEnvironment to _blockEnv_.
         1. Let _blockValue_ be the result of evaluating |StatementList|.
-        1. <ins>Set _blockValue_ to the result of performing DisposeResources(_blockEnv_, _blockValue_).</ins>
+        1. <ins>Set _blockValue_ to DisposeResources(_blockEnv_, _blockValue_).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
         1. Return _blockValue_.
       </emu-alg>
@@ -2051,7 +2392,7 @@ contributors: Ron Buckton, Ecma International
 
         <ins>
         UsingDeclaration[In, Yield, Await] :
-          `using` [no LineTerminator here] `const` BindingList[?In, ?Yield, ?Await, +Using] `;`
+          `using` [no LineTerminator here] BindingList[?In, ?Yield, ?Await, +Using] `;`
         </ins>
 
         BindingList[In, Yield, Await, <ins>Using</ins>] :
@@ -2108,15 +2449,15 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Let _next_ be the result of <del>evaluating |BindingList|</del><ins>BindingEvaluation for |BindingList| with parameter ~normal~</ins>.
           1. ReturnIfAbrupt(_next_).
-          1. Return NormalCompletion(~empty~).
+          1. Return ~empty~.
         </emu-alg>
 
         <ins class="block">
         <emu-grammar>UsingDeclaration : `using` BindingList `;`</emu-grammar>
         <emu-alg>
-          1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter ~sync-dispose~.
+          1. Let _next_ be BindingEvaluation of |BindingList| with parameter ~sync-dispose~.
           1. ReturnIfAbrupt(_next_).
-          1. Return NormalCompletion(~empty~).
+          1. Return ~empty~.
         </emu-alg>
         </ins>
 
@@ -2130,7 +2471,8 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>LexicalBinding : BindingIdentifier</emu-grammar>
         <emu-alg>
           1. Let _lhs_ be ResolveBinding(StringValue of |BindingIdentifier|).
-          1. Return InitializeReferencedBinding(_lhs_, *undefined*).
+          1. Perform ? InitializeReferencedBinding(_lhs_, *undefined*).
+          1. Return ~empty~.
         </emu-alg>
         <emu-note>
           <p>A static semantics rule ensures that this form of |LexicalBinding| never occurs in a `const` declaration.</p>
@@ -2138,39 +2480,45 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>LexicalBinding : BindingIdentifier Initializer</emu-grammar>
         <emu-alg>
           1. Let _bindingId_ be StringValue of |BindingIdentifier|.
-          1. Let _lhs_ be ResolveBinding(_bindingId_).
+          1. Let _lhs_ be Completion(ResolveBinding(_bindingId_)).
           1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
-            1. Let _value_ be NamedEvaluation of |Initializer| with argument _bindingId_.
+            1. Let _value_ be ? NamedEvaluation of |Initializer| with argument _bindingId_.
           1. Else,
             1. Let _rhs_ be the result of evaluating |Initializer|.
             1. Let _value_ be ? GetValue(_rhs_).
-          1. Return InitializeReferencedBinding(_lhs_, _value_).
+          1. Perform ? InitializeReferencedBinding(_lhs_, _value_).
+          1. Return ~empty~.
         </emu-alg>
         <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
         <emu-alg>
           1. Let _rhs_ be the result of evaluating |Initializer|.
           1. Let _value_ be ? GetValue(_rhs_).
           1. Let _env_ be the running execution context's LexicalEnvironment.
-          1. Return the result of performing BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.
+          1. Return ? BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.
         </emu-alg>
         </del>
       </emu-clause>
 
       <ins class="block">
-      <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation" aoid="BindingEvaluation" type="sdo">
-        <h1>Runtime Semantics: BindingEvaluation</h1>
-        <p>With parameter _hint_ (either ~normal~, ~sync-dispose~, or ~async-dispose~).</p>
+      <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation" type="sdo">
+        <h1>
+          Runtime Semantics: BindingEvaluation (
+            _hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~
+          ): either a normal completion containing ~unused~ or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-grammar>BindingList : BindingList `,` LexicalBinding</emu-grammar>
         <emu-alg>
-          1. Let _next_ be the result of BindingEvaluation for |BindingList| with parameter _hint_.
-          1. ReturnIfAbrupt(_next_).
-          1. Return the result of BindingEvaluation for |LexicalBinding| with parameter _hint_.
+          1. Perform ? BindingEvaluation of |BindingList| with parameter _hint_.
+          1. Perform ? BindingEvaluation of |LexicalBinding| with parameter _hint_.
+          1. Return ~unused~.
         </emu-alg>
         <emu-grammar>LexicalBinding : BindingIdentifier</emu-grammar>
         <emu-alg>
           1. Assert: _hint_ is ~normal~.
-          1. Let _lhs_ be ResolveBinding(StringValue of |BindingIdentifier|).
-          1. Return InitializeReferencedBinding(_lhs_, *undefined*, ~normal~).
+          1. Let _lhs_ be ? ResolveBinding(StringValue of |BindingIdentifier|).
+          1. Return ? InitializeReferencedBinding(_lhs_, *undefined*, ~normal~).
         </emu-alg>
         <emu-note>
           <p>A static semantics rule ensures that this form of |LexicalBinding| never occurs in a `const` declaration.</p>
@@ -2178,13 +2526,13 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>LexicalBinding : BindingIdentifier Initializer</emu-grammar>
         <emu-alg>
           1. Let _bindingId_ be StringValue of |BindingIdentifier|.
-          1. Let _lhs_ be ResolveBinding(_bindingId_).
+          1. Let _lhs_ be ? ResolveBinding(_bindingId_).
           1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
             1. Let _value_ be NamedEvaluation of |Initializer| with argument _bindingId_.
           1. Else,
             1. Let _rhs_ be the result of evaluating |Initializer|.
             1. Let _value_ be ? GetValue(_rhs_).
-          1. Return InitializeReferencedBinding(_lhs_, _value_, _hint_).
+          1. Return ? InitializeReferencedBinding(_lhs_, _value_, _hint_).
         </emu-alg>
         <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
         <emu-alg>
@@ -2192,7 +2540,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _rhs_ be the result of evaluating |Initializer|.
           1. Let _value_ be ? GetValue(_rhs_).
           1. Let _env_ be the running execution context's LexicalEnvironment.
-          1. Return the result of performing BindingInitialization for |BindingPattern| using _value_ and _env_ as the arguments.
+          1. Return ? BindingInitialization of |BindingPattern| with arguments _value_ and _env_.
         </emu-alg>
         <emu-grammar>LexicalBinding : VoidBinding Initializer</emu-grammar>
         <emu-alg>
@@ -2200,33 +2548,56 @@ contributors: Ron Buckton, Ecma International
           1. Let _expr_ be the result of evaluating |Initializer|.
           1. Let _value_ be ? GetValue(_expr_).
           1. Let _env_ be the running execution context's LexicalEnvironment.
-          1. Return AddDisposableResource(_env_, _value_, _hint_).
+          1. Return ? AddDisposableResource(_env_, _value_, _hint_).
         </emu-alg>
       </emu-clause>
       </ins>
     </emu-clause>
+
     <emu-clause id="sec-destructuring-binding-patterns">
       <h1>Destructuring Binding Patterns</h1>
-      <emu-clause id="sec-destructuring-binding-patterns-runtime-semantics-restbindinginitialization" type="sdo" aoid="RestBindingInitialization">
-        <h1>Runtime Semantics: RestBindingInitialization</h1>
-        <p>With parameters _value_, _environment_, and _excludedNames_.</p>
 
+      <emu-clause id="sec-destructuring-binding-patterns-runtime-semantics-restbindinginitialization" type="sdo">
+        <h1>
+          Runtime Semantics: RestBindingInitialization (
+            _value_: unknown,
+            _environment_: unknown,
+            _excludedNames_: unknown,
+          ): either a normal completion containing ~unused~ or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-grammar>BindingRestProperty : `...` BindingIdentifier</emu-grammar>
         <emu-alg>
           1. Let _lhs_ be ? ResolveBinding(StringValue of |BindingIdentifier|, _environment_).
-          1. Let _restObj_ be ! OrdinaryObjectCreate(%Object.prototype%).
+          1. Let _restObj_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Perform ? CopyDataProperties(_restObj_, _value_, _excludedNames_).
           1. If _environment_ is *undefined*, return PutValue(_lhs_, _restObj_).
-          1. Return InitializeReferencedBinding(_lhs_, _restObj_<ins>, ~normal~</ins>).
+          1. Return ? InitializeReferencedBinding(_lhs_, _restObj_<ins>, ~normal~</ins>).
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-runtime-semantics-keyedbindinginitialization" type="sdo" aoid="KeyedBindingInitialization">
-        <h1>Runtime Semantics: KeyedBindingInitialization</h1>
-        <p>With parameters _value_, _environment_, and _propertyName_.</p>
+      <emu-clause id="sec-runtime-semantics-keyedbindinginitialization" type="sdo">
+        <h1>
+          Runtime Semantics: KeyedBindingInitialization (
+            _value_: unknown,
+            _environment_: unknown,
+            _propertyName_: unknown,
+          ): either a normal completion containing ~unused~ or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-note>
           <p>When *undefined* is passed for _environment_ it indicates that a PutValue operation should be used to assign the initialization value. This is the case for formal parameter lists of non-strict functions. In that case the formal parameter bindings are preinitialized in order to deal with the possibility of multiple parameters with the same name.</p>
         </emu-note>
+        <emu-grammar>BindingElement : BindingPattern Initializer?</emu-grammar>
+        <emu-alg>
+          1. Let _v_ be ? GetV(_value_, _propertyName_).
+          1. If |Initializer| is present and _v_ is *undefined*, then
+            1. Let _defaultValue_ be the result of evaluating |Initializer|.
+            1. Set _v_ to ? GetValue(_defaultValue_).
+          1. Return ? BindingInitialization of |BindingPattern| with arguments _v_ and _environment_.
+        </emu-alg>
         <emu-grammar>SingleNameBinding : BindingIdentifier Initializer?</emu-grammar>
         <emu-alg>
           1. Let _bindingId_ be StringValue of |BindingIdentifier|.
@@ -2234,12 +2605,12 @@ contributors: Ron Buckton, Ecma International
           1. Let _v_ be ? GetV(_value_, _propertyName_).
           1. If |Initializer| is present and _v_ is *undefined*, then
             1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
-              1. Set _v_ to the result of performing NamedEvaluation for |Initializer| with argument _bindingId_.
+              1. Set _v_ to ? NamedEvaluation for |Initializer| with argument _bindingId_.
             1. Else,
               1. Let _defaultValue_ be the result of evaluating |Initializer|.
               1. Set _v_ to ? GetValue(_defaultValue_).
           1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _v_).
-          1. Return InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
+          1. Return ? InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
         </emu-alg>
       </emu-clause>
     </emu-clause>
@@ -2292,12 +2663,31 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-iteration-statements">
     <h1>Iteration Statements</h1>
 
-    <emu-clause id="sec-iteration-statements-semantics">
-      <h1>Semantics</h1>
-      <emu-clause id="sec-runtime-semantics-loopevaluation" type="sdo" aoid="LoopEvaluation">
-        <h1>Runtime Semantics: LoopEvaluation</h1>
-        <p>With parameter _labelSet_.</p>
-        <emu-grammar>IterationStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
+    <emu-clause id="sec-for-statement">
+      <h1>The `for` Statement</h1>
+
+      <emu-clause id="sec-runtime-semantics-forloopevaluation" oldids="sec-for-statement-runtime-semantics-labelledevaluation" type="sdo">
+        <h1>
+          Runtime Semantics: ForLoopEvaluation (
+            _labelSet_: unknown,
+          ): either a normal completion containing an ECMAScript language value or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-grammar>ForStatement : `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+        <emu-alg>
+          1. If the first |Expression| is present, then
+            1. Let _exprRef_ be the result of evaluating the first |Expression|.
+            1. Perform ? GetValue(_exprRef_).
+          1. Return ? ForBodyEvaluation(the second |Expression|, the third |Expression|, |Statement|, &laquo; &raquo;, _labelSet_).
+        </emu-alg>
+        <emu-grammar>ForStatement : `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement</emu-grammar>
+        <emu-alg>
+          1. Let _varDcl_ be the result of evaluating |VariableDeclarationList|.
+          1. ReturnIfAbrupt(_varDcl_).
+          1. Return ? ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, &laquo; &raquo;, _labelSet_).
+        </emu-alg>
+        <emu-grammar>ForStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
         <emu-alg>
           1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
           1. Let _loopEnv_ be NewDeclarativeEnvironment(_oldEnv_).
@@ -2311,23 +2701,29 @@ contributors: Ron Buckton, Ecma International
           1. Set the running execution context's LexicalEnvironment to _loopEnv_.
           1. Let _forDcl_ be the result of evaluating |LexicalDeclaration|.
           1. If _forDcl_ is an abrupt completion, then
-            1. <ins>Set _forDcl_ to be DisposeResources(_loopEnv_, _forDcl_).</ins>
+            1. <ins>Set _forDcl_ to DisposeResources(_loopEnv_, _forDcl_).</ins>
             1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-            1. Return Completion(_forDcl_).
-          1. If _isConst_ is *false*, let _perIterationLets_ be _boundNames_; otherwise let _perIterationLets_ be &laquo; &raquo;.
-          1. Let _bodyResult_ be ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, _perIterationLets_, _labelSet_).
-          1. <ins>Set _bodyResult_ to be DisposeResources(_loopEnv_, _bodyResult_).</ins>
+            1. Return ? _forDcl_.
+          1. If _isConst_ is *false*, let _perIterationLets_ be _boundNames_; otherwise let _perIterationLets_ be a new empty List.
+          1. Let _bodyResult_ be Completion(ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, _perIterationLets_, _labelSet_)).
+          1. <ins>Set _bodyResult_ to DisposeResources(_loopEnv_, _bodyResult_).</ins>
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-          1. Return Completion(_bodyResult_).
+          1. Return ? _bodyResult_.
         </emu-alg>
       </emu-clause>
-    </emu-clause>
 
-    <emu-clause id="sec-for-statement">
-      <h1>The `for` Statement</h1>
-      <emu-clause id="sec-forbodyevaluation" aoid="ForBodyEvaluation">
-        <h1>ForBodyEvaluation ( _test_, _increment_, _stmt_, _perIterationBindings_, _labelSet_ )</h1>
-        <p>The abstract operation ForBodyEvaluation takes arguments _test_, _increment_, _stmt_, _perIterationBindings_, and _labelSet_. It performs the following steps when called:</p>
+      <emu-clause id="sec-forbodyevaluation" type="abstract operation">
+        <h1>
+          ForBodyEvaluation (
+            _test_: unknown,
+            _increment_: unknown,
+            _stmt_: unknown,
+            _perIterationBindings_: unknown,
+            _labelSet_: unknown,
+          ): either a normal completion containing an ECMAScript language value or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
           1. Let _V_ be *undefined*.
           1. <del>Perform ? CreatePerIterationEnvironment(_perIterationBindings_).</del>
@@ -2337,15 +2733,15 @@ contributors: Ron Buckton, Ecma International
               1. Let _testRef_ be the result of evaluating _test_.
               1. <del>Let _testValue_ be ? GetValue(_testRef_).</del>
               1. <ins>Let _testValue_ be ? DisposeIfAbrupt(GetValue(_testRef_), _thisIterationEnv_).</ins>
-              1. <del>If ! ToBoolean(_testValue_) is *false*, return NormalCompletion(_V_).</del>
-              1. <ins>If ! ToBoolean(_testValue_) is *false*, return DisposeResources(_thisIterationEnv_, NormalCompletion(_V_)).</ins>
+              1. <del>If ToBoolean(_testValue_) is *false*, return _V_.</del>
+              1. <ins>If ToBoolean(_testValue_) is *false*, return DisposeResources(_thisIterationEnv_, _V_).</ins>
             1. Let _result_ be the result of evaluating _stmt_.
-            1. <del>If LoopContinues(_result_, _labelSet_) is *false*, return Completion(UpdateEmpty(_result_, _V_)).</del>
-            1. <ins>If LoopContinues(_result_, _labelSet_) is *false*, return DisposeResources(_thisIterationEnv_, Completion(UpdateEmpty(_result_, _V_))).</ins>
+            1. <del>If LoopContinues(_result_, _labelSet_) is *false*, return ? UpdateEmpty(_result_, _V_).</del>
+            1. <ins>If LoopContinues(_result_, _labelSet_) is *false*, return ? DisposeResources(_thisIterationEnv_, UpdateEmpty(_result_, _V_)).</ins>
             1. If _result_.[[Value]] is not ~empty~, set _V_ to _result_.[[Value]].
             1. <del>Perform ? CreatePerIterationEnvironment(_perIterationBindings_).</del>
             1. <ins>Perform ? DisposeResources(_thisIterationEnv_, *undefined*).</ins>
-            1. <ins>Set _thisIterationEnv_ to be ? CreatePerIterationEnvironment(_perIterationBindings_).</ins>
+            1. <ins>Set _thisIterationEnv_ to ? CreatePerIterationEnvironment(_perIterationBindings_).</ins>
             1. If _increment_ is not ~[empty]~, then
               1. Let _incRef_ be the result of evaluating _increment_.
               1. <del>Perform ? GetValue(_incRef_).</del>
@@ -2353,9 +2749,14 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-createperiterationenvironment" aoid="CreatePerIterationEnvironment">
-        <h1>CreatePerIterationEnvironment ( _perIterationBindings_ )</h1>
-        <p>The abstract operation CreatePerIterationEnvironment takes argument _perIterationBindings_. It performs the following steps when called:</p>
+      <emu-clause id="sec-createperiterationenvironment" type="abstract operation">
+        <h1>
+          CreatePerIterationEnvironment (
+            _perIterationBindings_: unknown,
+          ): either a normal completion containing either a Declarative Environment Record or ~unused~ or a throw completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
           1. If _perIterationBindings_ has any elements, then
             1. Let _lastIterationEnv_ be the running execution context's LexicalEnvironment.
@@ -2368,10 +2769,11 @@ contributors: Ron Buckton, Ecma International
               1. Perform _thisIterationEnv_.InitializeBinding(_bn_, _lastValue_).
             1. Set the running execution context's LexicalEnvironment to _thisIterationEnv_.
             1. <ins>Return _thisIterationEnv_.</ins>
-          1. Return *undefined*.
+          1. Return ~unused~.
         </emu-alg>
       </emu-clause>
     </emu-clause>
+
     <emu-clause id="sec-for-in-and-for-of-statements">
       <h1>The `for-in`, `for-of`, and `for-await-of` Statements</h1>
       <h2>Syntax</h2>
@@ -2389,7 +2791,7 @@ contributors: Ron Buckton, Ecma International
 
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
           LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-          <ins>[+Using] `using` [no LineTerminator here] `const` ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using] `using` [no LineTerminator here] ForBinding[?Yield, ?Await, +Using]</ins>
 
         ForBinding[Yield, Await, <ins>Using</ins>] :
           BindingIdentifier[?Yield, ?Await]
@@ -2397,9 +2799,16 @@ contributors: Ron Buckton, Ecma International
           <ins>[~Using] BindingPattern[?Yield, ?Await]</ins>
       </emu-grammar>
 
-      <emu-clause id="sec-runtime-semantics-forinofheadevaluation" oldids="sec-runtime-semantics-forin-div-ofheadevaluation-tdznames-expr-iterationkind" aoid="ForIn/OfHeadEvaluation">
-        <h1>ForIn/OfHeadEvaluation ( _uninitializedBoundNames_, _expr_, _iterationKind_ )</h1>
-        <p>The abstract operation ForIn/OfHeadEvaluation takes arguments _uninitializedBoundNames_, _expr_, and _iterationKind_ (either ~enumerate~, ~iterate~, or ~async-iterate~). It performs the following steps when called:</p>
+      <emu-clause id="sec-runtime-semantics-forinofheadevaluation" type="abstract operation" oldids="sec-runtime-semantics-forin-div-ofheadevaluation-tdznames-expr-iterationkind">
+        <h1>
+          ForIn/OfHeadEvaluation (
+            _uninitializedBoundNames_: unknown,
+            _expr_: unknown,
+            _iterationKind_: ~enumerate~, ~iterate~, or ~async-iterate~,
+          ): either a normal completion containing an Iterator Record or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
           1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
           1. If _uninitializedBoundNames_ is not an empty List, then
@@ -2409,30 +2818,42 @@ contributors: Ron Buckton, Ecma International
               1. Perform ! _newEnv_.CreateMutableBinding(_name_, *false*).
             1. Set the running execution context's LexicalEnvironment to _newEnv_.
           1. <ins>Else,</ins>
-            1. <ins>Set _newEnv_ to be *undefined*.</ins>
+            1. <ins>Let _newEnv_ be *undefined*.</ins>
           1. Let _exprRef_ be the result of evaluating _expr_.
-          1. <ins>Set _exprRef_ to be DisposeResources(_newEnv_, _exprRef_).</ins>
+          1. <ins>Set _exprRef_ to DisposeResources(_newEnv_, _exprRef_).</ins>
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
           1. Let _exprValue_ be ? GetValue(_exprRef_).
           1. If _iterationKind_ is ~enumerate~, then
             1. If _exprValue_ is *undefined* or *null*, then
-              1. Return Completion { [[Type]]: ~break~, [[Value]]: ~empty~, [[Target]]: ~empty~ }.
+              1. Return Completion Record { [[Type]]: ~break~, [[Value]]: ~empty~, [[Target]]: ~empty~ }.
             1. Let _obj_ be ! ToObject(_exprValue_).
-            1. Let _iterator_ be ? EnumerateObjectProperties(_obj_).
+            1. Let _iterator_ be EnumerateObjectProperties(_obj_).
             1. Let _nextMethod_ be ! GetV(_iterator_, *"next"*).
-            1. Return the Record { [[Iterator]]: _iterator_, [[NextMethod]]: _nextMethod_, [[Done]]: *false* }.
+            1. Return the Iterator Record { [[Iterator]]: _iterator_, [[NextMethod]]: _nextMethod_, [[Done]]: *false* }.
           1. Else,
             1. Assert: _iterationKind_ is ~iterate~ or ~async-iterate~.
-            1. If _iterationKind_ is ~async-iterate~, let _iteratorHint_ be ~async-dispose~.
-            1. Else, let _iteratorHint_ be ~sync-dispose~.
+            1. If _iterationKind_ is ~async-iterate~, let _iteratorHint_ be ~async~.
+            1. Else, let _iteratorHint_ be ~sync~.
             1. Return ? GetIterator(_exprValue_, _iteratorHint_).
         </emu-alg>
       </emu-clause>
-      <emu-clause id="sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset" aoid="ForIn/OfBodyEvaluation">
-        <h1>ForIn/OfBodyEvaluation ( _lhs_, _stmt_, _iteratorRecord_, _iterationKind_, _lhsKind_, _labelSet_ [ , _iteratorKind_ ] )</h1>
-        <p>The abstract operation ForIn/OfBodyEvaluation takes arguments _lhs_, _stmt_, _iteratorRecord_, _iterationKind_, _lhsKind_ (either ~assignment~, ~varBinding~ or ~lexicalBinding~), and _labelSet_ and optional argument _iteratorKind_ (either ~sync-dispose~ or ~async-dispose~). It performs the following steps when called:</p>
+
+      <emu-clause id="sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset" type="abstract operation">
+        <h1>
+          ForIn/OfBodyEvaluation (
+            _lhs_: unknown,
+            _stmt_: unknown,
+            _iteratorRecord_: unknown,
+            _iterationKind_: unknown,
+            _lhsKind_: ~assignment~, ~varBinding~, or ~lexicalBinding~,
+            _labelSet_: unknown,
+            optional _iteratorKind_: ~sync~ or ~async~,
+          ): either a normal completion containing an ECMAScript language value or an abrupt completion
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
-          1. If _iteratorKind_ is not present, set _iteratorKind_ to ~sync-dispose~.
+          1. If _iteratorKind_ is not present, set _iteratorKind_ to ~sync~.
           1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
           1. Let _V_ be *undefined*.
           1. Let _destructuring_ be IsDestructuring of _lhs_.
@@ -2441,10 +2862,10 @@ contributors: Ron Buckton, Ecma International
             1. Let _assignmentPattern_ be the |AssignmentPattern| that is covered by _lhs_.
           1. Repeat,
             1. Let _nextResult_ be ? Call(_iteratorRecord_.[[NextMethod]], _iteratorRecord_.[[Iterator]]).
-            1. If _iteratorKind_ is ~async-dispose~, set _nextResult_ to ? Await(_nextResult_).
+            1. If _iteratorKind_ is ~async~, set _nextResult_ to ? Await(_nextResult_).
             1. If Type(_nextResult_) is not Object, throw a *TypeError* exception.
             1. Let _done_ be ? IteratorComplete(_nextResult_).
-            1. If _done_ is *true*, return NormalCompletion(_V_).
+            1. If _done_ is *true*, return _V_.
             1. Let _nextValue_ be ? IteratorValue(_nextResult_).
             1. If _lhsKind_ is either ~assignment~ or ~varBinding~, then
               1. If _destructuring_ is *false*, then
@@ -2454,7 +2875,7 @@ contributors: Ron Buckton, Ecma International
               1. Assert: _lhsKind_ is ~lexicalBinding~.
               1. Assert: _lhs_ is a |ForDeclaration|.
               1. Let _iterationEnv_ be NewDeclarativeEnvironment(_oldEnv_).
-              1. Perform ForDeclarationBindingInstantiation for _lhs_ passing _iterationEnv_ as the argument.
+              1. Perform ForDeclarationBindingInstantiation of _lhs_ with argument _iterationEnv_.
               1. Set the running execution context's LexicalEnvironment to _iterationEnv_.
               1. If _destructuring_ is *false*, then
                 1. Assert: _lhs_ binds a single name.
@@ -2464,38 +2885,38 @@ contributors: Ron Buckton, Ecma International
               1. If _lhsRef_ is an abrupt completion, then
                 1. Let _status_ be _lhsRef_.
               1. Else if _lhsKind_ is ~lexicalBinding~, then
-                1. Let _status_ be InitializeReferencedBinding(_lhsRef_, _nextValue_).
+                1. Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_)).
               1. Else,
-                1. Let _status_ be PutValue(_lhsRef_, _nextValue_).
+                1. Let _status_ be Completion(PutValue(_lhsRef_, _nextValue_)).
             1. Else,
               1. If _lhsKind_ is ~assignment~, then
-                1. Let _status_ be DestructuringAssignmentEvaluation of _assignmentPattern_ with argument _nextValue_.
+                1. Let _status_ be Completion(DestructuringAssignmentEvaluation of _assignmentPattern_ with argument _nextValue_).
               1. Else if _lhsKind_ is ~varBinding~, then
                 1. Assert: _lhs_ is a |ForBinding|.
-                1. Let _status_ be BindingInitialization of _lhs_ with arguments _nextValue_ and *undefined*.
+                1. Let _status_ be Completion(BindingInitialization of _lhs_ with arguments _nextValue_ and *undefined*).
               1. Else,
                 1. Assert: _lhsKind_ is ~lexicalBinding~.
                 1. Assert: _lhs_ is a |ForDeclaration|.
-                1. Let _status_ be ForDeclarationBindingInitialization of _lhs_ with arguments _nextValue_ and _iterationEnv_.
+                1. Let _status_ be Completion(ForDeclarationBindingInitialization of _lhs_ with arguments _nextValue_ and _iterationEnv_).
             1. If _status_ is an abrupt completion, then
-              1. <ins>Set _status_ to be DisposeResources(_iterationEnv_, _status_)</ins>
+              1. <ins>Set _status_ to DisposeResources(_iterationEnv_, _status_).</ins>
               1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-              1. If _iteratorKind_ is ~async-dispose~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
+              1. If _iteratorKind_ is ~async~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
               1. If _iterationKind_ is ~enumerate~, then
-                1. Return _status_.
+                1. Return ? _status_.
               1. Else,
                 1. Assert: _iterationKind_ is ~iterate~.
                 1. Return ? IteratorClose(_iteratorRecord_, _status_).
             1. Let _result_ be the result of evaluating _stmt_.
-            1. <ins>Set _result_ to be DisposeResources(_iterationEnv_, _result_).</ins>
+            1. <ins>Set _result_ to DisposeResources(_iterationEnv_, _result_).</ins>
             1. Set the running execution context's LexicalEnvironment to _oldEnv_.
             1. If LoopContinues(_result_, _labelSet_) is *false*, then
               1. If _iterationKind_ is ~enumerate~, then
-                1. Return Completion(UpdateEmpty(_result_, _V_)).
+                1. Return ? UpdateEmpty(_result_, _V_).
               1. Else,
                 1. Assert: _iterationKind_ is ~iterate~.
-                1. Set _status_ to UpdateEmpty(_result_, _V_).
-                1. If _iteratorKind_ is ~async-dispose~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
+                1. Set _status_ to Completion(UpdateEmpty(_result_, _V_)).
+                1. If _iteratorKind_ is ~async~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
                 1. Return ? IteratorClose(_iteratorRecord_, _status_).
             1. If _result_.[[Value]] is not ~empty~, set _V_ to _result_.[[Value]].
         </emu-alg>
@@ -2505,7 +2926,8 @@ contributors: Ron Buckton, Ecma International
 
   <emu-clause id="sec-switch-statement">
     <h1>The `switch` Statement</h1>
-    <emu-clause id="sec-switch-statement-runtime-semantics-evaluation">
+
+    <emu-clause id="sec-switch-statement-runtime-semantics-evaluation" type="sdo">
       <h1>Runtime Semantics: Evaluation</h1>
       <emu-grammar>SwitchStatement : `switch` `(` Expression `)` CaseBlock</emu-grammar>
       <emu-alg>
@@ -2515,9 +2937,9 @@ contributors: Ron Buckton, Ecma International
         1. Let _blockEnv_ be NewDeclarativeEnvironment(_oldEnv_).
         1. Perform BlockDeclarationInstantiation(|CaseBlock|, _blockEnv_).
         1. Set the running execution context's LexicalEnvironment to _blockEnv_.
-        1. Let _R_ be CaseBlockEvaluation of |CaseBlock| with argument _switchValue_.
+        1. Let _R_ be Completion(CaseBlockEvaluation of |CaseBlock| with argument _switchValue_).
         1. <ins>Let _env_ be _blockEnv_'s LexicalEnvironment.</ins>
-        1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+        1. <ins>Set _R_ to DisposeResources(_env_, _R_).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
         1. Return _R_.
       </emu-alg>
@@ -2525,6 +2947,7 @@ contributors: Ron Buckton, Ecma International
         <p>No matter how control leaves the |SwitchStatement| the LexicalEnvironment is always restored to its former state.</p>
       </emu-note>
     </emu-clause>
+
   </emu-clause>
 
   <emu-clause id="sec-labelled-statements">
@@ -2729,82 +3152,65 @@ contributors: Ron Buckton, Ecma International
 
 <emu-clause id="sec-ecmascript-language-functions-and-classes">
   <h1>ECMAScript Language: Functions and Classes</h1>
+
   <emu-clause id="sec-function-definitions">
     <h1>Function Definitions</h1>
-    <emu-clause id="sec-runtime-semantics-evaluatefunctionbody" oldids="sec-function-definitions-runtime-semantics-evaluatebody" type="sdo" aoid="EvaluateFunctionBody">
-      <h1>Runtime Semantics: EvaluateFunctionBody</h1>
-      <p>With parameters _functionObject_ and _argumentsList_ (a List).</p>
+
+    <emu-clause id="sec-runtime-semantics-evaluatefunctionbody" oldids="sec-function-definitions-runtime-semantics-evaluatebody" type="sdo">
+      <h1>
+        Runtime Semantics: EvaluateFunctionBody (
+          _functionObject_: unknown,
+          _argumentsList_: a List,
+        ): either a normal completion containing an ECMAScript language value or an abrupt completion
+      </h1>
+      <dl class="header">
+      </dl>
       <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
       <emu-alg>
         1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
         1. <del>Return the result of evaluating |FunctionStatementList|.</del>
         1. <ins>Let _result_ be result of evaluating |FunctionStatementList|.</ins>
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return DisposeResources(_env_, _result_).</ins>
+        1. <ins>Return ? DisposeResources(_env_, _result_).</ins>
       </emu-alg>
     </emu-clause>
+
   </emu-clause>
-  <emu-clause id="sec-arrow-function-definitions">
-    <h1>Arrow Function Definitions</h1>
-    <emu-clause id="sec-runtime-semantics-evaluateconcisebody" oldids="sec-arrow-function-definitions-runtime-semantics-evaluatebody" type="sdo" aoid="EvaluateConciseBody">
-      <h1>Runtime Semantics: EvaluateConciseBody</h1>
-      <p>With parameters _functionObject_ and _argumentsList_ (a List).</p>
-      <emu-grammar>ConciseBody : ExpressionBody</emu-grammar>
-      <emu-alg>
-        1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
-        1. <del>Return the result of evaluating |ExpressionBody|.</del>
-        1. <ins>Let _result_ be result of evaluating |ExpressionBody|.</ins>
-        1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return DisposeResources(_env_, _result_).</ins>
-      </emu-alg>
-    </emu-clause>
-  </emu-clause>
+
   <emu-clause id="sec-class-definitions">
     <h1>Class Definitions</h1>
 
-    <emu-clause id="sec-runtime-semantics-evaluateclassstaticblockbody" type="sdo" aoid="EvaluateClassStaticBlockBody">
-      <h1>Runtime Semantics: EvaluateClassStaticBlockBody</h1>
-      <p>With parameter _functionObject_.</p>
+    <emu-clause id="sec-runtime-semantics-evaluateclassstaticblockbody" type="sdo">
+      <h1>
+        Runtime Semantics: EvaluateClassStaticBlockBody (
+          _functionObject_: unknown,
+        ): either a normal completion containing an ECMAScript language value or an abrupt completion
+      </h1>
+      <dl class="header">
+      </dl>
       <emu-grammar>ClassStaticBlockBody : ClassStaticBlockStatementList</emu-grammar>
       <emu-alg>
         1. Perform ? FunctionDeclarationInstantiation(_functionObject_, &laquo; &raquo;).
         1. <del>Return the result of evaluating |ClassStaticBlockStatementList|.</del>
         1. <ins>Let _result_ be result of evaluating |ClassStaticBlockStatementList|.</ins>
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return DisposeResources(_env_, _result_).</ins>
+        1. <ins>Return ? DisposeResources(_env_, _result_).</ins>
       </emu-alg>
     </emu-clause>
 
   </emu-clause>
+
   <emu-clause id="sec-tail-position-calls">
     <h1>Tail Position Calls</h1>
 
-    <emu-clause id="sec-isintailposition" type="abstract operation">
+    <emu-clause id="sec-static-semantics-hascallintailposition" type="sdo">
       <h1>
-        Static Semantics: IsInTailPosition (
-          _call_: a Parse Node,
-        )
+        Static Semantics: HasCallInTailPosition (
+          _call_: unknown,
+        ): a Boolean
       </h1>
       <dl class="header">
       </dl>
-      <emu-alg>
-        1. If the source code matching _call_ is non-strict code, return *false*.
-        1. If _call_ is not contained within a |FunctionBody|, |ConciseBody|, or |AsyncConciseBody|, return *false*.
-        1. Let _body_ be the |FunctionBody|, |ConciseBody|, or |AsyncConciseBody| that most closely contains _call_.
-        1. If _body_ is the |FunctionBody| of a |GeneratorBody|, return *false*.
-        1. If _body_ is the |FunctionBody| of an |AsyncFunctionBody|, return *false*.
-        1. If _body_ is the |FunctionBody| of an |AsyncGeneratorBody|, return *false*.
-        1. If _body_ is an |AsyncConciseBody|, return *false*.
-        1. Return the result of HasCallInTailPosition of _body_ with argument _call_.
-      </emu-alg>
-      <emu-note>
-        <p>Tail Position calls are only defined in strict mode code because of a common non-standard language extension (see <emu-xref href="#sec-addrestrictedfunctionproperties"></emu-xref>) that enables observation of the chain of caller contexts.</p>
-      </emu-note>
-    </emu-clause>
-
-    <emu-clause id="sec-static-semantics-hascallintailposition" type="sdo" aoid="HasCallInTailPosition">
-      <h1>Static Semantics: HasCallInTailPosition</h1>
-      <p>With parameter _call_.</p>
       <emu-note>
         <p>_call_ is a Parse Node that represents a specific range of source text. When the following algorithms compare _call_ to another Parse Node, it is a test of whether they represent the same source text.</p>
       </emu-note>
@@ -2825,9 +3231,11 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
 
         <emu-grammar>
-          FunctionStatementList : [empty]
+          FunctionStatementList :
+            [empty]
 
-          StatementListItem : Declaration
+          StatementListItem :
+            Declaration
 
           Statement :
             VariableStatement
@@ -2838,36 +3246,41 @@ contributors: Ron Buckton, Ecma International
             ThrowStatement
             DebuggerStatement
 
-          Block : `{` `}`
+          Block :
+            `{` `}`
 
-          ReturnStatement : `return` `;`
+          ReturnStatement :
+            `return` `;`
 
-          LabelledItem : FunctionDeclaration
+          LabelledItem :
+            FunctionDeclaration
 
           ForInOfStatement :
             `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
             `for` `(` `var` ForBinding `of` AssignmentExpression `)` Statement
             `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
 
-          CaseBlock : `{` `}`
+          CaseBlock :
+            `{` `}`
         </emu-grammar>
         <emu-alg>
           1. Return *false*.
         </emu-alg>
-
         <emu-grammar>IfStatement : `if` `(` Expression `)` Statement `else` Statement</emu-grammar>
         <emu-alg>
           1. Let _has_ be HasCallInTailPosition of the first |Statement| with argument _call_.
           1. If _has_ is *true*, return *true*.
           1. Return HasCallInTailPosition of the second |Statement| with argument _call_.
         </emu-alg>
-
         <emu-grammar>
-          IfStatement : `if` `(` Expression `)` Statement
+          IfStatement :
+            `if` `(` Expression `)` Statement
 
-          DoWhileStatement : `do` Statement `while` `(` Expression `)` `;`
+          DoWhileStatement :
+            `do` Statement `while` `(` Expression `)` `;`
 
-          WhileStatement : `while` `(` Expression `)` Statement
+          WhileStatement :
+            `while` `(` Expression `)` Statement
 
           ForStatement :
             `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
@@ -2879,7 +3292,8 @@ contributors: Ron Buckton, Ecma International
             `for` `(` `var` ForBinding `in` Expression `)` Statement
             `for` `(` ForDeclaration `in` Expression `)` Statement
 
-          WithStatement : `with` `(` Expression `)` Statement
+          WithStatement :
+            `with` `(` Expression `)` Statement
         </emu-grammar>
         <emu-alg>
           1. Return HasCallInTailPosition of |Statement| with argument _call_.
@@ -2941,9 +3355,9 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
 
         <emu-grammar>
-          TryStatement : `try` Block Finally
-
-          TryStatement : `try` Block Catch Finally
+          TryStatement :
+            `try` Block Finally
+            `try` Block Catch Finally
         </emu-grammar>
         <emu-alg>
           1. Return HasCallInTailPosition of |Finally| with argument _call_.
@@ -3146,8 +3560,10 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
 
     <ins class="block">
-    <emu-clause id="sec-static-semantics-hasunterminatedusingdeclaration" type="sdo" aoid="HasUnterminatedUsingDeclaration">
-      <h1>Static Semantics: HasUnterminatedUsingDeclaration</h1>
+    <emu-clause id="sec-static-semantics-hasunterminatedusingdeclaration" type="sdo">
+      <h1>Static Semantics: HasUnterminatedUsingDeclaration ( ): a Boolean</h1>
+      <dl class="header">
+      </dl>
 
       <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
       <emu-alg>
@@ -3157,7 +3573,8 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
 
       <emu-grammar>
-        StatementListItem : Statement
+        StatementListItem :
+          Statement
 
         CaseBlock :
           `{` `}`
@@ -3186,9 +3603,11 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
 
       <emu-grammar>
-        CaseClause : `case` Expression `:` StatementList?
+        CaseClause :
+          `case` Expression `:` StatementList?
 
-        DefaultClause : `default` `:` StatementList?
+        DefaultClause :
+          `default` `:` StatementList?
       </emu-grammar>
       <emu-alg>
         1. If |StatementList| is present, return HasUnterminatedUsingDeclaration of |StatementList|.
@@ -3200,29 +3619,54 @@ contributors: Ron Buckton, Ecma International
 
 <emu-clause id="sec-ecmascript-language-scripts-and-modules">
   <h1>ECMAScript Language: Scripts and Modules</h1>
+
   <emu-clause id="sec-modules">
     <h1>Modules</h1>
+
     <emu-clause id="sec-module-semantics">
       <h1>Module Semantics</h1>
+
       <emu-clause id="sec-source-text-module-records">
         <h1>Source Text Module Records</h1>
-        <emu-clause id="sec-source-text-module-record-execute-module" aoid="ExecuteModule">
-          <h1>ExecuteModule ( ) Concrete Method</h1>
-          <p>The ExecuteModule concrete method of a Source Text Module Record _module_ takes no arguments. It performs the following steps when called:</p>
+
+        <emu-clause id="sec-source-text-module-record-execute-module" type="concrete method">
+          <h1>
+            ExecuteModule (
+              optional _capability_: unknown,
+            ): either a normal completion containing ~unused~ or a throw completion
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a Source Text Module Record _module_</dd>
+          </dl>
 
           <emu-alg>
+            1. Let _moduleContext_ be a new ECMAScript code execution context.
+            1. Set the Function of _moduleContext_ to *null*.
+            1. Set the Realm of _moduleContext_ to _module_.[[Realm]].
+            1. Set the ScriptOrModule of _moduleContext_ to _module_.
+            1. Assert: _module_ has been linked and declarations in its module environment have been instantiated.
+            1. Set the VariableEnvironment of _moduleContext_ to _module_.[[Environment]].
+            1. Set the LexicalEnvironment of _moduleContext_ to _module_.[[Environment]].
             1. Suspend the currently running execution context.
-            1. Let _moduleContext_ be _module_.[[Context]].
-            1. Push _moduleContext_ onto the execution context stack; _moduleContext_ is now the running execution context.
-            1. Let _result_ be the result of evaluating _module_.[[ECMAScriptCode]].
-            1. <ins>Let _env_ be _moduleContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
-            1. Suspend _moduleContext_ and remove it from the execution context stack.
-            1. Resume the context that is now on the top of the execution context stack as the running execution context.
-            1. Return Completion(_result_).
+            1. If _module_.[[HasTLA]] is *false*, then
+              1. Assert: _capability_ is not present.
+              1. Push _moduleContext_ onto the execution context stack; _moduleContext_ is now the running execution context.
+              1. Let _result_ be the result of evaluating _module_.[[ECMAScriptCode]].
+              1. <ins>Let _env_ be _moduleContext_'s LexicalEnvironment.</ins>
+              1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+              1. Suspend _moduleContext_ and remove it from the execution context stack.
+              1. Resume the context that is now on the top of the execution context stack as the running execution context.
+              1. If _result_ is an abrupt completion, then
+                1. Return ? _result_.
+            1. Else,
+              1. Assert: _capability_ is a PromiseCapability Record.
+              1. Perform AsyncBlockStart(_capability_, _module_.[[ECMAScriptCode]], _moduleContext_).
+            1. Return ~unused~.
           </emu-alg>
         </emu-clause>
       </emu-clause>
+
       <emu-clause id="sec-exports">
         <h1>Exports</h1>
         <h2>Syntax</h2>
@@ -3261,10 +3705,13 @@ contributors: Ron Buckton, Ecma International
 
 <emu-clause id="sec-control-abstraction-objects">
   <h1>Control Abstraction Objects</h1>
+
   <emu-clause id="sec-iteration">
     <h1>Iteration</h1>
+
     <emu-clause id="sec-%iteratorprototype%-object">
       <h1>The %IteratorPrototype% Object</h1>
+
       <ins class="block">
       <emu-clause id="sec-%iteratorprototype%-@@dispose">
         <h1>%IteratorPrototype% [ @@dispose ] ( )</h1>
@@ -3276,11 +3723,14 @@ contributors: Ron Buckton, Ecma International
             1. Perform ? Call(_return_, _O_, &laquo; &raquo;).
           1. Return NormalCompletion(~empty~).
         </emu-alg>
+        <p>The value of the *"name"* property of this function is *"[Symbol.dispose]"*.</p>
       </emu-clause>
       </ins>
     </emu-clause>
+
     <emu-clause id="sec-%asynciteratorprototype%-object">
       <h1>The %AsyncIteratorPrototype% Object</h1>
+
       <ins class="block">
       <emu-clause id="sec-%asynciteratorprototype%-@@asyncdispose">
         <h1>%AsyncIteratorPrototype% [ @@asyncDispose ] ( )</h1>
@@ -3297,16 +3747,20 @@ contributors: Ron Buckton, Ecma International
             1. IfAbruptRejectPromise(_result_, _promiseCapability_).
           1. Return _promiseCapability_.[[Promise]].
         </emu-alg>
+        <p>The value of the *"name"* property of this function is *"[Symbol.asyncDispose]"*.</p>
       </emu-clause>
       </ins>
     </emu-clause>
   </emu-clause>
+
   <ins class="block">
   <emu-clause id="sec-resource-management">
     <h1>Resource Management</h1>
+
     <emu-clause id="sec-common-resource-management-interfaces">
       <h1>Common Resource Management Interfaces</h1>
       <p>An interface is a set of property keys whose associated values match a specific specification. Any object that provides all the properties as described by an interface's specification <em>conforms</em> to that interface. An interface is not represented by a distinct object. There may be many separately implemented objects that conform to any interface. An individual object may conform to multiple interfaces.</p>
+
       <emu-clause id="sec-disposable-interface">
         <h1>The <em>Disposable</em> Interface</h1>
         <p>The <em>Disposable</em> interface includes the property described in <emu-xref href="#table-disposable-interface-required-properties"></emu-xref>:</p>
@@ -3341,6 +3795,7 @@ contributors: Ron Buckton, Ecma International
           </table>
         </emu-table>
       </emu-clause>
+
       <emu-clause id="sec-asyncdisposable-interface">
         <h1>The <em>AsyncDisposable</em> Interface</h1>
         <p>The <em>AsyncDisposable</em> interface includes the property described in <emu-xref href="#table-asyncdisposable-interface-required-properties"></emu-xref>:</p>
@@ -3378,6 +3833,7 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
   </ins>
+
   <ins class="block">
   <emu-clause id="sec-disposablestack-objects">
     <h1>DisposableStack Objects</h1>
@@ -3398,6 +3854,7 @@ contributors: Ron Buckton, Ecma International
         <li>is not intended to be called as a function and will throw an exception when called in that manner.</li>
         <li>may be used as the value in an `extends` clause of a class definition. Subclass constructors that intend to inherit the specified DisposableStack behaviour must include a `super` call to the DisposableStack constructor to create and initialize the subclass instance with the internal state necessary to support the `DisposableStack` and `DisposableStack.prototype` built-in methods.</li>
       </ul>
+
       <emu-clause id="sec-disposablestack">
         <h1>DisposableStack ( )</h1>
         <p>When the `DisposableStack` function is called, the following steps are taken:</p>
@@ -3553,6 +4010,7 @@ contributors: Ron Buckton, Ecma International
           1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
           1. Return DisposeResources(_disposableStack_, NormalCompletion(*undefined*)).
         </emu-alg>
+        <p>The value of the *"name"* property of this function is *"[Symbol.dispose]"*.</p>
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype-@@toStringTag">
@@ -3606,6 +4064,7 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
   </ins>
+
   <ins class="block">
   <emu-clause id="sec-asyncdisposablestack-objects">
     <h1>AsyncDisposableStack Objects</h1>
@@ -3626,6 +4085,7 @@ contributors: Ron Buckton, Ecma International
         <li>is not intended to be called as a function and will throw an exception when called in that manner.</li>
         <li>may be used as the value in an `extends` clause of a class definition. Subclass constructors that intend to inherit the specified AsyncDisposableStack behaviour must include a `super` call to the AsyncDisposableStack constructor to create and initialize the subclass instance with the internal state necessary to support the `AsyncDisposableStack` and `AsyncDisposableStack.prototype` built-in methods.</li>
       </ul>
+
       <emu-clause id="sec-asyncdisposablestack">
         <h1>AsyncDisposableStack ( )</h1>
         <p>When the `AsyncDisposableStack` function is called, the following steps are taken:</p>
@@ -3789,6 +4249,7 @@ contributors: Ron Buckton, Ecma International
           1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_ &raquo;).
           1. Return _promiseCapability_.[[Promise]].
         </emu-alg>
+        <p>The value of the *"name"* property of this function is *"[Symbol.asyncDispose]"*.</p>
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposablestack.prototype-@@toStringTag">
@@ -3842,19 +4303,27 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
   </ins>
+
   <emu-clause id="sec-generator-objects">
     <h1>Generator Objects</h1>
+
     <emu-clause id="sec-generator-abstract-operations">
       <h1>Generator Abstract Operations</h1>
 
-      <emu-clause id="sec-generatorstart" aoid="GeneratorStart">
-        <h1>GeneratorStart ( _generator_, _generatorBody_ )</h1>
-        <p>The abstract operation GeneratorStart takes arguments _generator_ and _generatorBody_ (a Parse Node or an Abstract Closure with no parameters). It performs the following steps when called:</p>
+      <emu-clause id="sec-generatorstart" type="abstract operation">
+        <h1>
+          GeneratorStart (
+            _generator_: unknown,
+            _generatorBody_: a |FunctionBody| Parse Node or an Abstract Closure with no parameters,
+          ): ~unused~
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
           1. Assert: The value of _generator_.[[GeneratorState]] is *undefined*.
           1. Let _genContext_ be the running execution context.
           1. Set the Generator component of _genContext_ to _generator_.
-          1. Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
+          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
             1. If _generatorBody_ is a Parse Node, then
               1. Let _result_ be the result of evaluating _generatorBody_.
             1. Else,
@@ -3870,68 +4339,81 @@ contributors: Ron Buckton, Ecma International
             1. Else if _result_.[[Type]] is ~return~, let _resultValue_ be _result_.[[Value]].
             1. Else,
               1. Assert: _result_.[[Type]] is ~throw~.
-              1. Return Completion(_result_).
+              1. Return ? _result_.
             1. Return CreateIterResultObject(_resultValue_, *true*).
           1. Set _generator_.[[GeneratorContext]] to _genContext_.
           1. Set _generator_.[[GeneratorState]] to ~suspendedStart~.
-          1. Return NormalCompletion(*undefined*).
+          1. Return ~unused~.
         </emu-alg>
       </emu-clause>
     </emu-clause>
   </emu-clause>
+
   <emu-clause id="sec-asyncgenerator-objects">
     <h1>AsyncGenerator Objects</h1>
+
     <emu-clause id="sec-asyncgenerator-abstract-operations">
       <h1>AsyncGenerator Abstract Operations</h1>
 
-      <emu-clause id="sec-asyncgeneratorstart" aoid="AsyncGeneratorStart">
-        <h1>AsyncGeneratorStart ( _generator_, _generatorBody_ )</h1>
-        <p>The abstract operation AsyncGeneratorStart takes arguments _generator_ and _generatorBody_ (a Parse Node or an Abstract Closure with no parameters). It performs the following steps when called:</p>
+      <emu-clause id="sec-asyncgeneratorstart" type="abstract operation">
+        <h1>
+          AsyncGeneratorStart (
+            _generator_: an AsyncGenerator,
+            _generatorBody_: a |FunctionBody| Parse Node or an Abstract Closure with no parameters,
+          ): ~unused~
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
-          1. Assert: _generator_ is an AsyncGenerator instance.
           1. Assert: _generator_.[[AsyncGeneratorState]] is *undefined*.
           1. Let _genContext_ be the running execution context.
           1. Set the Generator component of _genContext_ to _generator_.
-          1. Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
+          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
             1. If _generatorBody_ is a Parse Node, then
               1. Let _result_ be the result of evaluating _generatorBody_.
             1. Else,
               1. Assert: _generatorBody_ is an Abstract Closure with no parameters.
-              1. Let _result_ be _generatorBody_().
+              1. Let _result_ be Completion(_generatorBody_()).
             1. Assert: If we return here, the async generator either threw an exception or performed either an implicit or explicit return.
             1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
             1. Set _generator_.[[AsyncGeneratorState]] to ~completed~.
             1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
             1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
-            1. If _result_ is a normal completion, let _resultValue_ be *undefined*.
-            1. Else,
-              1. Let _resultValue_ be _result_.[[Value]].
-              1. If _result_.[[Type]] is not ~return~, then
-                1. Return ! AsyncGeneratorReject(_generator_, _resultValue_).
-            1. Return ! AsyncGeneratorResolve(_generator_, _resultValue_, *true*).
+            1. If _result_.[[Type]] is ~normal~, set _result_ to NormalCompletion(*undefined*).
+            1. If _result_.[[Type]] is ~return~, set _result_ to NormalCompletion(_result_.[[Value]]).
+            1. Perform AsyncGeneratorCompleteStep(_generator_, _result_, *true*).
+            1. Perform AsyncGeneratorDrainQueue(_generator_).
+            1. Return *undefined*.
           1. Set _generator_.[[AsyncGeneratorContext]] to _genContext_.
           1. Set _generator_.[[AsyncGeneratorState]] to ~suspendedStart~.
           1. Set _generator_.[[AsyncGeneratorQueue]] to a new empty List.
-          1. Return *undefined*.
+          1. Return ~unused~.
         </emu-alg>
       </emu-clause>
-
     </emu-clause>
   </emu-clause>
+
   <emu-clause id="sec-async-function-objects">
     <h1>AsyncFunction Objects</h1>
+
     <emu-clause id="sec-async-functions-abstract-operations">
       <h1>Async Functions Abstract Operations</h1>
 
-      <emu-clause id="sec-async-functions-abstract-operations-async-function-start" aoid="AsyncFunctionStart">
-        <h1>AsyncFunctionStart ( _promiseCapability_, _asyncFunctionBody_ )</h1>
-        <p>The abstract operation AsyncFunctionStart takes arguments _promiseCapability_ (a PromiseCapability Record) and _asyncFunctionBody_. It performs the following steps when called:</p>
+      <emu-clause id="sec-asyncblockstart" type="abstract operation">
+        <h1>
+          AsyncBlockStart (
+            _promiseCapability_: a PromiseCapability Record,
+            _asyncBody_: a Parse Node,
+            _asyncContext_: an execution context,
+          ): ~unused~
+        </h1>
+        <dl class="header">
+        </dl>
         <emu-alg>
+          1. Assert: _promiseCapability_ is a PromiseCapability Record.
           1. Let _runningContext_ be the running execution context.
-          1. Let _asyncContext_ be a copy of _runningContext_.
-          1. NOTE: Copying the execution state is required for the step below to resume its execution. It is ill-defined to resume a currently executing context.
-          1. Set the code evaluation state of _asyncContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
-            1. Let _result_ be the result of evaluating _asyncFunctionBody_.
+          1. [fence-effects="user-code"] Set the code evaluation state of _asyncContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
+            1. Let _result_ be the result of evaluating _asyncBody_.
             1. Assert: If we return here, the async function either threw an exception or performed an implicit or explicit return; all awaiting is done.
             1. Remove _asyncContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
             1. <ins>Let _env_ be _asyncContext_'s LexicalEnvironment.</ins>
@@ -3943,12 +4425,12 @@ contributors: Ron Buckton, Ecma International
             1. Else,
               1. Assert: _result_.[[Type]] is ~throw~.
               1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; _result_.[[Value]] &raquo;).
-            1. [id="step-asyncfunctionstart-return-undefined"] Return.
+            1. [id="step-asyncblockstart-return-undefined"] Return ~unused~.
           1. Push _asyncContext_ onto the execution context stack; _asyncContext_ is now the running execution context.
-          1. Resume the suspended evaluation of _asyncContext_. Let _result_ be the value returned by the resumed computation.
+          1. <emu-meta effects="user-code">Resume the suspended evaluation of _asyncContext_</emu-meta>. Let _result_ be the value returned by the resumed computation.
           1. Assert: When we return here, _asyncContext_ has already been removed from the execution context stack and _runningContext_ is the currently running execution context.
-          1. Assert: _result_ is a normal completion with a value of *undefined*. The possible sources of completion values are Await or, if the async function doesn't await anything, step <emu-xref href="#step-asyncfunctionstart-return-undefined"></emu-xref> above.
-          1. Return.
+          1. Assert: _result_ is a normal completion with a value of ~unused~. The possible sources of this value are Await or, if the async function doesn't await anything, step <emu-xref href="#step-asyncblockstart-return-undefined"></emu-xref> above.
+          1. Return ~unused~.
         </emu-alg>
       </emu-clause>
     </emu-clause>
