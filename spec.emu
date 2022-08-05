@@ -899,10 +899,8 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
-          `using` `await` `(` AssignmentExpression `)` Block
-          CoverOutermostExpressionAndUsingStatementHead Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Return the VarDeclaredNames of |Block|.
@@ -1128,10 +1126,8 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
-          `using` `await` `(` AssignmentExpression `)` Block
-          CoverOutermostExpressionAndUsingStatementHead Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Return the VarScopedDeclarations of |Block|.
@@ -1347,10 +1343,8 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
-          `using` `await` `(` AssignmentExpression `)` Block
-          CoverOutermostExpressionAndUsingStatementHead Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Return ContainsDuplicateLabels of |Block| with argument _labelSet_.
@@ -1686,10 +1680,8 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
-          `using` `await` `(` AssignmentExpression `)` Block
-          CoverOutermostExpressionAndUsingStatementHead Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Return ContainsUndefinedBreakTarget of |Block| with argument _labelSet_.
@@ -1900,10 +1892,8 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
-          `using` `await` `(` AssignmentExpression `)` Block
-          CoverOutermostExpressionAndUsingStatementHead Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Return ContainsUndefinedContinueTarget of |Block| with argument _labelSet_ and &laquo; &raquo;.
@@ -2326,8 +2316,11 @@ contributors: Ron Buckton, Ecma International
       BlockStatement[?Yield, ?Await, ?Return]
       VariableStatement[?Yield, ?Await]
       EmptyStatement
-      ExpressionStatement[?Yield, ?Await]
-      <ins>UsingStatement[?Yield, ?Await]</ins>
+      <del>ExpressionStatement[?Yield, ?Await]</del>
+      <ins>
+      CoverExpressionStatement[?Yield, ?Await]
+      CoverUsingStatement[?Yield, ?Await]
+      </ins>
       IfStatement[?Yield, ?Await, ?Return]
       BreakableStatement[?Yield, ?Await, ?Return]
       ContinueStatement[?Yield, ?Await]
@@ -2620,44 +2613,39 @@ contributors: Ron Buckton, Ecma International
     <h1>Expression Statement</h1>
     <h2>Syntax</h2>
     <emu-grammar type="definition">
+      <del>
       ExpressionStatement[Yield, Await] :
-        <del>[lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await] `;`</del>
-        <ins>[lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] `;`</ins>
+        [lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await] `;`
+      </del>
+
+      <ins>
+      CoverExpressionStatement[Yield, Await] :
+        [lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] `;`
+      </ins>
 
       <ins>
       CoverOutermostExpressionAndUsingStatementHead[Yield, Await] :
-        [lookahead ∉ { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await]
+        AssignmentExpression[+In, ?Yield, ?Await]
+        VoidBinding Initializer[+In, ?Yield, ?Await]
+        CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] `,` AssignmentExpression[+In, ?Yield, ?Await]
+        CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] `,` VoidBinding Initializer[+In, ?Yield, ?Await]
       </ins>
     </emu-grammar>
-    <emu-note>
-      <p>An |ExpressionStatement| cannot start with a U+007B (LEFT CURLY BRACKET) because that might make it ambiguous with a |Block|. An |ExpressionStatement| cannot start with the `function` or `class` keywords because that would make it ambiguous with a |FunctionDeclaration|, a |GeneratorDeclaration|, or a |ClassDeclaration|. An |ExpressionStatement| cannot start with `async function` because that would make it ambiguous with an |AsyncFunctionDeclaration| or a |AsyncGeneratorDeclaration|. An |ExpressionStatement| cannot start with the two token sequence `let [` because that would make it ambiguous with a `let` |LexicalDeclaration| whose first |LexicalBinding| was an |ArrayBindingPattern|.</p>
-    </emu-note>
     <ins class="block">
     <h2>Supplemental Syntax</h2>
     <p>
       When processing an instance of the production<br>
-      <emu-grammar>ExpressionStatement : CoverOutermostExpressionAndUsingStatementHead `;`</emu-grammar><br>
-      the interpretation of |CoverOutermostExpressionAndUsingStatementHead| is refined using the following grammar:
+      <emu-grammar>CoverExpressionStatement : CoverOutermostExpressionAndUsingStatementHead `;`</emu-grammar><br>
+      the interpretation of |CoverExpressionStatement| is refined using the following grammar:
     </p>
     <emu-grammar type="definition">
-      OutermostExpression[?Yield, ?Await] :
-        Expression[+In, ?Yield, ?Await]
+      ExpressionStatement[?Yield, ?Await] :
+        [lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] Expression[+In, ?Yield, ?Await] `;`
     </emu-grammar>
     </ins>
-
-    <emu-clause id="sec-expression-statement-runtime-semantics-evaluation" type="sdo">
-      <h1>Runtime Semantics: Evaluation</h1>
-      <emu-grammar>
-        <del>ExpressionStatement : Expression `;`</del>
-        <ins>ExpressionStatement : CoverOutermostExpressionAndUsingStatementHead `;`</ins>
-      </emu-grammar>
-      <emu-alg>
-        1. <ins>Let _outerExpr_ be the |OutermostExpression| covered by |CoverOutermostExpressionAndUsingStatementHead|.</ins>
-        1. <ins>Let _expr_ be the |Expression| of _outerExpr_.</ins>
-        1. Let _exprRef_ be the result of evaluating <del>|Expression|</del><ins>_expr_</ins>.
-        1. Return ? GetValue(_exprRef_).
-      </emu-alg>
-    </emu-clause>
+    <emu-note>
+      <p>An |ExpressionStatement| cannot start with a U+007B (LEFT CURLY BRACKET) because that might make it ambiguous with a |Block|. An |ExpressionStatement| cannot start with the `function` or `class` keywords because that would make it ambiguous with a |FunctionDeclaration|, a |GeneratorDeclaration|, or a |ClassDeclaration|. An |ExpressionStatement| cannot start with `async function` because that would make it ambiguous with an |AsyncFunctionDeclaration| or a |AsyncGeneratorDeclaration|. An |ExpressionStatement| cannot start with the two token sequence `let [` because that would make it ambiguous with a `let` |LexicalDeclaration| whose first |LexicalBinding| was an |ArrayBindingPattern|.</p>
+    </emu-note>
   </emu-clause>
 
   <emu-clause id="sec-iteration-statements">
@@ -3000,7 +2988,7 @@ contributors: Ron Buckton, Ecma International
           VariableStatement
           EmptyStatement
           ExpressionStatement
-          <ins>UsingStatement</ins>
+          <ins>CoverUsingStatement</ins>
           IfStatement
           ContinueStatement
           BreakStatement
@@ -3024,29 +3012,28 @@ contributors: Ron Buckton, Ecma International
     <h1>Using Statement</h1>
     <h2>Syntax</h2>
     <emu-grammar type="definition">
-      UsingStatement[Yield, Await] :
-        `using` `(` `const` BindingList[+In, ?Yield, ?Await, +Using] `)` [no LineTerminator here] Block[?Yield, ?Await]
-        CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] [no LineTerminator here] Block[?Yield, ?Await]
-        [+Await] `using` `await` `(` `const` BindingList[+In, ?Yield, +Await, +Using] `)` [no LineTerminator here] Block[?Yield, +Await]
-        [+Await] `using` `await` `(` AssignmentExpression[+In, ?Yield, +Await] `)` [no LineTerminator here] Block[?Yield, +Await]
+      CoverUsingStatement[Yield, Await] :
+        [lookahead &notin; { `{`, `function`, `async` [no LineTerminator here] `function`, `class`, `let` `[` }] CoverOutermostExpressionAndUsingStatementHead[?Yield, ?Await] [no LineTerminator here] Block[?Yield, ?Await]
+        [+Await] `using` [no LineTerminator here] `await` `(` BindingList[+In, ?Yield, +Await, +Using] `)` [no LineTerminator here] Block[?Yield, +Await]
     </emu-grammar>
     <h2>Supplemental Syntax</h2>
     <p>
       When processing an instance of the production<br>
-      <emu-grammar>UsingStatement : CoverOutermostExpressionAndUsingStatementHead Block</emu-grammar><br>
-      the interpretation of |CoverOutermostExpressionAndUsingStatementHead| is refined using the following grammar:
+      <emu-grammar>Statement : CoverUsingStatement</emu-grammar><br>
+      the interpretation of |CoverUsingStatement| is refined using the following grammar:
     </p>
     <emu-grammar type="definition">
-      UsingStatementHead[?Yield, ?Await] :
-        `using` `(` AssignmentExpression[+In, ?Yield, ?Await] `)`
+      UsingStatement[?Yield, ?Await] :
+        `using` `(` BindingList[+In, ?Yield, ?Await, +Using] `)` [no LineTerminator here] Block[?Yield, ?Await]
+        [+Await] `using` [no LineTerminator here] `await` `(` BindingList[+In, ?Yield, +Await, +Using] `)` [no LineTerminator here] Block[?Yield, +Await]
     </emu-grammar>
 
     <emu-clause id="sec-using-statement-static-semantics-early-errors" type="sdo">
       <h1>Static Semantics: Early Errors</h1>
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
-          `using` `await` `(` `const` BindingList `)` Block
+          `using` `(` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <ul>
         <li>
@@ -3065,7 +3052,7 @@ contributors: Ron Buckton, Ecma International
       <h1>Runtime Semantics: Evaluation</h1>
       <emu-grammar>
         UsingStatement :
-          `using` `(` `const` BindingList `)` Block
+          `using` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
@@ -3086,7 +3073,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>
         UsingStatement :
-          `using` `await` `(` `const` BindingList `)` Block
+          `using` `await` `(` BindingList `)` Block
       </emu-grammar>
       <emu-alg>
         1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
@@ -3100,46 +3087,6 @@ contributors: Ron Buckton, Ecma International
           1. Set _usingDecl_ to be DisposeResources(_usingEnv_, _usingDecl_).
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
           1. Return ? _usingDecl_.
-        1. Let _bodyResult_ be the result of evaluating |Block|.
-        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
-        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-        1. Return ? _bodyResult_.
-      </emu-alg>
-      <emu-grammar>
-        UsingStatement :
-          CoverOutermostExpressionAndUsingStatementHead Block
-      </emu-grammar>
-      <emu-alg>
-        1. Let _head_ be the |UsingStatementHead| that is covered by |CoverOutermostExpressionAndUsingStatementHead|.
-        1. Let _expr_ be the |AssignmentExpression| of _head_.
-        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
-        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
-        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
-        1. Let _usingExpr_ be the result of evaluationg _expr_.
-        1. Let _usingValue_ be ? GetValue(_usingExpr_).
-        1. If _usingValue_ is an abrupt completion, then
-          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-          1. Return ? _usingValue_.
-        1. Perform ? AddDisposableResource(_usingEnv_, _usingValue_, ~sync-dispose~).
-        1. Let _bodyResult_ be the result of evaluating |Block|.
-        1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
-        1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-        1. Return ? _bodyResult_.
-      </emu-alg>
-      <emu-grammar>
-        UsingStatement :
-          `using` `await` `(` AssignmentExpression `)` Block
-      </emu-grammar>
-      <emu-alg>
-        1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
-        1. Let _usingEnv_ be NewDeclarativeEnvironment(_oldEnv_).
-        1. Set the running execution context's LexicalEnvironment to _usingEnv_.
-        1. Let _usingExpr_ be the result of evaluationg |AssignmentExpression|.
-        1. Let _usingValue_ be ? GetValue(_usingExpr_).
-        1. If _usingValue_ is an abrupt completion, then
-          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-          1. Return ? _usingValue_.
-        1. Perform ? AddDisposableResource(_usingEnv_, _usingValue_, ~async-dispose~).
         1. Let _bodyResult_ be the result of evaluating |Block|.
         1. Set _bodyResult_ to be DisposeResources(_usingEnv_, _bodyResult_).
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
