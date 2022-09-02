@@ -166,7 +166,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.asyncDispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using await` declaration while in an async function, async generator, or the top level of a _Module_.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of AsyncDisposableStack objects.</ins>
               </td>
             </tr>
             <tr>
@@ -177,7 +177,7 @@ contributors: Ron Buckton, Ecma International
                 <ins>`"Symbol.dispose"`</ins>
               </td>
               <td>
-                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using` declaration.</ins>
+                <ins>A method that performs explicit resource cleanup on an object. Called by the semantics of the `using` declaration and DisposableStack objects.</ins>
               </td>
             </tr>
             </tbody>
@@ -260,7 +260,7 @@ contributors: Ron Buckton, Ecma International
               ~sync-dispose~ or ~async-dispose~.
             </td>
             <td>
-              Indicates whether the resources was added by a `using` declaration (~sync-dispose~) or a `using await` declaration (~async-dispose~).
+              Indicates whether the resources was added by a `using` declaration or DisposableStack object (~sync-dispose~) or an AsyncDisposableStack object (~async-dispose~).
             </td>
           </tr>
           <tr>
@@ -427,7 +427,6 @@ contributors: Ron Buckton, Ecma International
       <emu-grammar>
         UsingDeclaration :
           `using` BindingList `;`
-          `using` `await` BindingList `;`
       </emu-grammar>
       <emu-alg>
         1. Return the BoundNames of |BindingList|.
@@ -447,12 +446,6 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Return the BoundNames of |BindingPattern|.
       </emu-alg>
-      <ins class="block">
-      <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
-      <emu-alg>
-        1. Return a new empty List.
-      </emu-alg>
-      </ins>
       <emu-grammar>VariableDeclarationList : VariableDeclarationList `,` VariableDeclaration</emu-grammar>
       <emu-alg>
         1. Let _names1_ be BoundNames of |VariableDeclarationList|.
@@ -966,7 +959,7 @@ contributors: Ron Buckton, Ecma International
               InitializeBinding(N, V<ins>, _hint_</ins>)
             </td>
             <td>
-              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from a `using` declaration (~sync-dispose~), a `using await` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
+              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from either a `using` declaration (~sync-dispose~) or a regular variable declaration (~normal~).</ins>
             </td>
           </tr>
           <tr>
@@ -1024,7 +1017,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-declarative-environment-records">
         <h1>Declarative Environment Records</h1>
         <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using` and `using await` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
@@ -1032,7 +1025,7 @@ contributors: Ron Buckton, Ecma International
             InitializeBinding (
               _N_: a String,
               _V_: an ECMAScript language value,
-              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+              <ins>_hint_: either ~normal~ or ~sync-dispose~,</ins>
             ): a normal completion containing ~unused~
           </h1>
           <dl class="header">
@@ -1060,7 +1053,7 @@ contributors: Ron Buckton, Ecma International
             InitializeBinding (
               _N_: a String,
               _V_: an ECMAScript language value,
-              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+              <ins>_hint_: either ~normal~ or ~sync-dispose~,</ins>
             ): either a normal completion containing ~unused~ or a throw completion
           </h1>
           <dl class="header">
@@ -1090,7 +1083,7 @@ contributors: Ron Buckton, Ecma International
             InitializeBinding (
               _N_: a String,
               _V_: an ECMAScript language value,
-              <ins>_hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
+              <ins>_hint_: either ~normal~ or ~sync-dispose~,</ins>
             ): either a normal completion containing ~unused~ or a throw completion
           </h1>
           <dl class="header">
@@ -1157,7 +1150,6 @@ contributors: Ron Buckton, Ecma International
         <ins>
         UsingDeclaration[In, Yield, Await] :
           `using` [no LineTerminator here] BindingList[?In, ?Yield, ?Await, +Using] `;`
-          [+Await] `using` [no LineTerminator here] `await` BindingList[?In, ?Yield, +Await, +Using] `;`
         </ins>
 
         BindingList[In, Yield, Await, <ins>Using</ins>] :
@@ -1168,7 +1160,6 @@ contributors: Ron Buckton, Ecma International
           BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
           <del>BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</del>
           <ins>[~Using] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</ins>
-          <ins>[+Using] `void` Initializer[?In, ?Yield, ?Await]</ins>
       </emu-grammar>
 
       <emu-clause id="sec-let-and-const-declarations-static-semantics-early-errors">
@@ -1177,7 +1168,6 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>
           UsingDeclaration :
             `using` BindingList `;`
-            `using` `await` BindingList `;`
         </emu-grammar>
         <ul>
           <li>
@@ -1217,12 +1207,6 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>UsingDeclaration : `using` BindingList `;`</emu-grammar>
         <emu-alg>
           1. Let _next_ be BindingEvaluation of |BindingList| with parameter ~sync-dispose~.
-          1. ReturnIfAbrupt(_next_).
-          1. Return ~empty~.
-        </emu-alg>
-        <emu-grammar>UsingDeclaration : `using` `await` BindingList `;`</emu-grammar>
-        <emu-alg>
-          1. Let _next_ be BindingEvaluation of |BindingList| with parameter ~async-dispose~.
           1. ReturnIfAbrupt(_next_).
           1. Return ~empty~.
         </emu-alg>
@@ -1270,7 +1254,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-let-and-const-declarations-runtime-semantics-bindingevaluation" type="sdo">
         <h1>
           Runtime Semantics: BindingEvaluation (
-            _hint_: either ~normal~, ~sync-dispose~, or ~async-dispose~
+            _hint_: either ~normal~ or ~sync-dispose~
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header">
@@ -1308,14 +1292,6 @@ contributors: Ron Buckton, Ecma International
           1. Let _value_ be ? GetValue(_rhs_).
           1. Let _env_ be the running execution context's LexicalEnvironment.
           1. Return ? BindingInitialization of |BindingPattern| with arguments _value_ and _env_.
-        </emu-alg>
-        <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
-        <emu-alg>
-          1. Assert: _hint_ is ~sync-dispose~ or ~async-dispose~.
-          1. Let _expr_ be the result of evaluating |Initializer|.
-          1. Let _value_ be ? GetValue(_expr_).
-          1. Let _env_ be the running execution context's LexicalEnvironment.
-          1. Return ? AddDisposableResource(_env_, _value_, _hint_).
         </emu-alg>
       </emu-clause>
       </ins>
@@ -1515,7 +1491,6 @@ contributors: Ron Buckton, Ecma International
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
           LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
           <ins>[+Using] `using` [no LineTerminator here] ForBinding[?Yield, ?Await, +Using]</ins>
-          <ins>[+Using, +Await] `using` [no LineTerminator here] `await` ForBinding[?Yield, ?Await, +Using]</ins>
 
         ForBinding[Yield, Await, <ins>Using</ins>] :
           BindingIdentifier[?Yield, ?Await]
@@ -1741,7 +1716,7 @@ contributors: Ron Buckton, Ecma International
       </emu-note>
       <ins class="block">
       <emu-note>
-        <p>A `using` or `using await` declaration that precedes a call in the same |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody| prevents that call from being a possible tail position call.</p>
+        <p>A `using` declaration that precedes a call in the same |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody| prevents that call from being a possible tail position call.</p>
       </emu-note>
       </ins>
 
@@ -1891,195 +1866,6 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>Catch : `catch` `(` CatchParameter `)` Block</emu-grammar>
         <emu-alg>
           1. Return HasCallInTailPosition of |Block| with argument _call_.
-        </emu-alg>
-      </emu-clause>
-
-      <emu-clause id="sec-expression-rules">
-        <h1>Expression Rules</h1>
-        <emu-note>
-          <p>A potential tail position call that is immediately followed by return GetValue of the call result is also a possible tail position call. A function call cannot return a Reference Record, so such a GetValue operation will always return the same value as the actual function call result.</p>
-        </emu-note>
-        <emu-grammar>
-          AssignmentExpression :
-            YieldExpression
-            ArrowFunction
-            AsyncArrowFunction
-            LeftHandSideExpression `=` AssignmentExpression
-            LeftHandSideExpression AssignmentOperator AssignmentExpression
-            LeftHandSideExpression `&amp;&amp;=` AssignmentExpression
-            LeftHandSideExpression `||=` AssignmentExpression
-            LeftHandSideExpression `??=` AssignmentExpression
-
-          BitwiseANDExpression : BitwiseANDExpression `&amp;` EqualityExpression
-
-          BitwiseXORExpression : BitwiseXORExpression `^` BitwiseANDExpression
-
-          BitwiseORExpression : BitwiseORExpression `|` BitwiseXORExpression
-
-          EqualityExpression :
-            EqualityExpression `==` RelationalExpression
-            EqualityExpression `!=` RelationalExpression
-            EqualityExpression `===` RelationalExpression
-            EqualityExpression `!==` RelationalExpression
-
-          RelationalExpression :
-            RelationalExpression `&lt;` ShiftExpression
-            RelationalExpression `&gt;` ShiftExpression
-            RelationalExpression `&lt;=` ShiftExpression
-            RelationalExpression `&gt;=` ShiftExpression
-            RelationalExpression `instanceof` ShiftExpression
-            RelationalExpression `in` ShiftExpression
-            PrivateIdentifier `in` ShiftExpression
-
-          ShiftExpression :
-            ShiftExpression `&lt;&lt;` AdditiveExpression
-            ShiftExpression `&gt;&gt;` AdditiveExpression
-            ShiftExpression `&gt;&gt;&gt;` AdditiveExpression
-
-          AdditiveExpression :
-            AdditiveExpression `+` MultiplicativeExpression
-            AdditiveExpression `-` MultiplicativeExpression
-
-          MultiplicativeExpression :
-            MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
-
-          ExponentiationExpression :
-            UpdateExpression `**` ExponentiationExpression
-
-          UpdateExpression :
-            LeftHandSideExpression `++`
-            LeftHandSideExpression `--`
-            `++` UnaryExpression
-            `--` UnaryExpression
-
-          UnaryExpression :
-            `delete` UnaryExpression
-            `void` UnaryExpression
-            `typeof` UnaryExpression
-            `+` UnaryExpression
-            `-` UnaryExpression
-            `~` UnaryExpression
-            `!` UnaryExpression
-            AwaitExpression
-
-          CallExpression :
-            SuperCall
-            CallExpression `[` Expression `]`
-            CallExpression `.` IdentifierName
-            CallExpression `.` PrivateIdentifier
-
-          NewExpression : `new` NewExpression
-
-          MemberExpression :
-            MemberExpression `[` Expression `]`
-            MemberExpression `.` IdentifierName
-            SuperProperty
-            MetaProperty
-            `new` MemberExpression Arguments
-            MemberExpression `.` PrivateIdentifier
-
-          PrimaryExpression :
-            `this`
-            IdentifierReference
-            Literal
-            ArrayLiteral
-            ObjectLiteral
-            FunctionExpression
-            ClassExpression
-            GeneratorExpression
-            AsyncFunctionExpression
-            AsyncGeneratorExpression
-            RegularExpressionLiteral
-            TemplateLiteral
-        </emu-grammar>
-        <emu-alg>
-          1. Return *false*.
-        </emu-alg>
-        <emu-grammar>
-          Expression :
-            AssignmentExpression
-            Expression `,` AssignmentExpression
-        </emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |AssignmentExpression| with argument _call_.
-        </emu-alg>
-        <emu-grammar>ConditionalExpression : ShortCircuitExpression `?` AssignmentExpression `:` AssignmentExpression</emu-grammar>
-        <emu-alg>
-          1. Let _has_ be HasCallInTailPosition of the first |AssignmentExpression| with argument _call_.
-          1. If _has_ is *true*, return *true*.
-          1. Return HasCallInTailPosition of the second |AssignmentExpression| with argument _call_.
-        </emu-alg>
-        <emu-grammar>LogicalANDExpression : LogicalANDExpression `&amp;&amp;` BitwiseORExpression</emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |BitwiseORExpression| with argument _call_.
-        </emu-alg>
-        <emu-grammar>LogicalORExpression : LogicalORExpression `||` LogicalANDExpression</emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |LogicalANDExpression| with argument _call_.
-        </emu-alg>
-        <emu-grammar>CoalesceExpression : CoalesceExpressionHead `??` BitwiseORExpression</emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |BitwiseORExpression| with argument _call_.
-        </emu-alg>
-        <emu-grammar>
-          CallExpression :
-            CoverCallExpressionAndAsyncArrowHead
-            CallExpression Arguments
-            CallExpression TemplateLiteral
-        </emu-grammar>
-        <emu-alg>
-          1. If this |CallExpression| is _call_, return *true*.
-          1. Return *false*.
-        </emu-alg>
-        <emu-grammar>
-          OptionalExpression :
-            MemberExpression OptionalChain
-            CallExpression OptionalChain
-            OptionalExpression OptionalChain
-        </emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |OptionalChain| with argument _call_.
-        </emu-alg>
-        <emu-grammar>
-          OptionalChain :
-            `?.` `[` Expression `]`
-            `?.` IdentifierName
-            `?.` PrivateIdentifier
-            OptionalChain `[` Expression `]`
-            OptionalChain `.` IdentifierName
-            OptionalChain `.` PrivateIdentifier
-        </emu-grammar>
-        <emu-alg>
-          1. Return *false*.
-        </emu-alg>
-        <emu-grammar>
-          OptionalChain :
-            `?.` Arguments
-            OptionalChain Arguments
-        </emu-grammar>
-        <emu-alg>
-          1. If this |OptionalChain| is _call_, return *true*.
-          1. Return *false*.
-        </emu-alg>
-        <emu-grammar>
-          MemberExpression :
-            MemberExpression TemplateLiteral
-        </emu-grammar>
-        <emu-alg>
-          1. If this |MemberExpression| is _call_, return *true*.
-          1. Return *false*.
-        </emu-alg>
-        <emu-grammar>PrimaryExpression : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
-        <emu-alg>
-          1. Let _expr_ be the |ParenthesizedExpression| that is covered by |CoverParenthesizedExpressionAndArrowParameterList|.
-          1. Return HasCallInTailPosition of _expr_ with argument _call_.
-        </emu-alg>
-        <emu-grammar>
-          ParenthesizedExpression :
-            `(` Expression `)`
-        </emu-grammar>
-        <emu-alg>
-          1. Return HasCallInTailPosition of |Expression| with argument _call_.
         </emu-alg>
       </emu-clause>
     </emu-clause>
@@ -2348,7 +2134,6 @@ contributors: Ron Buckton, Ecma International
               <td>
                 <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `using await` declaration, as the resource will be automatically disposed when the |Block| or |Module| containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>

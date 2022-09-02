@@ -30,14 +30,11 @@ finally {
 }
 ```
 
-As such, we propose the adoption of a syntax to simplify this common pattern:
+As such, we propose the adoption of a novel syntax to simplify this common pattern:
 
 ```js
 function * g() {
   using handle = acquireFileHandle(); // block-scoped critical resource
-
-  // or, if `handle` binding is unused:
-  using void = acquireFileHandle(); // block-scoped critical resource
 } // cleanup
 
 {
@@ -56,7 +53,8 @@ with managing multiple resources:
 
 **Stage:** 2  \
 **Champion:** Ron Buckton (@rbuckton)  \
-**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF), [notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
+**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF),
+[notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
 
@@ -137,7 +135,7 @@ This proposal is motivated by a number of cases:
 
   export async function readData() {
     // wait for outstanding writer and take a read lock
-    using void = await lock.read();
+    using lockHandle = await lock.read();
     ... // any number of readers
     await ...;
     ... // still in read lock after `await`
@@ -145,13 +143,14 @@ This proposal is motivated by a number of cases:
 
   export async function writeData(data) {
     // wait for all readers and take a write lock
-    using void = await lock.write();
+    using lockHandle = await lock.write();
     ... // only one writer
     await ...;
     ... // still in write lock after `await`
   } // release the write lock
   ```
-- Potential for use with the [Fixed Layout Objects Proposal](https://github.com/tc39/proposal-structs) and `shared struct`:
+- Potential for use with the [Fixed Layout Objects Proposal](https://github.com/tc39/proposal-structs) and
+  `shared struct`:
   ```js
   // main.js
   shared struct class SharedData {
@@ -168,7 +167,7 @@ This proposal is motivated by a number of cases:
   // send data to worker
   {
     // wait until main can get a lock on 'm'
-    using void = m.lock();
+    using lck = m.lock();
 
     // mark data for worker
     data.ready = true;
@@ -181,7 +180,7 @@ This proposal is motivated by a number of cases:
 
   {
     // reacquire lock on 'm'
-    using void = m.lock();
+    using lck = m.lock();
 
     // release the lock on 'm' and wait for the worker to finish processing
     cv.wait(m, () => data.processed);
@@ -196,7 +195,7 @@ This proposal is motivated by a number of cases:
 
     {
       // wait until worker can get a lock on 'm'
-      using void = m.lock();
+      using lck = m.lock();
 
       // release the lock on 'm' and wait until main() sends data
       cv.wait(m, () => data.ready);
@@ -224,29 +223,29 @@ This proposal is motivated by a number of cases:
 
 # Definitions
 
-- Resource &mdash; An object with a specific lifetime, at the end of which either a lifetime-sensitive operation should be performed or a non-gargbage-collected reference (such as a file handle, socket, etc.) should be closed or freed.
-- Resource Management &mdash; A process whereby "resources" are released, triggering any lifetime-sensitive operations or freeing any related non-garbage-collected references.
-- Implicit Resource Management &mdash; Indicates a system whereby the lifetime of a "resource" is managed implicitly by the runtime as part of garbage collection, such as:
+- _Resource_ &mdash; An object with a specific lifetime, at the end of which either a lifetime-sensitive operation
+  should be performed or a non-gargbage-collected reference (such as a file handle, socket, etc.) should be closed or
+  freed.
+- _Resource Management_ &mdash; A process whereby "resources" are released, triggering any lifetime-sensitive operations
+  or freeing any related non-garbage-collected references.
+- _Implicit Resource Management_ &mdash; Indicates a system whereby the lifetime of a "resource" is managed implicitly
+  by the runtime as part of garbage collection, such as:
   - `WeakMap` keys
   - `WeakSet` values
   - `WeakRef` values
   - `FinalizationRegistry` entries
-- Explicit Resource Management &mdash; Indicates a system whereby the lifetime of a "resource" is managed explicitly by the user either imperatively (by directly calling a method like `Symbol.dispose`) or declaratively (through a block-scoped declaration like `using`).
+- _Explicit Resource Management_ &mdash; Indicates a system whereby the lifetime of a "resource" is managed explicitly
+  by the user either **imperatively** (by directly calling a method like `Symbol.dispose`) or **declaratively** (through
+  a block-scoped declaration like `using`).
 
 # Syntax
 
 ## `using` Declarations
 
 ```js
-// for a synchronously-disposed resource (block scoped):
-using x = expr1;                              // resource w/ local binding
-using void = expr;                            // resource w/o local binding
-using y = expr2, void = expr3, z = expr4;     // multiple resources
-
-// for an asynchronously-disposed resource (block scoped):
-using await x = expr1;                          // resource w/ local binding
-using await void = expr;                        // resource w/o local binding
-using await y = expr2, void = expr3, z = expr3; // multiple resources
+// a synchronously-disposed, block-scoped resource
+using x = expr1;            // resource w/ local binding
+using y = expr2, z = expr4; // multiple resources
 ```
 
 # Grammar
@@ -262,14 +261,14 @@ Please refer to the [specification text][Specification] for the most recent vers
 ```grammarkdown
 UsingDeclaration :
   `using` BindingList `;`
-  `using` `await` BindingList `;`
 
 LexicalBinding :
     BindingIdentifier Initializer
 ```
 
 When a `using` declaration is parsed with _BindingIdentifier_ _Initializer_, the bindings created in the declaration
-are tracked for disposal at the end of the containing _Block_, _Script_, or _Module_:
+are tracked for disposal at the end of the containing _Block_ or _Module_ (a `using` declaration cannot be used
+at the top level of a _Script_):
 
 ```js
 {
@@ -279,8 +278,7 @@ are tracked for disposal at the end of the containing _Block_, _Script_, or _Mod
 }
 ```
 
-The above example has similar runtime semantics as the following transposed
-representation:
+The above example has similar runtime semantics as the following transposed representation:
 
 ```js
 {
@@ -326,109 +324,32 @@ representation:
 If exceptions are thrown both in the block following the `using` declaration and in the call to
 `[Symbol.dispose]()`, all exceptions are reported.
 
-### `using` Declarations with Existing Resources
-
-```grammarkdown
-UsingDeclaration :
-    `using` BindingList `;`
-    `using` `await` BindingList `;`
-
-LexicalBinding :
-    `void` Initializer
-```
-
-When a `using` declaration is parsed with `void` _Initializer_, an implicit block-scoped binding is
-created for the result of the expression. When the _Block_ or _Module_ immediately
-containing the `using` declaration is exited, whether by an abrupt or normal completion,
-`[Symbol.dispose]()` (or `[Symbol.asyncDispose]()` in the case of`using await`) is called
-on the implicit binding as long as it is neither `null` nor `undefined`. If an error is thrown
-in both the containing _Block_/_Module_ and the call to `[Symbol.dispose]()` (`[Symbol.asyncDispose]()`),
-an `AggregateError` containing both errors will be thrown instead.
-
-```js
-{
-  ... // (1)
-  using void = expr; // in Block scope
-  ... // (2)
-}
-```
-
-The above example has similar runtime semantics as the following transposed representation:
-
-```js
-{
-  const $$try = { stack: [], exception: undefined };
-  try {
-    ... // (1)
-
-    const $$expr = expr; // evaluate `expr`
-    if ($$expr !== null && $$expr !== undefined) {
-      const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") {
-        throw new TypeError();
-      }
-      $$try.stack.push({ value: $$expr, dispose: $$dispose });
-    }
-
-    ... // (2)
-  }
-  catch ($$error) {
-    $$try.exception = { cause: $$error };
-  }
-  finally {
-    const $$errors = [];
-    while ($$try.stack.length) {
-      const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
-      try {
-        $$dispose.call($$expr);
-      }
-      catch ($$error) {
-        $$errors.push($$error);
-      }
-    }
-    if ($$errors.length > 0) {
-      throw new AggregateError($$errors, undefined, $$try.exception);
-    }
-    if ($$try.exception) {
-      throw $$try.exception.cause;
-    }
-  }
-}
-```
-
-The local block-scoped binding ensures that if `expr` above is reassigned, we still correctly close
-the resource we are explicitly tracking.
-
 ### `using` Declarations with Multiple Resources
 
-A `using` declaration can mix multiple explicit (i.e., `using x = expr`) and implicit (i.e.,
-`using void = expr`) bindings in the same declaration:
+A `using` declaration can mix multiple explicit bindings in the same declaration:
 
 ```js
 {
   ...
-  using x = expr1, void = expr2, y = expr3;
+  using x = expr1, y = expr2;
   ...
 }
 ```
 
-These bindings are again used to perform resource disposal when the _Block_ or _Module_
-exits, however in this case `[Symbol.dispose]()` (or `[Symbol.asyncDispose]()` in the case of
-`using await`) is invoked in the reverse order of their declaration. This is
-_approximately_ equivalent to the following:
+These bindings are again used to perform resource disposal when the _Block_ or _Module_ exits, however in this case
+`[Symbol.dispose]()` is invoked in the reverse order of their declaration. This is _approximately_ equivalent to the
+following:
 
 ```js
 {
   ... // (1)
   using x = expr1;
-  using void = expr2;
   using y = expr2;
   ... // (2)
 }
 ```
 
-Both of the above cases would have similar runtime semantics as the following transposed
-representation:
+Both of the above cases would have similar runtime semantics as the following transposed representation:
 
 ```js
 {
@@ -445,16 +366,7 @@ representation:
       $$try.stack.push({ value: x, dispose: $$dispose });
     }
 
-    const $$expr = expr2; // evaluate `expr2`
-    if ($$expr !== null && $$expr !== undefined) {
-      const $$dispose = $$expr[Symbol.dispose];
-      if (typeof $$dispose !== "function") {
-        throw new TypeError();
-      }
-      $$try.stack.push({ value: $$expr, dispose: $$dispose });
-    }
-
-    const y = expr3;
+    const y = expr2;
     if (y !== null && y !== undefined) {
       const $$dispose = y[Symbol.dispose];
       if (typeof $$dispose !== "function") {
@@ -489,17 +401,16 @@ representation:
 }
 ```
 
-Since we must always ensure that we properly release resources, we must ensure that any abrupt
-completion that might occur during binding initialization results in evaluation of the cleanup
-step. When there are multiple declarations in the list, we track each resource in the order they
-are declared. As a result, we must release these resources in reverse order.
+Since we must always ensure that we properly release resources, we must ensure that any abrupt completion that might
+occur during binding initialization results in evaluation of the cleanup step. When there are multiple declarations in
+the list, we track each resource in the order they are declared. As a result, we must release these resources in reverse
+order.
 
 ### `using` Declarations and `null` or `undefined` Values
 
-This proposal has opted to ignore `null` and `undefined` values provided to the `using` and
-`using await` declarations. This is similar to the behavior of `using` in C#, which also
-allows `null`. One primary reason for this behavior is to simplify a common case where a resource
-might be optional, without requiring duplication of work or needless allocations:
+This proposal has opted to ignore `null` and `undefined` values provided to the `using` declarations. This is similar to
+the behavior of `using` in C#, which also allows `null`. One primary reason for this behavior is to simplify a common
+case where a resource might be optional, without requiring duplication of work or needless allocations:
 
 ```js
 if (isResourceAvailable()) {
@@ -526,82 +437,12 @@ resource?.doSomething();
 
 ### `using` Declarations and Values Without `[Symbol.dispose]`
 
-If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown
-**immediately** when the resource is tracked.
-
-### `using await` Declarations and Values Without `[Symbol.asyncDispose]`
-
-If a resource does not have either a callable `[Symbol.asyncDispose]` member or a callable 
-`[Symbol.dispose]` member, a `TypeError` would be thrown **immediately** when the resource is tracked.
-
-### `using await` Declarations in _AsyncFunction_, _AsyncGeneratorFunction_, or _Module_
-
-In an _AsyncFunction_, _AsyncGeneratorFunction_, _AsyncArrowFunction_, or the top-level of a _Module_,
-when we evaluate a `using await` declaration we first look for a `[Symbol.asyncDispose]` method
-before looking for a `[Symbol.dispose]` method. At the end of the containing function body, _Block_, or
-_Module_, if the method returns a value other than `undefined`, we **Await** the value before exiting:
-
-```js
-async function f() {
-  ... // (1)
-  using await x = expr;
-  ... // (2)
-}
-```
-
-Is semantically equivalent to the following transposed representation:
-
-
-```js
-async function f() {
-  const $$try = { stack: [], exception: undefined };
-  try {
-    ... // (1)
-
-    const x = expr;
-    if (x !== null && x !== undefined) {
-      let $$dispose = x[Symbol.asyncDispose];
-      if ($$dispose === undefined) {
-        $$dispose = x[Symbol.dispose];
-      }
-      if (typeof $$dispose !== "function") {
-        throw new TypeError();
-      }
-      $$try.stack.push({ value: x, dispose: $$dispose });
-    }
-
-    ... // (2)
-  }
-  catch ($$error) {
-    $$try.exception = { cause: $$error };
-  }
-  finally {
-    const $$errors = [];
-    while ($$try.stack.length) {
-      const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
-      try {
-        const $$result = $$dispose.call($$expr);
-        if ($$result !== undefined) {
-          await $$result;
-        }
-      }
-      catch ($$error) {
-        $$errors.push($$error);
-      }
-    }
-    if ($$errors.length > 0) {
-      throw new AggregateError($$errors, undefined, $$try.exception);
-    }
-    if ($$try.exception) {
-      throw $$try.exception.cause;
-    }
-  }
-}
-```
+If a resource does not have a callable `[Symbol.dispose]` member, a `TypeError` would be thrown **immediately** when the
+resource is tracked.
 
 ### `using` Declarations in `for-of` and `for-await-of` Loops
 
-A `using` (or `using await`) declaration can occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
+A `using` declaration _may_ occur in the _ForDeclaration_ of a `for-of` or `for-await-of` loop:
 
 ```js
 for (using x of iterateResources()) {
@@ -609,10 +450,11 @@ for (using x of iterateResources()) {
 }
 ```
 
-In this case, the value bound to `x` in each iteration will be disposed at the end of each iteration. This will not dispose
-resources that are not iterated, such as if iteration is terminated early due to `return`, `break`, or `throw`.
+In this case, the value bound to `x` in each iteration will be _synchronously_ disposed at the end of each iteration.
+This will not dispose resources that are not iterated, such as if iteration is terminated early due to `return`,
+`break`, or `throw`.
 
-Neither `using` nor `using await` can be used in a `for-in` loop.
+`using` declarations _may not_ be used in in the head of a `for-in` loop.
 
 # Examples
 
@@ -623,38 +465,25 @@ The following show examples of using this proposal with various APIs, assuming t
 {
   using reader = stream.getReader();
   const { value, done } = reader.read();
-} // reader is disposed
+} // 'reader' is disposed
 ```
 
 ### NodeJS FileHandle
 ```js
 {
   using f1 = await fs.promises.open(s1, constants.O_RDONLY),
-              f2 = await fs.promises.open(s2, constants.O_WRONLY);
+        f2 = await fs.promises.open(s2, constants.O_WRONLY);
   const buffer = Buffer.alloc(4092);
   const { bytesRead } = await f1.read(buffer);
   await f2.write(buffer, 0, bytesRead);
-} // both handles are closed
-```
-
-### Transactional Consistency (ACID/3PC)
-```js
-// roll back transaction if either action fails
-{
-  using await tx = transactionManager.startTransaction(account1, account2);
-  await account1.debit(amount);
-  await account2.credit(amount);
-
-  // mark transaction success
-  tx.succeeded = true;
-} // transaction is committed
+} // 'f2' is disposed, then 'f1' is disposed
 ```
 
 ### Logging and tracing
 ```js
 // audit privileged function call entry and exit
 function privilegedActivity() {
-  using void = auditLog.startActivity("privilegedActivity"); // log activity start
+  using activity = auditLog.startActivity("privilegedActivity"); // log activity start
   ...
 } // log activity end
 ```
@@ -665,7 +494,7 @@ import { Semaphore } from "...";
 const sem = new Semaphore(1); // allow one participant at a time
 
 export async function tryUpdate(record) {
-  using void = await sem.wait(); // asynchronously block until we are the sole participant
+  using lck = await sem.wait(); // asynchronously block until we are the sole participant
   ...
 } // synchronously release semaphore and notify the next participant
 ```
@@ -698,7 +527,7 @@ const { mut, cv } = data;
 
 {
   // lock mutex
-  using void = Atomics.Mutex.lock(mut);
+  using lck = Atomics.Mutex.lock(mut);
 
   // NOTE: at this point we currently own the lock
 
@@ -715,7 +544,7 @@ Atomics.ConditionVariable.notifyOne(cv);
 
 {
   // reacquire lock on mutex
-  using void = Atomics.Mutex.lock(mut);
+  using lck = Atomics.Mutex.lock(mut);
 
   // NOTE: at this point we currently own the lock
 
@@ -739,7 +568,7 @@ const { mut, cv } = data;
 
 {
   // lock mutex
-  using void = Atomics.Mutex.lock(mut);
+  using lck = Atomics.Mutex.lock(mut);
 
   // NOTE: at this point we currently own the lock
 
@@ -767,8 +596,8 @@ values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
 **Well-known Symbols**
 | Specification Name | \[\[Description]] | Value and Purpose |
 |:-|:-|:-|
-| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of `using` declarations. |
-| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Called by the semantics of `using await` declarations. |
+| _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of `using` declarations and by `DisposableStack` objects. |
+| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Used by `AsyncDisposableStack` objects. |
 
 **TypeScript Definition**
 ```ts
@@ -778,11 +607,16 @@ interface SymbolConstructor {
 }
 ```
 
+Even though this proposal no longer includes [novel syntax for async disposal](#out-of-scopedeferred), we still define
+`Symbol.asyncDispose`. Async resource management is extremely valuable even without novel syntax, and
+`Symbol.asyncDispose` is still necessary to support the semantics of `AsyncDisposableStack`. It is our hope that
+a follow-on proposal for novel syntax will be adopted by the committee at a future date.
+
 ## Built-in Disposables
 
 ### `%IteratorPrototype%.@@dispose()`
 
-We also propose to add `@@dispose` to the built-in `%IteratorPrototype%` as if it had the following behavior:
+We also propose to add `Symbol.dispose` to the built-in `%IteratorPrototype%` as if it had the following behavior:
 
 ```js
 %IteratorPrototype%[Symbol.dispose] = function () {
@@ -792,7 +626,7 @@ We also propose to add `@@dispose` to the built-in `%IteratorPrototype%` as if i
 
 ### `%AsyncIteratorPrototype%.@@asyncDispose()`
 
-We propose to add `@@asyncDispose` to the built-in `%AsyncIteratorPrototype%` as if it had the following behavior:
+We propose to add `Symbol.asyncDispose` to the built-in `%AsyncIteratorPrototype%` as if it had the following behavior:
 
 ```js
 %AsyncIteratorPrototype%[Symbol.asyncDispose] = async function () {
@@ -802,7 +636,7 @@ We propose to add `@@asyncDispose` to the built-in `%AsyncIteratorPrototype%` as
 
 ### Other Possibilities
 
-We could also consider adding `@@dispose` to such objects as the return value from `Proxy.revocable()`, but that
+We could also consider adding `Symbol.dispose` to such objects as the return value from `Proxy.revocable()`, but that
 is currently out of scope for the current proposal.
 
 ## The Common `Disposable` and `AsyncDisposable` Interfaces
@@ -947,10 +781,10 @@ NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's
 
 ### Aggregation
 
-The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources into a
-single container. When the `DisposableStack` container is disposed, each object in the container is also guaranteed to be
-disposed (barring early termination of the program). Any exceptions thrown as resources in the container are disposed
-will be collected and rethrown as an `AggregateError`.
+The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources
+into a single container. When the `DisposableStack` container is disposed, each object in the container is also
+guaranteed to be disposed (barring early termination of the program). Any exceptions thrown as resources in the
+container are disposed will be collected and rethrown as an `AggregateError`.
 
 For example:
 
@@ -963,8 +797,8 @@ stack[Symbol.dispose](); // disposes of resource2, then resource1
 
 ### Interoperation and Customization
 
-The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a simple
-callback. This callback will be executed when the stack's disposal method is executed.
+The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a
+simple callback. This callback will be executed when the stack's disposal method is executed.
 
 The ability to create a disposable resource from a callback has several benefits:
 
@@ -992,9 +826,9 @@ The ability to create a disposable resource from a callback has several benefits
 ### Assist in Complex Construction
 
 A user-defined disposable class might need to allocate and track multiple nested resources that should be disposed when
-the class instance is disposed. However, properly managing the lifetime of these nested resources in the class constructor
-can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more easily manage
-lifetime in these scenarios:
+the class instance is disposed. However, properly managing the lifetime of these nested resources in the class
+constructor can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more
+easily manage lifetime in these scenarios:
 
 ```js
 class PluginHost {
@@ -1033,8 +867,8 @@ class PluginHost {
 
 # Relation to `Iterator` and `for..of`
 
-Iterators in ECMAScript also employ a "cleanup" step by way of supplying a `return` method. This means that there is some similarity between a
-`using` declaration and a `for..of` statement:
+Iterators in ECMAScript also employ a "cleanup" step by way of supplying a `return` method. This means that there is
+some similarity between a `using` declaration and a `for..of` statement:
 
 ```js
 // using
@@ -1042,6 +876,7 @@ function f() {
   using x = ...;
   // use x
 } // x is disposed
+
 
 // for..of
 function makeDisposableScope() {
@@ -1099,7 +934,8 @@ However there are a number drawbacks to using `for..of` as an alternative:
 
 - Exceptions in the body are swallowed by exceptions from disposables.
 - `for..of` implies iteration, which can be confusing when reading code.
-- Conflating `for..of` and resource management could make it harder to find documentation, examples, StackOverflow answers, etc.
+- Conflating `for..of` and resource management could make it harder to find documentation, examples, StackOverflow
+  answers, etc.
 - A `for..of` implementation like the one above cannot control the scope of `use`, which can make lifetimes confusing:
   ```js
   for (const { use } of ...) {
@@ -1111,7 +947,8 @@ However there are a number drawbacks to using `for..of` as an alternative:
   ```
 - Significantly more boilerplate compared to `using`.
 - Mandates introduction of a new block scope, even at the top level of a function body.
-- Control flow analysis of a `for..of` loop cannot infer definite assignment since a loop could potentially have zero elements:
+- Control flow analysis of a `for..of` loop cannot infer definite assignment since a loop could potentially have zero
+  elements:
   ```js
   // using
   function f1() {
@@ -1157,10 +994,10 @@ However there are a number drawbacks to using `for..of` as an alternative:
 
 # Relation to DOM APIs
 
-This proposal does not necessarily require immediate support in the HTML DOM specification, as existing APIs can still be adapted by
-using `DisposableStack`. However, there are a number of APIs that could benefit from this proposal and should be considered by the
-relevant standards bodies. The following is by no means a complete list, and primarily offers suggestions for consideration. The actual
-implementation is at the discretion of the relevant standards bodies.
+This proposal does not necessarily require immediate support in the HTML DOM specification, as existing APIs can still
+be adapted by using `DisposableStack`. However, there are a number of APIs that could benefit from this proposal and
+should be considered by the relevant standards bodies. The following is by no means a complete list, and primarily
+offers suggestions for consideration. The actual implementation is at the discretion of the relevant standards bodies.
 
 - `AudioContext` &mdash; `@@asyncDispose()` as an alias for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
@@ -1191,7 +1028,8 @@ implementation is at the discretion of the relevant standards bodies.
 - `RTCRtpTransceiver` &mdash; `@@dispose()` as an alias for `stop()`.
 - `ReadableStream` &mdash; `@@asyncDispose()` as an alias for `cancel()`.
 - `ReadableStreamDefaultController` &mdash; `@@dispose()` as an alias for `close()`.
-- `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a wrapper for `cancel()` (but probably not both).
+- `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a
+  wrapper for `cancel()` (but probably not both).
 - `ResizeObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
 - `ServiceWorkerRegistration` &mdash; `@@asyncDispose()` as a wrapper for `unregister()`.
 - `SourceBuffer` &mdash; `@@dispose()` as a wrapper for `abort()`.
@@ -1200,14 +1038,17 @@ implementation is at the discretion of the relevant standards bodies.
 - `Worker` &mdash; `@@dispose()` as an alias for `terminate()`.
 - `WritableStream` &mdash; `@@asyncDispose()` as an alias for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a wrapper for `close()` (but probably not both).
+- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a
+  wrapper for `close()` (but probably not both).
 - `XMLHttpRequest` &mdash; `@@dispose()` as an alias for `abort()`.
 
 In addition, several new APIs could be considered that leverage this functionality:
 
-- `EventTarget.prototype.addEventListener(type, listener, { subscription: true }) -> Disposable` &mdash; An option passed to `addEventListener` could
+- `EventTarget.prototype.addEventListener(type, listener, { subscription: true }) -> Disposable` &mdash; An option
+  passed to `addEventListener` could
   return a `Disposable` that removes the event listener when disposed.
-- `Performance.prototype.measureBlock(measureName, options) -> Disposable` &mdash; Combines `mark` and `measure` into a block-scoped disposable:
+- `Performance.prototype.measureBlock(measureName, options) -> Disposable` &mdash; Combines `mark` and `measure` into a
+  block-scoped disposable:
   ```js
   function f() {
     using void = performance.measureBlock("f"); // marks on entry
@@ -1216,6 +1057,17 @@ In addition, several new APIs could be considered that leverage this functionali
   ```
 - A wrapper for `pauseAnimations()` and `unpauseAnimations()` in `SVGSVGElement`.
 - A wrapper for `lock()` and `unlock()` in `ScreenOrientation`.
+
+# Out-of-Scope/Deferred
+
+Several pieces of functionality related to this proposal are currently out of scope. However, we still feel they are
+important characteristics for the ECMAScript to employ in the future and may be considered for follow-on proposals:
+
+- Bindingless [`using void`](./future/using-void-declaration.md) declarations (i.e., `using void = expr`).
+- Block-style [`using` statements](./future/using-statement.md) (i.e., `using (x = expr) {}`) for sync disposables.
+- RAII-style [`using await` declarations](./future/using-await-declaration.md) (i.e., `using await id = expr`) for async
+  disposables.
+- Block-style [`using await` statements]() (i.e., `using await (x = expr) {}`) for async disposables.
 
 # Meeting Notes
 
