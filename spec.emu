@@ -1866,7 +1866,7 @@ contributors: Ron Buckton, Ecma International
             1. Assert: If the binding exists, it must be in the object Environment Record.
             1. <ins>Assert: _hint_ is ~normal~.</ins>
             1. Let _ObjRec_ be _envRec_.[[ObjectRecord]].
-            1. Return ? <emu-meta effects="user-code">_ObjRec_.InitializeBinding</emu-meta>(_N_, _V_).
+            1. Return ? <emu-meta effects="user-code">_ObjRec_.InitializeBinding</emu-meta>(_N_, _V_<ins>, ~normal~</ins>).
           </emu-alg>
         </emu-clause>
 
@@ -2231,7 +2231,7 @@ contributors: Ron Buckton, Ecma International
             1. For each element _bn_ of _perIterationBindings_, do
               1. Perform ! _thisIterationEnv_.CreateMutableBinding(_bn_, *false*).
               1. Let _lastValue_ be ? _lastIterationEnv_.GetBindingValue(_bn_, *true*).
-              1. Perform _thisIterationEnv_.InitializeBinding(_bn_, _lastValue_).
+              1. Perform _thisIterationEnv_.InitializeBinding(_bn_, _lastValue_<ins>, ~normal~</ins>).
             1. Set the running execution context's LexicalEnvironment to _thisIterationEnv_.
             1. <ins>Return _thisIterationEnv_.</ins>
           1. Return ~unused~.
