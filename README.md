@@ -1020,7 +1020,7 @@ offers suggestions for consideration. The actual implementation is at the discre
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
 - `MessagePort` &mdash; `@@dispose()` as an alias for `close()`.
 - `MutationObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
-- `PaymentRequest` &mdash; `@@asyncDispose()` as an alias for `abort()`.
+- `PaymentRequest` &mdash; `@@asyncDispose()` could invoke `abort()` if the payment is still in the active state.
   - NOTE: `abort()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
 - `PerformanceObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
 - `PushSubscription` &mdash; `@@asyncDispose()` as an alias for `unsubscribe()`.
