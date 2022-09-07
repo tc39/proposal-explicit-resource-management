@@ -53,7 +53,7 @@ with managing multiple resources:
 
 **Stage:** 2  \
 **Champion:** Ron Buckton (@rbuckton)  \
-**Last Presented:** February, 2020 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF),
+**Last Presented:** October, 2021 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF),
 [notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
