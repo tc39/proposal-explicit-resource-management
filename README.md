@@ -999,11 +999,11 @@ be adapted by using `DisposableStack`. However, there are a number of APIs that 
 should be considered by the relevant standards bodies. The following is by no means a complete list, and primarily
 offers suggestions for consideration. The actual implementation is at the discretion of the relevant standards bodies.
 
-- `AudioContext` &mdash; `@@asyncDispose()` as an alias for `close()`.
+- `AudioContext` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `BroadcastChannel` &mdash; `@@dispose()` as an alias for `close()`.
-- `EventSource` &mdash; `@@dispose()` as an alias for `close()`.
-- `FileReader` &mdash; `@@dispose()` as an alias for `abort()`.
+- `BroadcastChannel` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `EventSource` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `FileReader` &mdash; `@@dispose()` as an alias or [wrapper][] for `abort()`.
 - `IDbTransaction` &mdash; `@@dispose()` could invoke `abort()` if the transaction is still in the active state:
   ```js
   {
@@ -1014,33 +1014,33 @@ offers suggestions for consideration. The actual implementation is at the discre
     tx.commit();
   } // implicit tx.abort() if we don't reach the explicit tx.commit()
   ```
-- `ImageBitmap` &mdash; `@@dispose()` as an alias for `close()`.
-- `IntersectionObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
-- `MediaKeySession` &mdash; `@@asyncDispose()` as an alias for `close()`.
+- `ImageBitmap` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `IntersectionObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
+- `MediaKeySession` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `MessagePort` &mdash; `@@dispose()` as an alias for `close()`.
-- `MutationObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
+- `MessagePort` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `MutationObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
 - `PaymentRequest` &mdash; `@@asyncDispose()` could invoke `abort()` if the payment is still in the active state.
   - NOTE: `abort()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `PerformanceObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
-- `PushSubscription` &mdash; `@@asyncDispose()` as an alias for `unsubscribe()`.
-- `RTCPeerConnection` &mdash; `@@dispose()` as an alias for `close()`.
-- `RTCRtpTransceiver` &mdash; `@@dispose()` as an alias for `stop()`.
-- `ReadableStream` &mdash; `@@asyncDispose()` as an alias for `cancel()`.
-- `ReadableStreamDefaultController` &mdash; `@@dispose()` as an alias for `close()`.
-- `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a
-  wrapper for `cancel()` (but probably not both).
-- `ResizeObserver` &mdash; `@@dispose()` as an alias for `disconnect()`.
-- `ServiceWorkerRegistration` &mdash; `@@asyncDispose()` as a wrapper for `unregister()`.
-- `SourceBuffer` &mdash; `@@dispose()` as a wrapper for `abort()`.
-- `TransformStreamDefaultController` &mdash; `@@dispose()` as an alias for `terminate()`.
-- `WebSocket` &mdash; `@@dispose()` as a wrapper for `close()`.
-- `Worker` &mdash; `@@dispose()` as an alias for `terminate()`.
-- `WritableStream` &mdash; `@@asyncDispose()` as an alias for `close()`.
+- `PerformanceObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
+- `PushSubscription` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `unsubscribe()`.
+- `RTCPeerConnection` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `RTCRtpTransceiver` &mdash; `@@dispose()` as an alias or [wrapper][] for `stop()`.
+- `ReadableStream` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `cancel()`.
+- `ReadableStreamDefaultController` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or
+  `@@asyncDispose()` as a [wrapper][] for `cancel()` (but probably not both).
+- `ResizeObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
+- `ServiceWorkerRegistration` &mdash; `@@asyncDispose()` as a [wrapper][] for `unregister()`.
+- `SourceBuffer` &mdash; `@@dispose()` as a [wrapper][] for `abort()`.
+- `TransformStreamDefaultController` &mdash; `@@dispose()` as an alias or [wrapper][] for `terminate()`.
+- `WebSocket` &mdash; `@@dispose()` as a [wrapper][] for `close()`.
+- `Worker` &mdash; `@@dispose()` as an alias or [wrapper][] for `terminate()`.
+- `WritableStream` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias for `releaseLock()`, or `@@asyncDispose()` as a
-  wrapper for `close()` (but probably not both).
-- `XMLHttpRequest` &mdash; `@@dispose()` as an alias for `abort()`.
+- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or 
+  `@@asyncDispose()` as a [wrapper][] for `close()` (but probably not both).
+- `XMLHttpRequest` &mdash; `@@dispose()` as an alias or [wrapper][] for `abort()`.
 
 In addition, several new APIs could be considered that leverage this functionality:
 
@@ -1051,12 +1051,69 @@ In addition, several new APIs could be considered that leverage this functionali
   block-scoped disposable:
   ```js
   function f() {
-    using void = performance.measureBlock("f"); // marks on entry
+    using measure = performance.measureBlock("f"); // marks on entry
     // ...
   } // marks and measures on exit
   ```
-- A wrapper for `pauseAnimations()` and `unpauseAnimations()` in `SVGSVGElement`.
-- A wrapper for `lock()` and `unlock()` in `ScreenOrientation`.
+- `SVGSVGElement` &mdash; A new method producing a [single-use disposer][] for `pauseAnimations()` and `unpauseAnimations()`.
+- `ScreenOrientation` &mdash; A new method producing a [single-use disposer][] for `lock()` and `unlock()`.
+
+### Definitions
+
+A _<dfn id="wrapper">wrapper</dfn> for `x()`_ is a method that invokes `x()`, but only if the object is in a state
+such that calling `x()` will not throw as a result of repeated evaluation.
+
+A _<dfn id="adapter">callback-adapting wrapper</dfn>_ is a _wrapper_ that adapts a continuation passing-style method
+that accepts a callback into a `Promise`-producing method.
+
+A _<dfn id="disposer">single-use disposer</dfn> for `x()` and `y()`_ indicates a newly constructed disposable object
+that invokes `x()` when constructed and `y()` when disposed the first time (and does nothing if the object is disposed
+more than once).
+
+# Relation to NodeJS APIs
+
+This proposal does not necessarily require immediate support in NodeJS, as existing APIs can still be adapted by using
+`DisposableStack`. However, there are a number of APIs that could benefit from this proposal and should be considered by
+the NodeJS maintainers. The following is by no means a complete list, and primarily offers suggestions for
+consideration. The actual implementation is at the discretion of the NodeJS maintainers.
+
+- Anything with `ref()` and `unref()` methods &mdash; A new method or API that produces a [single-use disposer][] for
+ `ref()` and `unref()`.
+- Anything with `cork()` and `uncork()` methods &mdash; A new method or API that produces a [single-use disposer][] for
+ `cork()` and `uncork()`.
+- `async_hooks.AsyncHook` &mdash; either `@@dispose()` as an alias or [wrapper][] for `disable()`, or a new method that
+  produces a [single-use disposer][] for `enable()` and `disable()`.
+- `child_process.ChildProcess` &mdash; `@@dispose()` as an alias or [wrapper][] for `kill()`.
+- `cluster.Worker` &mdash; `@@dispose()` as an alias or [wrapper][] for `kill()`.
+- `crypto.Cipher`, `crypto.Decipher` &mdash; `@@dispose()` as a [wrapper][] for `final()`.
+- `crypto.Hash`, `crypto.Hmac` &mdash; `@@dispose()` as a [wrapper][] for `digest()`.
+- `dns.Resolver`, `dnsPromises.Resolver` &mdash; `@@dispose()` as an alias or [wrapper][] for `cancel()`.
+- `domain.Domain` &mdash; A new method or API that produces a [single-use disposer][] for `enter()` and `exit()`.
+- `events.EventEmitter` &mdash; A new method or API that produces a [single-use disposer][] for `on()` and `off()`.
+- `fs.promises.FileHandle` &mdash; `@@disposeAsync()` as an alias or [wrapper][] for `close()`.
+- `fs.Dir` &mdash; `@@disposeAsync()` as an alias or [wrapper][] for `close()`, `@@dispose()` as an alias or [wrapper][]
+  for `closeSync()`.
+- `fs.FSWatcher` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
+- `http.Agent` &mdash; `@@dispose()` as an alias or [wrapper][] for `destroy()`.
+- `http.ClientRequest` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
+- `http.Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `http.ServerResponse` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `end()`.
+- `http.IncomingMessage` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
+- `http.OutgoingMessage` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
+- `http2.Http2Session` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `http2.Http2Stream` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `http2.Http2Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `http2.Http2SecureServer` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `http2.Http2ServerRequest` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for
+  `destroy()`.
+- `http2.Http2ServerResponse` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `end()`.
+- `https.Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
+- `inspector` &mdash; A new API that produces a [single-use disposer][] for `open()` and `close()`.
+- `stream.Writable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()` or
+  `@@disposeAsync` only as a [callback-adapting wrapper][] for `end()` (depending on whether the disposal behavior 
+  should be to drop immediately or to flush any pending writes).
+- `stream.Readable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
+- ... and many others in `net`, `readline`, `tls`, `udp`, and `worker_threads`.
 
 # Out-of-Scope/Deferred
 
@@ -1118,7 +1175,6 @@ The following is a high-level list of tasks to progress through each stage of th
 * [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].
 
 
-
 <!-- # References -->
 
 <!-- Links to other specifications, etc. -->
@@ -1149,3 +1205,6 @@ The following is a high-level list of tasks to progress through each stage of th
 [Implementation1]: #todo
 [Implementation2]: #todo
 [Ecma262PullRequest]: #todo
+[wrapper]: #wrapper
+[callback-adapting wrapper]: #adapter
+[single-use disposer]: #disposer
