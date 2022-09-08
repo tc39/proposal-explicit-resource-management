@@ -40,102 +40,6 @@ contributors: Ron Buckton, Ecma International
   <p>See <a href="https://github.com/tc39/explicit-resource-management">the proposal repository</a> for background material and discussion.</p>
 </emu-intro>
 
-<emu-clause id="sec-notational-conventions">
-  <h1>Notational Conventions</h1>
-  <emu-clause id="sec-algorithm-conventions">
-    <h1>Algorithm Conventions</h1>
-    <emu-clause id="sec-runtime-semantics">
-      <h1>Runtime Semantics</h1>
-      <ins class="block">
-      <emu-clause id="sec-disposeifabrupt" aoid="DisposeIfAbrupt">
-        <h1>DisposeIfAbrupt</h1>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. DisposeIfAbrupt(_argument_, _disposable_).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_).
-        </emu-alg>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. DisposeIfAbrupt(_argument_, _disposable_, _errors_).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. Assert: _errors_ is a List.
-          1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_, _errors_).
-        </emu-alg>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. DisposeIfAbrupt(AbstractOperation(), _disposable_).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. Let _hygienicTemp_ be AbstractOperation().
-          1. If _hygienicTemp_ is an abrupt completion, set _hygienicTemp_ to DisposeResources(_disposable_, _hygienicTemp_).
-        </emu-alg>
-        <p>Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. DisposeIfAbrupt(AbstractOperation(), _disposable_, _errors_).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. Assert: _errors_ is a List.
-          1. Let _hygienicTemp_ be AbstractOperation().
-          1. If _hygienicTemp_ is an abrupt completion, set _hygienicTemp_ to DisposeResources(_disposable_, _hygienicTemp_, _errors_).
-        </emu-alg>
-        <p>Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to DisposeIfAbrupt.</p>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. Let _result_ be AbstractOperation(DisposeIfAbrupt(_argument_, _disposable_)).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_).
-          1. Let _result_ be AbstractOperation(_argument_).
-        </emu-alg>
-
-        <p>Algorithm steps that say or are otherwise equivalent to:</p>
-        <emu-alg>
-          1. Let _result_ be AbstractOperation(DisposeIfAbrupt(_argument_, _disposable_, _errors_)).
-        </emu-alg>
-        <p>mean the same thing as:</p>
-        <emu-alg>
-          1. Assert: _disposable_ is an object with a [[DisposableResourceStack]] internal slot or *undefined*.
-          1. Assert: _errors_ is a List.
-          1. If _argument_ is an abrupt completion, set _argument_ to DisposeResources(_disposable_, _argument_, _errors_).
-          1. Let _result_ be AbstractOperation(_argument_).
-        </emu-alg>
-
-        <emu-note>
-          <p>DisposeIfAbrupt can be combined with the `?` and `!` prefixes, so that for example</p>
-          <emu-alg>
-            1. Let _result_ be ? DisposeIfAbrupt(_value_, _disposable_).
-          </emu-alg>
-          <p>means the same thing as:</p>
-          <emu-alg>
-            1. Let _result_ be DisposeIfAbrupt(_value_, _disposable_).
-            1. ReturnIfAbrupt(_result_).
-          </emu-alg>
-        </emu-note>
-      </emu-clause>
-      </ins>
-    </emu-clause>
-  </emu-clause>
-</emu-clause>
-
 <emu-clause id="sec-ecmascript-data-types-and-values" aoid="Type">
   <h1>ECMAScript Data Types and Values</h1>
   <emu-clause id="sec-ecmascript-language-types">
@@ -962,6 +866,7 @@ contributors: Ron Buckton, Ecma International
           InitializeReferencedBinding (
             _V_: unknown,
             _W_: unknown,
+            <ins>_hint_: either ~normal~ or ~sync-dispose~,</ins>
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header">
@@ -971,7 +876,6 @@ contributors: Ron Buckton, Ecma International
           1. ReturnIfAbrupt(_W_).
           1. Assert: _V_ is a Reference Record.
           1. Assert: IsUnresolvableReference(_V_) is *false*.
-          1. <ins>Assert: _hint_ is ~normal~, ~sync-dispose~, or ~async-dispose~.</ins>
           1. Let _base_ be _V_.[[Base]].
           1. Assert: _base_ is an Environment Record.
           1. Return ? _base_.InitializeBinding(_V_.[[ReferencedName]], _W_<ins>, _hint_</ins>).
@@ -2197,20 +2101,25 @@ contributors: Ron Buckton, Ecma International
             1. If _test_ is not ~[empty]~, then
               1. Let _testRef_ be the result of evaluating _test_.
               1. <del>Let _testValue_ be ? GetValue(_testRef_).</del>
-              1. <ins>Let _testValue_ be ? DisposeIfAbrupt(GetValue(_testRef_), _thisIterationEnv_).</ins>
+              1. <ins>Let _testValue_ be Completion(GetValue(_testRef_)).</ins>
+              1. <ins>If _testValue_ is an abrupt completion, then</ins>
+                1. <ins>Return ? DisposeResources(_thisIterationEnv_, _testValue_).</ins>
+              1. <ins>Else,</ins>
+                1. <ins>Set _testValue_ to _testValue_.[[Value]].</ins>
               1. <del>If ToBoolean(_testValue_) is *false*, return _V_.</del>
-              1. <ins>If ToBoolean(_testValue_) is *false*, return DisposeResources(_thisIterationEnv_, _V_).</ins>
+              1. <ins>If ToBoolean(_testValue_) is *false*, return ? DisposeResources(_thisIterationEnv_, Completion(_V_)).</ins>
             1. Let _result_ be the result of evaluating _stmt_.
-            1. <del>If LoopContinues(_result_, _labelSet_) is *false*, return ? UpdateEmpty(_result_, _V_).</del>
-            1. <ins>If LoopContinues(_result_, _labelSet_) is *false*, return ? DisposeResources(_thisIterationEnv_, UpdateEmpty(_result_, _V_)).</ins>
+            1. <ins>Perform ? DisposeResources(_thisIterationEnv_, _result_).</ins>
+            1. If LoopContinues(_result_, _labelSet_) is *false*, return ? UpdateEmpty(_result_, _V_).
             1. If _result_.[[Value]] is not ~empty~, set _V_ to _result_.[[Value]].
             1. <del>Perform ? CreatePerIterationEnvironment(_perIterationBindings_).</del>
-            1. <ins>Perform ? DisposeResources(_thisIterationEnv_, *undefined*).</ins>
             1. <ins>Set _thisIterationEnv_ to ? CreatePerIterationEnvironment(_perIterationBindings_).</ins>
             1. If _increment_ is not ~[empty]~, then
               1. Let _incRef_ be the result of evaluating _increment_.
               1. <del>Perform ? GetValue(_incRef_).</del>
-              1. <ins>Perform ? DisposeIfAbrupt(GetValue(_incRef_), _thisIterationEnv_).</ins>
+              1. <ins>Let _incrResult_ be Completion(GetValue(_incrRef_)).</ins>
+              1. <ins>If _incrResult_ is an abrupt completion, then</ins>
+                1. <ins>Return ? DisposeResources(_thisIterationEnv_, _incrResult_).</ins>
         </emu-alg>
       </emu-clause>
 
@@ -2264,45 +2173,6 @@ contributors: Ron Buckton, Ecma International
           <ins>[~Using] BindingPattern[?Yield, ?Await]</ins>
       </emu-grammar>
 
-      <emu-clause id="sec-runtime-semantics-forinofheadevaluation" type="abstract operation" oldids="sec-runtime-semantics-forin-div-ofheadevaluation-tdznames-expr-iterationkind">
-        <h1>
-          ForIn/OfHeadEvaluation (
-            _uninitializedBoundNames_: unknown,
-            _expr_: unknown,
-            _iterationKind_: ~enumerate~, ~iterate~, or ~async-iterate~,
-          ): either a normal completion containing an Iterator Record or an abrupt completion
-        </h1>
-        <dl class="header">
-        </dl>
-        <emu-alg>
-          1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
-          1. If _uninitializedBoundNames_ is not an empty List, then
-            1. Assert: _uninitializedBoundNames_ has no duplicate entries.
-            1. Let _newEnv_ be NewDeclarativeEnvironment(_oldEnv_).
-            1. For each String _name_ of _uninitializedBoundNames_, do
-              1. Perform ! _newEnv_.CreateMutableBinding(_name_, *false*).
-            1. Set the running execution context's LexicalEnvironment to _newEnv_.
-          1. <ins>Else,</ins>
-            1. <ins>Let _newEnv_ be *undefined*.</ins>
-          1. Let _exprRef_ be the result of evaluating _expr_.
-          1. <ins>Set _exprRef_ to DisposeResources(_newEnv_, _exprRef_).</ins>
-          1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-          1. Let _exprValue_ be ? GetValue(_exprRef_).
-          1. If _iterationKind_ is ~enumerate~, then
-            1. If _exprValue_ is *undefined* or *null*, then
-              1. Return Completion Record { [[Type]]: ~break~, [[Value]]: ~empty~, [[Target]]: ~empty~ }.
-            1. Let _obj_ be ! ToObject(_exprValue_).
-            1. Let _iterator_ be EnumerateObjectProperties(_obj_).
-            1. Let _nextMethod_ be ! GetV(_iterator_, *"next"*).
-            1. Return the Iterator Record { [[Iterator]]: _iterator_, [[NextMethod]]: _nextMethod_, [[Done]]: *false* }.
-          1. Else,
-            1. Assert: _iterationKind_ is ~iterate~ or ~async-iterate~.
-            1. If _iterationKind_ is ~async-iterate~, let _iteratorHint_ be ~async~.
-            1. Else, let _iteratorHint_ be ~sync~.
-            1. Return ? GetIterator(_exprValue_, _iteratorHint_).
-        </emu-alg>
-      </emu-clause>
-
       <emu-clause id="sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset" type="abstract operation">
         <h1>
           ForIn/OfBodyEvaluation (
@@ -2350,7 +2220,11 @@ contributors: Ron Buckton, Ecma International
               1. If _lhsRef_ is an abrupt completion, then
                 1. Let _status_ be _lhsRef_.
               1. Else if _lhsKind_ is ~lexicalBinding~, then
-                1. Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_)).
+                1. <del>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_)).</del>
+                1. <ins>If IsUsingDeclaration of _lhs_ is *true*, then</ins>
+                  1. <ins>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_, ~sync-dispose~)).</ins>
+                1. <ins>Else,</ins>
+                  1. <ins>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_, ~normal~)).</ins>
               1. Else,
                 1. Let _status_ be Completion(PutValue(_lhsRef_, _nextValue_)).
             1. Else,
