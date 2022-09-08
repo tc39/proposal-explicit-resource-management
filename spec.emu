@@ -913,6 +913,17 @@ contributors: Ron Buckton, Ecma International
           </tr>
           <tr>
             <td>
+              [[BindingName]]
+            </td>
+            <td>
+              A String or *undefined*.
+            </td>
+            <td>
+              The name of a binding to be uninitialized when the resource is disposed.
+            </td>
+          </tr>
+          <tr>
+            <td>
               [[ResourceValue]]
             </td>
             <td>
@@ -953,6 +964,7 @@ contributors: Ron Buckton, Ecma International
       <h1>
         AddDisposableResource (
           _disposable_ : an object with a [[DisposableResourceStack]] internal slot,
+          _N_: a String or *undefined*,
           _V_ : an ECMAScript language value,
           _hint_ : either ~sync-dispose~ or ~async-dispose~,
           optional _method_ : a function object,
@@ -961,16 +973,17 @@ contributors: Ron Buckton, Ecma International
       <dl class="header">
       </dl>
       <emu-alg>
+        1. Assert: When _N_ is not *undefined*, _disposable_ is a Declarative Environment Record.
         1. If _method_ is not present then,
           1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
           1. If Type(_V_) is not Object, throw a *TypeError* exception.
-          1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
+          1. Let _resource_ be ? CreateDisposableResource(_N_, _V_, _hint_).
         1. Else,
           1. If _V_ is *null* or *undefined*, then
-            1. Let _resource_ be ? CreateDisposableResource(*undefined*, _hint_, _method_).
+            1. Let _resource_ be ? CreateDisposableResource(_N_, *undefined*, _hint_, _method_).
           1. Else,
             1. If Type(_V_) is not Object, throw a *TypeError* exception.
-            1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_, _method_).
+            1. Let _resource_ be ? CreateDisposableResource(_N_, _V_, _hint_, _method_).
         1. Append _resource_ to _disposable_.[[DisposableResourceStack]].
         1. Return NormalCompletion(~empty~).
       </emu-alg>
@@ -979,6 +992,7 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-createdisposableresource" type="abstract operation">
       <h1>
         CreateDisposableResource (
+          _N_ : a String or *undefined*,
           _V_ : an Object or *undefined*,
           _hint_ : either ~sync-dispose~ or ~async-dispose~,
           optional _method_ : a function object,
@@ -992,7 +1006,7 @@ contributors: Ron Buckton, Ecma International
           1. If _method_ is *undefined*, throw a *TypeError* exception.
         1. Else,
           1. If IsCallable(_method_) is *false*, throw a *TypeError* exception.
-        1. Return the DisposableResource Record { [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _method_ }.
+        1. Return the DisposableResource Record { [[BindingName]]: _N_, [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _method_ }.
       </emu-alg>
     </emu-clause>
 
@@ -1018,6 +1032,8 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-dispose" type="abstract operation">
       <h1>
         Dispose (
+          _disposable_ : an object with a [[DisposableResourceStack]] internal slot,
+          _N_ : a String or *undefined*,
           _V_ : an Object or *undefined*,
           _hint_ : either ~sync-dispose~ or ~async-dispose~,
           _method_ : a function object,
@@ -1025,6 +1041,9 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
+        1. If _N_ is not *undefined*, then
+          1. Assert: _disposable_ is a Declarative Environment Record.
+          1. Perform ! _disposable_.UninitializeUsingBinding(_N_).
         1. Let _result_ be ? Call(_method_, _V_).
         1. If _hint_ is ~async-dispose~ and _result_ is not *undefined*, then
           1. Perform ? Await(_result_).
@@ -1045,7 +1064,7 @@ contributors: Ron Buckton, Ecma International
         1. If _errors_ is not present, let _errors_ be a new empty List.
         1. If _disposable_ is not *undefined*, then
           1. For each _resource_ of _disposable_.[[DisposableResourceStack]], in reverse list order, do
-            1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
+            1. Let _result_ be Dispose(_disposable_, _resource_.[[BindingName]], _resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
               1. If _result_.[[Type]] is ~throw~, then
                 1. Append _result_.[[Value]] to _errors_.
         1. Let _errorsLength_ be the number of elements in _errors_.
@@ -1393,7 +1412,73 @@ contributors: Ron Buckton, Ecma International
         <p>It is not necessary to treat `export default` |AssignmentExpression| as a constant declaration because there is no syntax that permits assignment to the internal bound name used to reference a module's default object.</p>
       </emu-note>
     </emu-clause>
+
+    <ins class="block">
+      <emu-clause id="sec-static-semantics-isusingdeclaration" type="sdo">
+      <h1>Static Semantics: IsUsingDeclaration ( ): a Boolean</h1>
+      <dl class="header">
+      </dl>
+      <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
+      <emu-alg>
+        1. Return IsUsingDeclaration of |LetOrConst|.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>LexicalDeclaration : UsingDeclaration</emu-grammar>
+      <emu-alg>
+        1. Return *true*.
+      </emu-alg>
+      </ins>
+      <emu-grammar>LetOrConst : `let`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>LetOrConst : `const`</emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>
+        FunctionDeclaration :
+          `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`
+          `function` `(` FormalParameters `)` `{` FunctionBody `}`
+
+        GeneratorDeclaration :
+          `function` `*` BindingIdentifier `(` FormalParameters `)` `{` GeneratorBody `}`
+          `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`
+
+        AsyncGeneratorDeclaration :
+          `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+          `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+
+        AsyncFunctionDeclaration :
+          `async` `function` BindingIdentifier `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+          `async` `function` `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>
+        ClassDeclaration :
+          `class` BindingIdentifier ClassTail
+          `class` ClassTail
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-grammar>
+        ExportDeclaration :
+          `export` ExportFromClause FromClause `;`
+          `export` NamedExports `;`
+          `export` `default` AssignmentExpression `;`
+      </emu-grammar>
+      <emu-alg>
+        1. Return *false*.
+      </emu-alg>
+      <emu-note>
+        <p>It is not necessary to treat `export default` |AssignmentExpression| as a using declaration because there is no syntax that permits assignment to the internal bound name used to reference a module's default object.</p>
+      </emu-note>
+    </emu-clause>
   </emu-clause>
+  </ins>
 
   <emu-clause id="sec-syntax-directed-operations-miscellaneous">
     <h1>Miscellaneous</h1>
@@ -1618,10 +1703,10 @@ contributors: Ron Buckton, Ecma International
           </tr>
           <tr>
             <td>
-              CreateImmutableBinding(N, S)
+              CreateImmutableBinding(N, S<ins>, U</ins>)
             </td>
             <td>
-              Create a new but uninitialized immutable binding in an Environment Record. The String value _N_ is the text of the bound name. If _S_ is *true* then attempts to set it after it has been initialized will always throw an exception, regardless of the strict mode setting of operations that reference that binding.
+              Create a new but uninitialized immutable binding in an Environment Record. The String value _N_ is the text of the bound name. If _S_ is *true* then attempts to set it after it has been initialized will always throw an exception, regardless of the strict mode setting of operations that reference that binding. <ins>If the Boolean argument _U_ is *true* the binding may be uninitialized.</ins>
             </td>
           </tr>
           <tr>
@@ -1658,6 +1743,14 @@ contributors: Ron Buckton, Ecma International
           </tr>
           <tr>
             <td>
+              <ins>UninitializeUsingBinding(N)</ins>
+            </td>
+            <td>
+              <ins>Marks a binding as uninitialized in an Environment Record. The String value _N_ is the text of the bound name. If a binding for _N_ exists, unset the binding's value and mark at as uninitalized and return *true*. If the binding exists but cannot be uninitalized return *false*. If the binding does not exist return *true*.</ins>
+            </td>
+          </tr>
+          <tr>
+            <td>
               HasThisBinding()
             </td>
             <td>
@@ -1690,6 +1783,28 @@ contributors: Ron Buckton, Ecma International
         <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
+        <emu-clause id="sec-declarative-environment-records-createimmutablebinding-n-s" type="concrete method">
+          <h1>
+            CreateImmutableBinding (
+              _N_: a String,
+              _S_: a Boolean,
+              <ins>_U_: a Boolean,</ins>
+            )
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a declarative Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It creates a new immutable binding for the name _N_ that is uninitialized. A binding must not already exist in this Environment Record for _N_. If _S_ is *true*, the new binding is marked as a strict binding. <ins>If _U_ is *true*, the new binding is marked as being subject to becoming uninitialized.</ins></dd>
+          </dl>
+          <emu-alg>
+            1. Assert: _envRec_ does not already have a binding for _N_.
+            1. Create an immutable binding in _envRec_ for _N_ and record that it is uninitialized. If _S_ is *true*, record that the newly created binding is a strict binding. <ins>If _U_ is *true*, record that the newly created binding may be uninitialized by a subsequent UninitializeUsingBinding call.</ins>
+            1. Return NormalCompletion(~empty~).
+          </emu-alg>
+        </emu-clause>
+
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
           <h1>
             InitializeBinding (
@@ -1707,16 +1822,44 @@ contributors: Ron Buckton, Ecma International
           </dl>
           <emu-alg>
             1. Assert: _envRec_ must have an uninitialized binding for _N_.
-            1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _V_, _hint_).</ins>
+            1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _N_, _V_, _hint_).</ins>
             1. Set the bound value for _N_ in _envRec_ to _V_.
             1. <emu-not-ref>Record</emu-not-ref> that the binding for _N_ in _envRec_ has been initialized.
             1. Return ~unused~.
           </emu-alg>
         </emu-clause>
+
+        <ins class="block">
+        <emu-clause id="sec-declarative-environment-records-uninitializeusingbinding-n" type="concrete method">
+          <h1>
+            UninitializeUsingBinding (
+              _N_: a String,
+            )
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a declarative Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It marks a binding as uninitialized in an Environment Record. The String value _N_ is the text of the bound name. If a binding for _N_ exists, unset the binding's value and mark at as uninitalized and return *true*. If the binding exists but cannot be uninitalized return *false*. If the binding does not exist return *true*.</dd>
+          </dl>
+          <emu-alg>
+            1. Assert: _envRec_ must have a binding for _N_.
+            1. If the binding for _N_ in _envRec_ cannot be uninitalized, return *false*.
+            1. Unset the value for binding _N_ in _envRec_ and mark it as uninitalized.
+            1. Return *true*.
+          </emu-alg>
+        </emu-clause>
+        </ins>
       </emu-clause>
 
       <emu-clause id="sec-object-environment-records">
         <h1>Object Environment Records</h1>
+
+        <emu-clause id="sec-object-environment-records-createimmutablebinding-n-s">
+          <h1>CreateImmutableBinding ( _N_, _S_<ins>, _U_</ins> )</h1>
+          <p>The CreateImmutableBinding concrete method of an object Environment Record is never used within this specification.</p>
+        </emu-clause>
 
         <emu-clause id="sec-object-environment-records-initializebinding-n-v" type="concrete method">
           <h1>
@@ -1743,10 +1886,45 @@ contributors: Ron Buckton, Ecma International
           </emu-note>
         </emu-clause>
 
+        <ins class="block">
+        <emu-clause id="sec-object-environment-records-uninitializeusingbinding-n" type="concrete method">
+          <h1>UninitializeUsingBinding ( _N_ )</h1>
+          <p>The UninitializeUsingBinding concrete method of an object Environment Record is never used within this specification.</p>
+        </emu-clause>
+        </ins>
+  
       </emu-clause>
 
       <emu-clause id="sec-global-environment-records" oldids="global-environment">
         <h1>Global Environment Records</h1>
+
+        <emu-clause id="sec-global-environment-records-createimmutablebinding-n-s" type="concrete method">
+          <h1>
+            CreateImmutableBinding (
+              _N_: a String,
+              _S_: a Boolean,
+              <ins>_U_: a Boolean,</ins>
+            )
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a global Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It creates a new immutable binding for the name _N_ that is uninitialized. A binding must not already exist in this Environment Record for _N_. If _S_ is *true*, the new binding is marked as a strict binding. <ins>If _U_ is *true*, the new binding is marked as being subject to becoming uninitalized.</ins></dd>
+          </dl>
+          <emu-alg>
+            1. <ins>Assert: _U_ is *false*.</ins>
+            1. Let _DclRec_ be _envRec_.[[DeclarativeRecord]].
+            1. If _DclRec_.HasBinding(_N_) is *true*, throw a *TypeError* exception.
+            1. Return _DclRec_.CreateImmutableBinding(_N_, _S_<ins>, *false*</ins>).
+          </emu-alg>
+          <ins class="block">
+          <emu-note>
+            When _N_ is *true*, it indicates the binding was created as part of a `using` declaration. However, `using` declarations are not permitted at the top level of a _Script_ and thus cannot be added to a Global Environment Record.
+          </emu-note>
+          </ins>
+        </emu-clause>
 
         <emu-clause id="sec-global-environment-records-initializebinding-n-v" type="concrete method">
           <h1>
@@ -1773,6 +1951,29 @@ contributors: Ron Buckton, Ecma International
             1. Return ? <emu-meta effects="user-code">_ObjRec_.InitializeBinding</emu-meta>(_N_, _V_<ins>, ~normal~</ins>).
           </emu-alg>
         </emu-clause>
+
+        <ins class="block">
+        <emu-clause id="sec-global-environment-records-uninitializeusingbinding-n" type="concrete method">
+          <h1>
+            UninitializeUsingBinding (
+              _N_: a String,
+            )
+          </h1>
+          <dl class="header">
+            <dt>for</dt>
+            <dd>a declarative Environment Record _envRec_</dd>
+
+            <dt>description</dt>
+            <dd>It marks a binding as uninitialized in an Environment Record. The String value _N_ is the text of the bound name. If a binding for _N_ exists, unset the binding's value and mark at as uninitalized and return *true*. If the binding exists but cannot be uninitalized return *false*. If the binding does not exist return *true*.</dd>
+          </dl>
+          <emu-alg>
+            1. Let _DclRec_ be _envRec_.[[DeclarativeRecord]].
+            1. If _DclRec_.HasBinding(_N_) is *true*, then
+              1. Return _DclRec_.UninitalizeUsingBinding(_N_).
+            1. Return *true*.
+          </emu-alg>
+        </emu-clause>
+        </ins>
 
       </emu-clause>
     </emu-clause>
@@ -1902,8 +2103,10 @@ contributors: Ron Buckton, Ecma International
         1. For each element _d_ of _lexDeclarations_, do
           1. NOTE: A lexically declared name cannot be the same as a function/generator declaration, formal parameter, or a var name. Lexically declared names are only instantiated here but not initialized.
           1. For each element _dn_ of the BoundNames of _d_, do
-            1. If IsConstantDeclaration of _d_ is *true*, then
-              1. Perform ! _lexEnv_.CreateImmutableBinding(_dn_, *true*).
+            1. <ins>If IsUsingDeclaration of _d_ is *true*, then</ins>
+              1. <ins>Perform ! _lexEnv_.CreateImmutableBinding(_dn_, *true*, *true*).</ins>
+            1. <del>If</del><ins>Else, if</ins> IsConstantDeclaration of _d_ is *true*, then
+              1. Perform ! _lexEnv_.CreateImmutableBinding(_dn_, *true*<ins>, *false*</ins>).
             1. Else,
               1. Perform ! _lexEnv_.CreateMutableBinding(_dn_, *false*).
         1. Let _privateEnv_ be the PrivateEnvironment of _calleeContext_.
@@ -1968,8 +2171,10 @@ contributors: Ron Buckton, Ecma International
         1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. For each element _d_ of _declarations_, do
           1. For each element _dn_ of the BoundNames of _d_, do
-            1. If IsConstantDeclaration of _d_ is *true*, then
-              1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*).
+            1. <ins>If IsUsingDeclaration of _d_ is *true*, then</ins>
+              1. <ins>Perform ! _env_.CreateImmutableBinding(_dn_, *true*, *true*).</ins>
+            1. <del>If</del><ins>Else, if</ins> IsConstantDeclaration of _d_ is *true*, then
+              1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*<ins>, *false*</ins>).
             1. Else,
               1. [id="step-blockdeclarationinstantiation-createmutablebinding"] Perform ! _env_.CreateMutableBinding(_dn_, *false*). NOTE: This step is replaced in section <emu-xref href="#sec-web-compat-blockdeclarationinstantiation"></emu-xref>.
           1. If _d_ is a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
@@ -2237,11 +2442,14 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Let _oldEnv_ be the running execution context's LexicalEnvironment.
           1. Let _loopEnv_ be NewDeclarativeEnvironment(_oldEnv_).
+          1. <ins>Let _isUsing_ be IsUsingDeclaration of |LexicalDeclaration|.</ins>
           1. Let _isConst_ be IsConstantDeclaration of |LexicalDeclaration|.
           1. Let _boundNames_ be the BoundNames of |LexicalDeclaration|.
           1. For each element _dn_ of _boundNames_, do
+            1. <ins>If _isUsing_ is *true*, then</ins>
+              1. <ins>Perform ! _loopEnv_.CreateImmutableBinding(_dn_, *true*, *true*).</ins>
             1. If _isConst_ is *true*, then
-              1. Perform ! _loopEnv_.CreateImmutableBinding(_dn_, *true*).
+              1. Perform ! _loopEnv_.CreateImmutableBinding(_dn_, *true*<ins>, *false*</ins>).
             1. Else,
               1. Perform ! _loopEnv_.CreateMutableBinding(_dn_, *false*).
           1. Set the running execution context's LexicalEnvironment to _loopEnv_.
@@ -2363,7 +2571,7 @@ contributors: Ron Buckton, Ecma International
           1. Assert: _environment_ is a declarative Environment Record.
           1. For each element _name_ of the BoundNames of |ForBinding|, do
             1. If IsConstantDeclaration of |LetOrConst| is *true*, then
-              1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*).
+              1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*<ins>, *false*</ins>).
             1. Else,
               1. Perform ! _environment_.CreateMutableBinding(_name_, *false*).
         </emu-alg>
@@ -2372,7 +2580,7 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Assert: _environment_ is a declarative Environment Record.
           1. For each element _name_ of the BoundNames of |ForBinding|, do
-            1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*).
+            1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*, *true*).
         </emu-alg>
         </ins>
       </emu-clause>
@@ -2544,7 +2752,7 @@ contributors: Ron Buckton, Ecma International
         1. Set _name_ to StringValue of |BindingIdentifier|.
         1. Let _scope_ be the running execution context's LexicalEnvironment.
         1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
-        1. Perform _funcEnv_.CreateImmutableBinding(_name_, *false*).
+        1. Perform _funcEnv_.CreateImmutableBinding(_name_, *false*<ins>, *false*</ins>).
         1. Let _privateScope_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |FunctionExpression|.
         1. Let _closure_ be OrdinaryFunctionCreate(%Function.prototype%, _sourceText_, |FormalParameters|, |FunctionBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
@@ -2587,7 +2795,7 @@ contributors: Ron Buckton, Ecma International
         1. Set _name_ to StringValue of |BindingIdentifier|.
         1. Let _scope_ be the running execution context's LexicalEnvironment.
         1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
-        1. Perform _funcEnv_.CreateImmutableBinding(_name_, *false*).
+        1. Perform _funcEnv_.CreateImmutableBinding(_name_, *false*<ins>, *false*</ins>).
         1. Let _privateScope_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |GeneratorExpression|.
         1. Let _closure_ be OrdinaryFunctionCreate(%GeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |GeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
@@ -2636,7 +2844,7 @@ contributors: Ron Buckton, Ecma International
         1. Set _name_ to StringValue of |BindingIdentifier|.
         1. Let _scope_ be the running execution context's LexicalEnvironment.
         1. Let _funcEnv_ be ! NewDeclarativeEnvironment(_scope_).
-        1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
+        1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*<ins>, *false*</ins>).
         1. Let _privateScope_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncGeneratorExpression|.
         1. Let _closure_ be ! OrdinaryFunctionCreate(%AsyncGeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncGeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
@@ -2823,7 +3031,7 @@ contributors: Ron Buckton, Ecma International
         1. Let _env_ be the LexicalEnvironment of the running execution context.
         1. Let _classScope_ be NewDeclarativeEnvironment(_env_).
         1. If _classBinding_ is not *undefined*, then
-          1. Perform _classScope_.CreateImmutableBinding(_classBinding_, *true*).
+          1. Perform _classScope_.CreateImmutableBinding(_classBinding_, *true*<ins>, *false*</ins>).
         1. Let _outerPrivateEnvironment_ be the running execution context's PrivateEnvironment.
         1. Let _classPrivateEnvironment_ be NewPrivateEnvironment(_outerPrivateEnvironment_).
         1. If |ClassBody?| is present, then
@@ -3212,6 +3420,87 @@ contributors: Ron Buckton, Ecma International
 <emu-clause id="sec-ecmascript-language-scripts-and-modules">
   <h1>ECMAScript Language: Scripts and Modules</h1>
 
+  <emu-clause id="sec-scripts">
+    <h1>Scripts</h1>
+
+    <emu-clause id="sec-globaldeclarationinstantiation" type="abstract operation">
+      <h1>
+        GlobalDeclarationInstantiation (
+          _script_: a |ScriptBody| Parse Node,
+          _env_: a global Environment Record,
+        )
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>_script_ is the |ScriptBody| for which the execution context is being established. _env_ is the global environment in which bindings are to be created.</dd>
+      </dl>
+      <emu-note>
+        <p>When an execution context is established for evaluating scripts, declarations are instantiated in the current global environment. Each global binding declared in the code is instantiated.</p>
+      </emu-note>
+      <p>It performs the following steps when called:</p>
+      <!--
+        WARNING: If you add, remove, rename, or repurpose any variable names
+                 within this algorithm, you may need to update
+                 #sec-web-compat-globaldeclarationinstantiation accordingly.
+      -->
+      <emu-alg>
+        1. Let _lexNames_ be the LexicallyDeclaredNames of _script_.
+        1. Let _varNames_ be the VarDeclaredNames of _script_.
+        1. For each element _name_ of _lexNames_, do
+          1. If _env_.HasVarDeclaration(_name_) is *true*, throw a *SyntaxError* exception.
+          1. If _env_.HasLexicalDeclaration(_name_) is *true*, throw a *SyntaxError* exception.
+          1. Let _hasRestrictedGlobal_ be ? _env_.HasRestrictedGlobalProperty(_name_).
+          1. If _hasRestrictedGlobal_ is *true*, throw a *SyntaxError* exception.
+        1. For each element _name_ of _varNames_, do
+          1. If _env_.HasLexicalDeclaration(_name_) is *true*, throw a *SyntaxError* exception.
+        1. Let _varDeclarations_ be the VarScopedDeclarations of _script_.
+        1. Let _functionsToInitialize_ be a new empty List.
+        1. Let _declaredFunctionNames_ be a new empty List.
+        1. For each element _d_ of _varDeclarations_, in reverse List order, do
+          1. If _d_ is neither a |VariableDeclaration| nor a |ForBinding| nor a |BindingIdentifier|, then
+            1. Assert: _d_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
+            1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
+            1. Let _fn_ be the sole element of the BoundNames of _d_.
+            1. If _fn_ is not an element of _declaredFunctionNames_, then
+              1. Let _fnDefinable_ be ? _env_.CanDeclareGlobalFunction(_fn_).
+              1. If _fnDefinable_ is *false*, throw a *TypeError* exception.
+              1. Append _fn_ to _declaredFunctionNames_.
+              1. Insert _d_ as the first element of _functionsToInitialize_.
+        1. Let _declaredVarNames_ be a new empty List.
+        1. For each element _d_ of _varDeclarations_, do
+          1. If _d_ is a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+            1. For each String _vn_ of the BoundNames of _d_, do
+              1. If _vn_ is not an element of _declaredFunctionNames_, then
+                1. Let _vnDefinable_ be ? _env_.CanDeclareGlobalVar(_vn_).
+                1. If _vnDefinable_ is *false*, throw a *TypeError* exception.
+                1. If _vn_ is not an element of _declaredVarNames_, then
+                  1. Append _vn_ to _declaredVarNames_.
+        1. NOTE: No abnormal terminations occur after this algorithm step if the global object is an ordinary object. However, if the global object is a Proxy exotic object it may exhibit behaviours that cause abnormal terminations in some of the following steps.
+        1. [id="step-globaldeclarationinstantiation-web-compat-insertion-point"] NOTE: Annex <emu-xref href="#sec-web-compat-globaldeclarationinstantiation"></emu-xref> adds additional steps at this point.
+        1. Let _lexDeclarations_ be the LexicallyScopedDeclarations of _script_.
+        1. Let _privateEnv_ be *null*.
+        1. For each element _d_ of _lexDeclarations_, do
+          1. NOTE: Lexically declared names are only instantiated here but not initialized.
+          1. For each element _dn_ of the BoundNames of _d_, do
+            1. If IsConstantDeclaration of _d_ is *true*, then
+              1. Perform ? <emu-meta effects="user-code">_env_.CreateImmutableBinding</emu-meta>(_dn_, *true*<ins>, *false*</ins>).
+            1. Else,
+              1. Perform ? <emu-meta effects="user-code">_env_.CreateMutableBinding</emu-meta>(_dn_, *false*).
+        1. For each Parse Node _f_ of _functionsToInitialize_, do
+          1. Let _fn_ be the sole element of the BoundNames of _f_.
+          1. Let _fo_ be InstantiateFunctionObject of _f_ with arguments _env_ and _privateEnv_.
+          1. Perform ? <emu-meta effects="user-code">_env_.CreateGlobalFunctionBinding</emu-meta>(_fn_, _fo_, *false*).
+        1. For each String _vn_ of _declaredVarNames_, do
+          1. Perform ? <emu-meta effects="user-code">_env_.CreateGlobalVarBinding</emu-meta>(_vn_, *false*).
+        1. Return NormalCompletion(~empty~).
+      </emu-alg>
+      <emu-note>
+        <p>Early errors specified in <emu-xref href="#sec-scripts-static-semantics-early-errors"></emu-xref> prevent name conflicts between function/var declarations and let/const/class declarations as well as redeclaration of let/const/class bindings for declaration contained within a single |Script|. However, such conflicts and redeclarations that span more than one |Script| are detected as runtime errors during GlobalDeclarationInstantiation. If any such errors are detected, no bindings are instantiated for the script. However, if the global object is defined using Proxy exotic objects then the runtime tests for conflicting declarations may be unreliable resulting in an abrupt completion and some global declarations not being instantiated. If this occurs, the code for the |Script| is not evaluated.</p>
+        <p>Unlike explicit var or function declarations, properties that are directly created on the global object result in global bindings that may be shadowed by let/const/class declarations.</p>
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+
   <emu-clause id="sec-modules">
     <h1>Modules</h1>
 
@@ -3243,14 +3532,14 @@ contributors: Ron Buckton, Ecma International
               1. NOTE: The above call cannot fail because imported module requests are a subset of _module_.[[RequestedModules]], and these have been resolved earlier in this algorithm.
               1. If _in_.[[ImportName]] is ~namespace-object~, then
                 1. Let _namespace_ be ? GetModuleNamespace(_importedModule_).
-                1. Perform ! _env_.CreateImmutableBinding(_in_.[[LocalName]], *true*).
+                1. Perform ! _env_.CreateImmutableBinding(_in_.[[LocalName]], *true*<ins>, *false*</ins>).
                 1. Call _env_.InitializeBinding(_in_.[[LocalName]], _namespace_<ins>, ~normal~</ins>).
               1. Else,
                 1. Let _resolution_ be ? _importedModule_.ResolveExport(_in_.[[ImportName]]).
                 1. If _resolution_ is *null* or ~ambiguous~, throw a *SyntaxError* exception.
                 1. If _resolution_.[[BindingName]] is ~namespace~, then
                   1. Let _namespace_ be ? GetModuleNamespace(_resolution_.[[Module]]).
-                  1. Perform ! _env_.CreateImmutableBinding(_in_.[[LocalName]], *true*).
+                  1. Perform ! _env_.CreateImmutableBinding(_in_.[[LocalName]], *true*<ins>, *false*</ins>).
                   1. Call _env_.InitializeBinding(_in_.[[LocalName]], _namespace_<ins>, ~normal~</ins>).
                 1. Else,
                   1. Call _env_.CreateImportBinding(_in_.[[LocalName]], _resolution_.[[Module]], _resolution_.[[BindingName]]).
@@ -3277,8 +3566,10 @@ contributors: Ron Buckton, Ecma International
             1. Let _privateEnv_ be *null*.
             1. For each element _d_ of _lexDeclarations_, do
               1. For each element _dn_ of the BoundNames of _d_, do
-                1. If IsConstantDeclaration of _d_ is *true*, then
-                  1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*).
+                1. <ins>If IsUsingDeclaration of _d_ is *true*, then</ins>
+                  1. <ins>Perform ! _env_.CreateImmutableBinding(_dn_, *true*, *true*).</ins>
+                1. <del>If</del><ins>Else, if</ins> IsConstantDeclaration of _d_ is *true*, then
+                  1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*<ins>, *false*</ins>).
                 1. Else,
                   1. Perform ! _env_.CreateMutableBinding(_dn_, *false*).
                 1. If _d_ is a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
@@ -3442,8 +3733,10 @@ contributors: Ron Buckton, Ecma International
           1. For each element _d_ of _lexDeclarations_, do
             1. NOTE: Lexically declared names are only instantiated here but not initialized.
             1. For each element _dn_ of the BoundNames of _d_, do
-              1. If IsConstantDeclaration of _d_ is *true*, then
-                1. Perform ? _lexEnv_.CreateImmutableBinding(_dn_, *true*).
+              1. <ins>If IsUsingDeclaration of _d_ is *true*, then</ins>
+                1. <ins>Perform ? _lexEnv_.CreateImmutableBinding(_dn_, *true*, *true*).</ins>
+              1. <del>If</del><ins>Else, if</ins> IsConstantDeclaration of _d_ is *true*, then
+                1. Perform ? _lexEnv_.CreateImmutableBinding(_dn_, *true*<ins>, *false*</ins>).
               1. Else,
                 1. Perform ? _lexEnv_.CreateMutableBinding(_dn_, *false*).
           1. For each Parse Node _f_ of _functionsToInitialize_, do
@@ -3719,17 +4012,17 @@ contributors: Ron Buckton, Ecma International
             1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-disposablestack-callback-functions"></emu-xref>.
             1. Set _F_.[[Argument]] to _value_.
             1. Set _F_.[[OnDisposeCallback]] to _onDispose_.
-            1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _F_).
+            1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, *undefined*, ~sync-dispose~, _F_).
           1. Else, if _value_ is neither *null* nor *undefined*, then
             1. If Type(_value_) is not Object, throw a *TypeError* exception.
             1. Let _method_ be GetDisposeMethod(_value_, ~sync-dispose~).
             1. If _method_ is *undefined*, then
               1. If IsCallable(_value_) is *true*, then
-                1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _value_).
+                1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, *undefined*, ~sync-dispose~, _value_).
               1. Else,
                 1. Throw a *TypeError* exception.
             1. Else,
-              1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~sync-dispose~, _method_).
+              1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, _value_, ~sync-dispose~, _method_).
           1. Return _value_.
         </emu-alg>
 
@@ -3950,17 +4243,17 @@ contributors: Ron Buckton, Ecma International
             1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-asyncdisposablestack-callback-functions"></emu-xref>.
             1. Set _F_.[[Argument]] to _value_.
             1. Set _F_.[[OnDisposeAsyncCallback]] to _onDisposeAsync_.
-            1. Perform ? AddDisposableResource(_asyncDisposableStack_, *undefined*, ~async-dispose~, _F_).
+            1. Perform ? AddDisposableResource(_asyncDisposableStack_, *undefined*, *undefined*, ~async-dispose~, _F_).
           1. Else, if _value_ is neither *null* nor *undefined*, then
             1. If Type(_value_) is not Object, throw a *TypeError* exception.
             1. Let _method_ be GetDisposeMethod(_value_, ~async-dispose~).
             1. If _method_ is *undefined*, then
               1. If IsCallable(_value_) is *true*, then
-                1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~async-dispose~, _value_).
+                1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, *undefined*, ~async-dispose~, _value_).
               1. Else,
                 1. Throw a *TypeError* exception.
             1. Else,
-              1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~async-dispose~, _method_).
+              1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, _value_, ~async-dispose~, _method_).
           1. Return _value_.
         </emu-alg>
 
