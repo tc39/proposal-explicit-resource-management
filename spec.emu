@@ -2671,6 +2671,137 @@ contributors: Ron Buckton, Ecma International
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
         1. <ins>Return ? DisposeResources(_env_, _result_).</ins>
       </emu-alg>
+
+      <emu-clause id="sec-runtime-semantics-classdefinitionevaluation" oldids="sec-default-constructor-functions" type="sdo">
+        <h1>
+          Runtime Semantics: ClassDefinitionEvaluation (
+            _classBinding_: unknown,
+            _className_: unknown,
+          )
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-note>
+          <p>For ease of specification, private methods and accessors are included alongside private fields in the [[PrivateElements]] slot of class instances. However, any given object has either all or none of the private methods and accessors defined by a given class. This feature has been designed so that implementations may choose to implement private methods and accessors using a strategy which does not require tracking each method or accessor individually.</p>
+          <p>For example, an implementation could directly associate instance private methods with their corresponding Private Name and track, for each object, which class constructors have run with that object as their `this` value. Looking up an instance private method on an object then consists of checking that the class constructor which defines the method has been used to initialize the object, then returning the method associated with the Private Name.</p>
+          <p>This differs from private fields: because field initializers can throw during class instantiation, an individual object may have some proper subset of the private fields of a given class, and so private fields must in general be tracked individually.</p>
+        </emu-note>
+        <emu-grammar>ClassTail : ClassHeritage? `{` ClassBody? `}`</emu-grammar>
+        <emu-alg>
+          1. Let _env_ be the LexicalEnvironment of the running execution context.
+          1. Let _classScope_ be NewDeclarativeEnvironment(_env_).
+          1. If _classBinding_ is not *undefined*, then
+            1. Perform _classScope_.CreateImmutableBinding(_classBinding_, *true*).
+          1. Let _outerPrivateEnvironment_ be the running execution context's PrivateEnvironment.
+          1. Let _classPrivateEnvironment_ be NewPrivateEnvironment(_outerPrivateEnvironment_).
+          1. If |ClassBody?| is present, then
+            1. For each String _dn_ of the PrivateBoundIdentifiers of |ClassBody?|, do
+              1. If _classPrivateEnvironment_.[[Names]] contains a Private Name whose [[Description]] is _dn_, then
+                1. Assert: This is only possible for getter/setter pairs.
+              1. Else,
+                1. Let _name_ be a new Private Name whose [[Description]] value is _dn_.
+                1. Append _name_ to _classPrivateEnvironment_.[[Names]].
+          1. If |ClassHeritage?| is not present, then
+            1. Let _protoParent_ be %Object.prototype%.
+            1. Let _constructorParent_ be %Function.prototype%.
+          1. Else,
+            1. Set the running execution context's LexicalEnvironment to _classScope_.
+            1. NOTE: The running execution context's PrivateEnvironment is _outerPrivateEnvironment_ when evaluating |ClassHeritage|.
+            1. Let _superclassRef_ be the result of evaluating |ClassHeritage|.
+            1. Set the running execution context's LexicalEnvironment to _env_.
+            1. Let _superclass_ be ? GetValue(_superclassRef_).
+            1. If _superclass_ is *null*, then
+              1. Let _protoParent_ be *null*.
+              1. Let _constructorParent_ be %Function.prototype%.
+            1. Else if IsConstructor(_superclass_) is *false*, throw a *TypeError* exception.
+            1. Else,
+              1. Let _protoParent_ be ? Get(_superclass_, *"prototype"*).
+              1. If Type(_protoParent_) is neither Object nor Null, throw a *TypeError* exception.
+              1. Let _constructorParent_ be _superclass_.
+          1. Let _proto_ be ! OrdinaryObjectCreate(_protoParent_).
+          1. If |ClassBody?| is not present, let _constructor_ be ~empty~.
+          1. Else, let _constructor_ be ConstructorMethod of |ClassBody|.
+          1. Set the running execution context's LexicalEnvironment to _classScope_.
+          1. Set the running execution context's PrivateEnvironment to _classPrivateEnvironment_.
+          1. If _constructor_ is ~empty~, then
+            1. Let _defaultConstructor_ be a new Abstract Closure with no parameters that captures nothing and performs the following steps when called:
+              1. Let _args_ be the List of arguments that was passed to this function by [[Call]] or [[Construct]].
+              1. If NewTarget is *undefined*, throw a *TypeError* exception.
+              1. Let _F_ be the active function object.
+              1. If _F_.[[ConstructorKind]] is ~derived~, then
+                1. NOTE: This branch behaves similarly to `constructor(...args) { super(...args); }`. The most notable distinction is that while the aforementioned ECMAScript source text observably calls the @@iterator method on `%Array.prototype%`, this function does not.
+                1. Let _func_ be ! _F_.[[GetPrototypeOf]]().
+                1. If IsConstructor(_func_) is *false*, throw a *TypeError* exception.
+                1. Let _result_ be ? Construct(_func_, _args_, NewTarget).
+              1. Else,
+                1. NOTE: This branch behaves similarly to `constructor() {}`.
+                1. Let _result_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%Object.prototype%"*).
+              1. Perform ? InitializeInstanceElements(_result_, _F_).
+              1. Return _result_.
+            1. Let _F_ be ! CreateBuiltinFunction(_defaultConstructor_, 0, _className_, &laquo; [[ConstructorKind]], [[SourceText]] &raquo;, the current Realm Record, _constructorParent_).
+          1. Else,
+            1. Let _constructorInfo_ be ! DefineMethod of _constructor_ with arguments _proto_ and _constructorParent_.
+            1. Let _F_ be _constructorInfo_.[[Closure]].
+            1. Perform ! MakeClassConstructor(_F_).
+            1. Perform ! SetFunctionName(_F_, _className_).
+          1. Perform ! MakeConstructor(_F_, *false*, _proto_).
+          1. If |ClassHeritage?| is present, set _F_.[[ConstructorKind]] to ~derived~.
+          1. Perform ! CreateMethodProperty(_proto_, *"constructor"*, _F_).
+          1. If |ClassBody?| is not present, let _elements_ be a new empty List.
+          1. Else, let _elements_ be NonConstructorElements of |ClassBody|.
+          1. Let _instancePrivateMethods_ be a new empty List.
+          1. Let _staticPrivateMethods_ be a new empty List.
+          1. Let _instanceFields_ be a new empty List.
+          1. Let _staticElements_ be a new empty List.
+          1. For each |ClassElement| _e_ of _elements_, do
+            1. If IsStatic of _e_ is *false*, then
+              1. Let _element_ be ClassElementEvaluation of _e_ with argument _proto_.
+            1. Else,
+              1. Let _element_ be ClassElementEvaluation of _e_ with argument _F_.
+            1. If _element_ is an abrupt completion, then
+              1. Set the running execution context's LexicalEnvironment to _env_.
+              1. Set the running execution context's PrivateEnvironment to _outerPrivateEnvironment_.
+              1. Return Completion(_element_).
+            1. Set _element_ to _element_.[[Value]].
+            1. If _element_ is a PrivateElement, then
+              1. Assert: _element_.[[Kind]] is either ~method~ or ~accessor~.
+              1. If IsStatic of _e_ is *false*, let _container_ be _instancePrivateMethods_.
+              1. Else, let _container_ be _staticPrivateMethods_.
+              1. If _container_ contains a PrivateElement whose [[Key]] is _element_.[[Key]], then
+                1. Let _existing_ be that PrivateElement.
+                1. Assert: _element_.[[Kind]] and _existing_.[[Kind]] are both ~accessor~.
+                1. If _element_.[[Get]] is *undefined*, then
+                  1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _existing_.[[Get]], [[Set]]: _element_.[[Set]] }.
+                1. Else,
+                  1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _element_.[[Get]], [[Set]]: _existing_.[[Set]] }.
+                1. Replace _existing_ in _container_ with _combined_.
+              1. Else,
+                1. Append _element_ to _container_.
+            1. Else if _element_ is a ClassFieldDefinition Record, then
+              1. If IsStatic of _e_ is *false*, append _element_ to _instanceFields_.
+              1. Else, append _element_ to _staticElements_.
+            1. Else if _element_ is a ClassStaticBlockDefinition Record, then
+              1. Append _element_ to _staticElements_.
+          1. Set the running execution context's LexicalEnvironment to _env_.
+          1. If _classBinding_ is not *undefined*, then
+            1. Perform _classScope_.InitializeBinding(_classBinding_, _F_<ins>, ~normal~</ins>).
+          1. Set _F_.[[PrivateMethods]] to _instancePrivateMethods_.
+          1. Set _F_.[[Fields]] to _instanceFields_.
+          1. For each PrivateElement _method_ of _staticPrivateMethods_, do
+            1. Perform ! PrivateMethodOrAccessorAdd(_F_, _method_).
+          1. For each element _elementRecord_ of _staticElements_, do
+            1. If _elementRecord_ is a ClassFieldDefinition Record, then
+              1. Let _result_ be DefineField(_F_, _elementRecord_).
+            1. Else,
+              1. Assert: _elementRecord_ is a ClassStaticBlockDefinition Record.
+              1. Let _result_ be ? Call(_elementRecord_.[[BodyFunction]], _F_).
+            1. If _result_ is an abrupt completion, then
+              1. Set the running execution context's PrivateEnvironment to _outerPrivateEnvironment_.
+              1. Return _result_.
+          1. Set the running execution context's PrivateEnvironment to _outerPrivateEnvironment_.
+          1. Return _F_.
+        </emu-alg>
+      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-runtime-semantics-classdefinitionevaluation" oldids="sec-default-constructor-functions" type="sdo">
@@ -2836,7 +2967,7 @@ contributors: Ron Buckton, Ecma International
         1. Set _name_ to StringValue of |BindingIdentifier|.
         1. Let _scope_ be the LexicalEnvironment of the running execution context.
         1. Let _funcEnv_ be ! NewDeclarativeEnvironment(_scope_).
-        1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
+        1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*<ins>, *false*</ins>).
         1. Let _privateScope_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncFunctionExpression|.
         1. Let _closure_ be ! OrdinaryFunctionCreate(%AsyncFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncFunctionBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
