@@ -1042,24 +1042,18 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
-        1. If _errors_ is not present, let _errors_ be a new empty List.
         1. If _disposable_ is not *undefined*, then
           1. For each _resource_ of _disposable_.[[DisposableResourceStack]], in reverse list order, do
             1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
               1. If _result_.[[Type]] is ~throw~, then
-                1. Append _result_.[[Value]] to _errors_.
-        1. Let _errorsLength_ be the number of elements in _errors_.
-        1. If _errorsLength_ &gt; 0, then
-          1. Let _error_ be a newly created *AggregateError* object.
-          1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: ! CreateArrayFromList(_errors_) }).
-          1. If _completion_.[[Type]] is ~throw~, then
-            1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, "cause", _completion_.[[Value]]).
-          1. Return ThrowCompletion(_error_).
+                1. Let _disposeError_ be a newly created *AggregateError* object.
+                1. Let _errors_ be ! CreateArrayFromList( &laquo; _result_.[[Value]] &raquo; ).
+                1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _errors_ }).
+                1. If _completion_.[[Type]] is ~throw~, then
+                  1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, "cause", _completion_.[[Value]]).
+                1. Set _completion_ to ThrowCompletion(_disposeError_).
         1. Return _completion_.
       </emu-alg>
-      <emu-note>
-        Draft Note: This algorithm uses <a href="https://tc39.es/proposal-error-cause/#sec-createnonenumerabledatapropertyorthrow">CreateNonEnumerableDataPropertyOrThrow</a> from the Stage 3 <a href="https://github.com/tc39/proposal-error-cause">Error Cause proposal</a>.
-      </emu-note>
     </emu-clause>
   </emu-clause>
   </ins>
