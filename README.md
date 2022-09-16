@@ -696,20 +696,27 @@ class DisposableStack {
 
   /**
    * Adds a resource to the top of the stack.
-   * @template {Disposable | (() => void) | null | undefined} T
-   * @param {T} value - A `Disposable` object, or a callback to evaluate
-   * when this object is disposed.
+   * @template {Disposable | null | undefined} T
+   * @param {T} value - A `Disposable` object, `null`, or `undefined`.
    * @returns {T} The provided value.
    */
   use(value);
+
   /**
-   * Adds a resource to the top of the stack.
+   * Adds a non-disposable resource and a disposal callback to the top of the stack.
    * @template T
    * @param {T} value - A resource to be disposed.
    * @param {(value: T) => void} onDispose - A callback invoked to dispose the provided value.
    * @returns {T} The provided value.
    */
-  use(value, onDispose);
+  adopt(value, onDispose);
+
+  /**
+   * Adds a disposal callback to the top of the stack.
+   * @param {() => void} onDispose - A callback to evaluate when this object is disposed.
+   * @returns {void}
+   */
+  defer(onDispose);
 
   /**
    * Moves all resources currently in this stack into a new `DisposableStack`.
@@ -738,20 +745,27 @@ class AsyncDisposableStack {
 
   /**
    * Adds a resource to the top of the stack.
-   * @template {AsyncDisposable | Disposable | (() => void | Promise<void>) | null | undefined} T
-   * @param {T} value - An `AsyncDisposable` or `Disposable` object, or a callback to evaluate
-   * when this object is disposed.
+   * @template {AsyncDisposable | Disposable | null | undefined} T
+   * @param {T} value - An `AsyncDisposable` or `Disposable` object, `null`, or `undefined`.
    * @returns {T} The provided value.
    */
   use(value);
+
   /**
-   * Adds a resource to the top of the stack.
+   * Adds a non-disposable resource and a disposal callback to the top of the stack.
    * @template T
    * @param {T} value - A resource to be disposed.
    * @param {(value: T) => void | Promise<void>} onDisposeAsync - A callback invoked to dispose the provided value.
    * @returns {T} The provided value.
    */
-  use(value, onDisposeAsync);
+  adopt(value, onDisposeAsync);
+
+  /**
+   * Adds a disposal callback to the top of the stack.
+   * @param {() => void | Promise<void>} onDisposeAsync - A callback to evaluate when this object is disposed.
+   * @returns {void}
+   */
+  defer(onDisposeAsync);
 
   /**
    * Moves all resources currently in this stack into a new `AsyncDisposableStack`.
@@ -807,8 +821,7 @@ The ability to create a disposable resource from a callback has several benefits
   ```js
   {
     using stack = new DisposableStack();
-    const reader = ...;
-    stack.use(() => reader.releaseLock());
+    const reader = stack.adopt(createReader(), reader => reader.releaseLock());
     ...
   }
   ```
@@ -818,7 +831,7 @@ The ability to create a disposable resource from a callback has several benefits
   function f() {
     using stack = new DisposableStack();
     console.log("enter");
-    stack.use(() => console.log("exit"));
+    stack.defer(() => console.log("exit"));
     ...
   }
   ```
@@ -860,10 +873,83 @@ class PluginHost {
   }
 
   [Symbol.dispose]() {
+    this.#socket = undefined;
+    this.#channel = undefined;
     this.#disposables[Symbol.dispose]();
   }
 }
 ```
+
+### Subclassing `Disposable` Classes
+
+You can also use a `DisposableStack` to assist with disposal in a subclass constructor whose superclass is disposable:
+
+```js
+class DerivedPluginHost extends PluginHost {
+  constructor() {
+    super();
+
+    // Create a DisposableStack to cover the subclass constructor.
+    using stack = new DisposableStack();
+
+    // Defer a callback to dispose resources on the superclass. We use `defer` so that we can invoke the version of
+    // `[Symbol.dispose]` on the superclass and not on this or any subclasses.
+    stack.defer(() => super[Symbol.dispose]());
+
+    // If any operations throw during subclass construction, the instance will still be disposed, and superclass
+    // resources will be freed
+    doSomethingThatCouldPotentiallyThrow();
+
+    // As the last step before exiting, empty out the DisposabeleStack so that we don't dispose ourself.
+    stack.move();
+  }
+}
+```
+
+Here, we can use `stack` to track the result of `super()` (i.e., the `this` value). If any exception occurs during
+subclass construction, we can ensure that `[Symbol.dispose]()` is called, freeing resources. If the subclass also needs
+to track its own disposable resources, this example is modified slightly:
+
+```js
+class DerivedPluginHostWithOwnDisposables extends PluginHost {
+  #logger;
+  #disposables;
+
+  constructor() {
+    super()
+
+    // Create a DisposableStack to cover the subclass constructor.
+    using stack = new DisposableStack();
+
+    // Defer a callback to dispose resources on the superclass. We use `defer` so that we can invoke the version of
+    // `[Symbol.dispose]` on the superclass and not on this or any subclasses.
+    stack.defer(() => super[Symbol.dispose]());
+
+    // Create a logger that uses the file system and add it to our own disposables.
+    this.#logger = stack.use(new FileLogger());
+
+    // If any operations throw during subclass construction, the instance will still be disposed, and superclass
+    // resources will be freed
+    doSomethingThatCouldPotentiallyThrow();
+
+    // Persist our own disposables. If construction fails prior to the call to `stack.move()`, our own disposables
+    // will be disposed before they are set, and then the superclass `[Symbol.dispose]` will be invoked.
+    this.#disposables = stack.move();
+  }
+
+  [Symbol.dispose]() {
+    this.#logger = undefined;
+
+    // Dispose of our resources and those of our superclass. We do not need to invoke `super[Symbol.dispose]()` since
+    // that is already tracked by the `stack.defer` call in the constructor.
+    this.#disposables[Symbol.dispose]();
+  }
+}
+```
+
+In this example, we can simply add new resources to the `stack` and move its contents into the subclass instance's
+`this.#disposables`. In the subclass `[Symbol.dispose]()` method we don't need to call `super[Symbol.dispose]()` since
+that has already been tracked by the `stack.defer` call in the constructor.
 
 # Relation to `Iterator` and `for..of`
 
