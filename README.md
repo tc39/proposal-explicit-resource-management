@@ -695,7 +695,7 @@ class DisposableStack {
   get dispose();
 
   /**
-   * Adds a resource to the top of the stack.
+   * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
    * @template {Disposable | null | undefined} T
    * @param {T} value - A `Disposable` object, `null`, or `undefined`.
    * @returns {T} The provided value.
@@ -744,7 +744,7 @@ class AsyncDisposableStack {
   get disposeAsync();
 
   /**
-   * Adds a resource to the top of the stack.
+   * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
    * @template {AsyncDisposable | Disposable | null | undefined} T
    * @param {T} value - An `AsyncDisposable` or `Disposable` object, `null`, or `undefined`.
    * @returns {T} The provided value.
@@ -845,6 +845,7 @@ easily manage lifetime in these scenarios:
 
 ```js
 class PluginHost {
+  #disposed = false;
   #disposables;
   #channel;
   #socket;
@@ -872,10 +873,28 @@ class PluginHost {
     // `#socket` to be GC'd.
   }
 
+  loadPlugin(file) {
+    // A disposable should try to ensure access is consistent with its "disposed" state, though this isn't strictly
+    // necessary since some disposables could be reusable (i.e., a Connection with an `open()` method, etc.).
+    if (this.#disposed) throw new ReferenceError("Object is disposed.");
+    // ...
+  }
+
   [Symbol.dispose]() {
-    this.#socket = undefined;
-    this.#channel = undefined;
-    this.#disposables[Symbol.dispose]();
+    if (!this.#disposed) {
+      this.#disposed = true;
+      const disposables = this.#disposables;
+
+      // NOTE: we can free `#socket` and `#channel` here since they will be disposed by the call to
+      // `disposables[Symbol.dispose]()`, below. This isn't strictly a requirement for every Disposable, but is
+      // good housekeeping since these objects will no longer be useable.
+      this.#socket = undefined;
+      this.#channel = undefined;
+      this.#disposables = undefined;
+
+      // Dispose all resources in `disposables`
+      disposables[Symbol.dispose]();
+    }
   }
 }
 ```
@@ -900,7 +919,7 @@ class DerivedPluginHost extends PluginHost {
     // resources will be freed
     doSomethingThatCouldPotentiallyThrow();
 
-    // As the last step before exiting, empty out the DisposabeleStack so that we don't dispose ourself.
+    // As the last step before exiting, empty out the DisposableStack so that we don't dispose ourselves.
     stack.move();
   }
 }
