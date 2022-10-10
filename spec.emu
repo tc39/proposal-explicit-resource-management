@@ -3880,13 +3880,13 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
-          1. If _asyncDisposableStack_ does not have a [[DisposableState]] internal slot, then
+          1. If _asyncDisposableStack_ does not have an [[AsyncDisposableState]] internal slot, then
             1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; a newly created *TypeError* object &raquo;).
             1. Return _promiseCapability_.[[Promise]].
-          1. If _asyncDisposableStack_.[[DisposableState]] is ~disposed~, then
+          1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, then
             1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
             1. Return _promiseCapability_.[[Promise]].
-          1. Set _asyncDisposableStack_.[[DisposableState]] to ~disposed~.
+          1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
           1. Let _result_ be DisposeResources(_asyncDisposableStack_, NormalCompletion(*undefined*)).
           1. IfAbruptRejectPromise(_result_, _promiseCapability_).
           1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_ &raquo;).
