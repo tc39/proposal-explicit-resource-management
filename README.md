@@ -1060,13 +1060,13 @@ In addition, several new APIs could be considered that leverage this functionali
 
 ### Definitions
 
-A _<dfn id="wrapper">wrapper</dfn> for `x()`_ is a method that invokes `x()`, but only if the object is in a state
+A _<dfn><a name="wrapper"></a>wrapper</dfn> for `x()`_ is a method that invokes `x()`, but only if the object is in a state
 such that calling `x()` will not throw as a result of repeated evaluation.
 
-A _<dfn id="adapter">callback-adapting wrapper</dfn>_ is a _wrapper_ that adapts a continuation passing-style method
+A _<dfn><a name="adapter"></a>callback-adapting wrapper</dfn>_ is a _wrapper_ that adapts a continuation passing-style method
 that accepts a callback into a `Promise`-producing method.
 
-A _<dfn id="disposer">single-use disposer</dfn> for `x()` and `y()`_ indicates a newly constructed disposable object
+A _<dfn><a name="disposer"></a>single-use disposer</dfn> for `x()` and `y()`_ indicates a newly constructed disposable object
 that invokes `x()` when constructed and `y()` when disposed the first time (and does nothing if the object is disposed
 more than once).
 
