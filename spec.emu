@@ -1036,8 +1036,7 @@ contributors: Ron Buckton, Ecma International
       <h1>
         DisposeResources (
           _disposable_ : an object with a [[DisposableResourceStack]] internal slot or *undefined*,
-          _completion_ : a Completion Record,
-          optional _errors_ : a List,
+          _completion_ : a Completion Record
         ): a Completion Record
       </h1>
       <dl class="header"></dl>
@@ -1048,9 +1047,9 @@ contributors: Ron Buckton, Ecma International
               1. If _result_.[[Type]] is ~throw~, then
                 1. Let _disposeError_ be a newly created *AggregateError* object.
                 1. Let _errors_ be ! CreateArrayFromList( &laquo; _result_.[[Value]] &raquo; ).
-                1. Perform ! DefinePropertyOrThrow(_error_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _errors_ }).
+                1. Perform ! DefinePropertyOrThrow(_disposeError_, *"errors"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _errors_ }).
                 1. If _completion_.[[Type]] is ~throw~, then
-                  1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, "cause", _completion_.[[Value]]).
+                  1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_disposeError_, "cause", _completion_.[[Value]]).
                 1. Set _completion_ to ThrowCompletion(_disposeError_).
         1. Return _completion_.
       </emu-alg>
