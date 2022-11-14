@@ -724,7 +724,6 @@ class DisposableStack {
   [Symbol.dispose]();
 
   [Symbol.toStringTag];
-  static get [Symbol.species]();
 }
 
 class AsyncDisposableStack {
@@ -766,7 +765,6 @@ class AsyncDisposableStack {
   [Symbol.asyncDispose]();
 
   [Symbol.toStringTag];
-  static get [Symbol.species]();
 }
 ```
 
