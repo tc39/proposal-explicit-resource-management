@@ -3639,6 +3639,7 @@ contributors: Ron Buckton, Ecma International
           1. Set _newDisposableStack_.[[BoundDispose]] to *undefined*.
           -->
           1. Set _disposableStack_.[[DisposableResourceStack]] to a new empty List.
+          1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
           1. Return _newDisposableStack_.
         </emu-alg>
       </emu-clause>
@@ -3870,6 +3871,7 @@ contributors: Ron Buckton, Ecma International
           1. Set _newAsyncDisposableStack_.[[BoundDisposeAsync]] to *undefined*.
           -->
           1. Set _asyncDisposableStack_.[[DisposableResourceStack]] to a new empty List.
+          1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
           1. Return _newAsyncDisposableStack_.
         </emu-alg>
       </emu-clause>
