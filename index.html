@@ -6005,7 +6005,7 @@ li.menu-search-result-term:before {
           1. Set _newDisposableStack_.[[DisposableState]] to ~pending~.
           1. Set _newDisposableStack_.[[DisposableResourceStack]] to _disposableStack_.[[DisposableResourceStack]].
           1. Set _newDisposableStack_.[[BoundDispose]] to *undefined*.
-          --></li><li>Set <var>disposableStack</var>.[[DisposableResourceStack]] to a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>Return <var>newDisposableStack</var>.</li></ol></emu-alg>
+          --></li><li>Set <var>disposableStack</var>.[[DisposableResourceStack]] to a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>Set <var>disposableStack</var>.[[DisposableState]] to <emu-const>disposed</emu-const>.</li><li>Return <var>newDisposableStack</var>.</li></ol></emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype-@@dispose">
@@ -6166,7 +6166,7 @@ li.menu-search-result-term:before {
           1. Set _newAsyncDisposableStack_.[[AsyncDisposableState]] to ~pending~.
           1. Set _newAsyncDisposableStack_.[[DisposableResourceStack]] to _asyncDisposableStack_.[[DisposableResourceStack]].
           1. Set _newAsyncDisposableStack_.[[BoundDisposeAsync]] to *undefined*.
-          --></li><li>Set <var>asyncDisposableStack</var>.[[DisposableResourceStack]] to a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>Return <var>newAsyncDisposableStack</var>.</li></ol></emu-alg>
+          --></li><li>Set <var>asyncDisposableStack</var>.[[DisposableResourceStack]] to a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>Set <var>asyncDisposableStack</var>.[[AsyncDisposableState]] to <emu-const>disposed</emu-const>.</li><li>Return <var>newAsyncDisposableStack</var>.</li></ol></emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposablestack.prototype-@@asyncDispose">
