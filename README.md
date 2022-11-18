@@ -747,10 +747,9 @@ class DisposableStack {
   get disposed();
 
   /**
-   * Gets a bound function that when called invokes `Symbol.dispose` on this object.
-   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
+   * Alias for `[Symbol.dispose]()`.
    */
-  get dispose();
+  dispose();
 
   /**
    * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
@@ -801,10 +800,9 @@ class AsyncDisposableStack {
   get disposed();
 
   /**
-   * Gets a bound function that when called invokes `Symbol.disposeAsync` on this object.
-   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
+   * Alias for `[Symbol.asyncDispose]()`.
    */
-  get disposeAsync();
+  disposeAsync();
 
   /**
    * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
