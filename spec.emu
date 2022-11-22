@@ -37,7 +37,7 @@ contributors: Ron Buckton, Ecma International
 <emu-intro id="intro">
   <h1>Introduction</h1>
   <p>This proposal introduces syntax and semantics around explicit resource management.</p>
-  <p>See <a href="https://github.com/tc39/explicit-resource-management">the proposal repository</a> for background material and discussion.</p>
+  <p>See <a href="https://github.com/tc39/proposal-explicit-resource-management">the proposal repository</a> for background material and discussion.</p>
 </emu-intro>
 
 <emu-clause id="sec-ecmascript-data-types-and-values" aoid="Type">
