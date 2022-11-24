@@ -282,7 +282,7 @@ The above example has similar runtime semantics as the following transposed repr
 
 ```js
 {
-  const $$try = { stack: [], exception: undefined };
+  const $$try = { stack: [], error: undefined, hasError: false };
   try {
     ... // (1)
 
@@ -298,24 +298,22 @@ The above example has similar runtime semantics as the following transposed repr
     ... // (2)
   }
   catch ($$error) {
-    $$try.exception = { cause: $$error };
+    $$try.error = $$error;
+    $$try.hasError = true;
   }
   finally {
-    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
         $$dispose.call($$expr);
       }
       catch ($$error) {
-        $$errors.push($$error);
+        $$try.error = $$try.hasError ? new SuppressedError($$error, $$try.error) : $$error;
+        $$try.hasError = true;
       }
     }
-    if ($$errors.length > 0) {
-      throw new AggregateError($$errors, undefined, $$try.exception);
-    }
-    if ($$try.exception) {
-      throw $$try.exception.cause;
+    if ($$try.hasError) {
+      throw $$try.error;
     }
   }
 }
@@ -353,7 +351,7 @@ Both of the above cases would have similar runtime semantics as the following tr
 
 ```js
 {
-  const $$try = { stack: [], exception: undefined };
+  const $$try = { stack: [], error: undefined, hasError: false };
   try {
     ... // (1)
 
@@ -378,24 +376,22 @@ Both of the above cases would have similar runtime semantics as the following tr
     ... // (2)
   }
   catch ($$error) {
-    $$try.exception = { cause: $$error };
+    $$try.error = $$error;
+    $$try.hasError = true;
   }
   finally {
-    const $$errors = [];
     while ($$try.stack.length) {
       const { value: $$expr, dispose: $$dispose } = $$try.stack.pop();
       try {
         $$dispose.call($$expr);
       }
       catch ($$error) {
-        $$errors.push($$error);
+        $$try.error = $$try.hasError ? new SuppressedError($$error, $$try.error) : $$error;
+        $$try.hasError = true;
       }
     }
-    if ($$errors.length > 0) {
-      throw new AggregateError($$errors, undefined, $$try.exception);
-    }
-    if ($$try.exception) {
-      throw $$try.exception.cause;
+    if ($$try.hasError) {
+      throw $$try.error;
     }
   }
 }
@@ -612,6 +608,62 @@ Even though this proposal no longer includes [novel syntax for async disposal](#
 `Symbol.asyncDispose` is still necessary to support the semantics of `AsyncDisposableStack`. It is our hope that
 a follow-on proposal for novel syntax will be adopted by the committee at a future date.
 
+## The `SuppressedError` Error
+
+If an exception occurs during resource disposal, it is possible that it might suppress an existing exception thrown
+from the body, or from the disposal of another resource. Languages like Java allow you to access a suppressed exception
+via a [`getSuppressed()`](https://docs.oracle.com/javase/7/docs/api/java/lang/Throwable.html#getSuppressed()) method on
+the exception. However, ECMAScript allows you to throw any value, not just `Error`, so there is no convenient place to
+attach a suppressed exception. To better surface these suppressed exceptions and support both logging and error
+recovery, this proposal seeks to introduce a new `SuppressedError` built-in `Error` subclass which would contain both
+the error that was most recently thrown, as well as the error that was suppressed:
+
+```js
+class SuppressedError extends Error {
+  /**
+   * Wraps an error that suppresses another error, and the error that was suppressed.
+   * @param {*} error The error that resulted in a suppression.
+   * @param {*} suppressed The error that was suppressed.
+   * @param {string} message The message for the error.
+   * @param {{ cause?: * }} [options] Options for the error.
+   */
+  constructor(error, suppressed, message, options);
+
+  /**
+   * The name of the error (i.e., `"SuppressedError"`).
+   * @type {string}
+   */
+  name = "SuppressedError";
+
+  /**
+   * The error that resulted in a suppression.
+   * @type {*}
+   */
+  error;
+
+  /**
+   * The error that was suppressed.
+   * @type {*}
+   */
+  suppressed;
+
+  /**
+   * The message for the error.
+   * @type {*}
+   */
+  message;
+}
+```
+
+We've chosen to use `SuppressedError` over `AggregateError` for several reasons:
+- `AggregateError` is designed to hold a list of multiple errors, with no correlation between those errors, while
+  `SuppressedError` is intended to hold references to two errors with a direct correlation.
+- `AggregateError` is intended to ideally hold a flat list of errors. `SuppressedError` is intended to hold a jagged set
+  of errors (i.e., `e.suppressed.suppressed.suppressed` if there were successive error suppressions).
+- The only error correlation on `AggregateError` is through `cause`, however a `SuppressedError` isn't "caused" by the
+  error it suppresses. In addition, `cause` is intended to be optional, while the `error` of a `SuppressedError` must
+  always be defined.
+
 ## Built-in Disposables
 
 ### `%IteratorPrototype%.@@dispose()`
@@ -679,10 +731,10 @@ interface AsyncDisposable {
 
 ## `DisposableStack` and `AsyncDisposableStack` container objects
 
-This proposal adds two global objects that can as containers to aggregate disposables, guaranteeing
-that every disposable resource in the container is disposed when the respective disposal method is
-called. If any disposable in the container throws an error, they would be collected and an
-`AggregateError` would be thrown at the end:
+This proposal adds two global objects that can as containers to aggregate disposables, guaranteeing that every
+disposable resource in the container is disposed when the respective disposal method is called. If any disposable in the
+container throws an error during dispose, it would be thrown at the end (possibly wrapped in a `SuppressedError` if
+multiple errors were thrown):
 
 ```js
 class DisposableStack {
@@ -795,16 +847,31 @@ NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's
 
 The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources
 into a single container. When the `DisposableStack` container is disposed, each object in the container is also
-guaranteed to be disposed (barring early termination of the program). Any exceptions thrown as resources in the
-container are disposed will be collected and rethrown as an `AggregateError`.
+guaranteed to be disposed (barring early termination of the program). If any resource throws an error during dispose,
+it will be collected and rethrown after all resources are disposed. If there were multiple errors, they will be wrapped
+in nested `SuppressedError` objects.
 
 For example:
 
 ```js
 const stack = new DisposableStack();
-stack.use(getResource1());
-stack.use(getResource2());
-stack[Symbol.dispose](); // disposes of resource2, then resource1
+const resource1 = stack.use(getResource1());
+const resource2 = stack.use(getResource2());
+const resource3 = stack.use(getResource3());
+stack[Symbol.dispose](); // disposes of resource3, then resource2, then resource1
+```
+
+If all of `resource1`, `resource2` and `resource3` were to throw during disposal, this would produce an exception
+similar to the following:
+
+```js
+new SuppressedError(
+  /*error*/ exception_from_resource3_disposal,
+  /*suppressed*/ new SuppressedError(
+    /*error*/ exception_from_resource2_disposal,
+    /*suppressed*/ exception_from_resource1_disposal
+  )
+)
 ```
 
 ### Interoperation and Customization
@@ -1141,7 +1208,7 @@ offers suggestions for consideration. The actual implementation is at the discre
 - `Worker` &mdash; `@@dispose()` as an alias or [wrapper][] for `terminate()`.
 - `WritableStream` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
   - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
-- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or 
+- `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or
   `@@asyncDispose()` as a [wrapper][] for `close()` (but probably not both).
 - `XMLHttpRequest` &mdash; `@@dispose()` as an alias or [wrapper][] for `abort()`.
 
@@ -1213,7 +1280,7 @@ consideration. The actual implementation is at the discretion of the NodeJS main
 - `https.Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
 - `inspector` &mdash; A new API that produces a [single-use disposer][] for `open()` and `close()`.
 - `stream.Writable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()` or
-  `@@disposeAsync` only as a [callback-adapting wrapper][] for `end()` (depending on whether the disposal behavior 
+  `@@disposeAsync` only as a [callback-adapting wrapper][] for `end()` (depending on whether the disposal behavior
   should be to drop immediately or to flush any pending writes).
 - `stream.Readable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
 - ... and many others in `net`, `readline`, `tls`, `udp`, and `worker_threads`.
