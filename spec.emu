@@ -3652,6 +3652,17 @@ contributors: Ron Buckton, Ecma International
         <li>does not have a [[DisposableState]] internal slot or any of the other internal slots of DisposableStack instances.</li>
       </ul>
 
+      <emu-clause id="sec-get-disposablestack.prototype.disposed">
+        <h1>get DisposableStack.prototype.disposed</h1>
+        <p>`DisposableStack.prototype.disposed` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
+        <emu-alg>
+          1. Let _disposableStack_ be the *this* value.
+          1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+          1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *true*.
+          1. Otherwise, return *false*.
+        </emu-alg>
+      </emu-clause>
+
       <emu-clause id="sec-get-disposablestack.prototype.dispose">
         <h1>get DisposableStack.prototype.dispose</h1>
         <p>`DisposableStack.prototype.dispose` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
@@ -3875,6 +3886,17 @@ contributors: Ron Buckton, Ecma International
         <li>is an ordinary object.</li>
         <li>does not have an [[AsyncDisposableState]] internal slot or any of the other internal slots of AsyncDisposableStack instances.</li>
       </ul>
+
+      <emu-clause id="sec-get-asyncdisposablestack.prototype.disposed">
+        <h1>get AsyncDisposableStack.prototype.disposed</h1>
+        <p>`AsyncDisposableStack.prototype.disposed` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
+        <emu-alg>
+          1. Let _asyncDisposableStack_ be the *this* value.
+          1. Perform ? RequireInternalSlot(_asyncDisposableStack_, [[AsyncDisposableState]]).
+          1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, return *true*.
+          1. Otherwise, return *false*.
+        </emu-alg>
+      </emu-clause>
 
       <emu-clause id="sec-get-asyncdisposablestack.prototype.disposeAsync">
         <h1>get AsyncDisposableStack.prototype.disposeAsync</h1>

@@ -741,6 +741,12 @@ class DisposableStack {
   constructor();
 
   /**
+   * Gets a value indicating whether the stack has been disposed.
+   * @returns {boolean}
+   */
+  get disposed();
+
+  /**
    * Gets a bound function that when called invokes `Symbol.dispose` on this object.
    * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
@@ -787,6 +793,12 @@ class DisposableStack {
 
 class AsyncDisposableStack {
   constructor();
+
+  /**
+   * Gets a value indicating whether the stack has been disposed.
+   * @returns {boolean}
+   */
+  get disposed();
 
   /**
    * Gets a bound function that when called invokes `Symbol.disposeAsync` on this object.
