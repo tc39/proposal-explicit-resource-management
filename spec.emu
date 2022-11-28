@@ -3725,8 +3725,8 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
-          1. If IsCallable(_onDispose_) is *false*, throw a *TypeError* exception.
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
+          1. If IsCallable(_onDispose_) is *false*, throw a *TypeError* exception.
           1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _onDispose_).
           1. Return *undefined*.
         </emu-alg>
