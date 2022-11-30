@@ -1345,7 +1345,7 @@ The following is a high-level list of tasks to progress through each stage of th
 
 * [x] [Complete specification text][Specification].
 * [ ] Designated reviewers have signed off on the current spec text:
-  * [x] [Waldemar Horwat][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
+  * [ ] [Waldemar Horwat][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
   * [ ] [Shu-yu Guo][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
 * [ ] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
 
