@@ -1344,8 +1344,10 @@ The following is a high-level list of tasks to progress through each stage of th
 ### Stage 3 Entrance Criteria
 
 * [x] [Complete specification text][Specification].
-* [ ] Designated reviewers have [signed off][Stage3ReviewerSignOff] on the current spec text.
-* [ ] The ECMAScript editor has [signed off][Stage3EditorSignOff] on the current spec text.
+* [ ] Designated reviewers have signed off on the current spec text:
+  * [x] [Waldemar Horwat][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
+  * [ ] [Shu-yu Guo][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
+* [ ] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
 
 ### Stage 4 Entrance Criteria
 
@@ -1379,7 +1381,11 @@ The following is a high-level list of tasks to progress through each stage of th
 [API]: #api
 [Specification]: https://tc39.es/proposal-explicit-resource-management
 [Transpiler]: #todo
-[Stage3ReviewerSignOff]: #todo
+[Stage3Reviewer1]: https://github.com/tc39/proposal-explicit-resource-management/issues/71
+[Stage3Reviewer1SignOff]: https://github.com/tc39/proposal-explicit-resource-management/issues/71#issuecomment-1325842256
+[Stage3Reviewer2]: https://github.com/tc39/proposal-explicit-resource-management/issues/93
+[Stage3Reviewer2SignOff]: #todo
+[Stage3Editor]: https://github.com/tc39/proposal-explicit-resource-management/issues/72
 [Stage3EditorSignOff]: #todo
 [Test262PullRequest]: #todo
 [Implementation1]: #todo
