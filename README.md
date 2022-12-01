@@ -47,14 +47,15 @@ In addition, we propose the addition of two disposable container objects to assi
 with managing multiple resources:
 
 - `DisposableStack` &mdash; A stack-based container of disposable resources.
-- `AsyncDisposableStack` &mdash; A stack-based container of asynchronously disposable resources.
+- ~~`AsyncDisposableStack` &mdash; A stack-based container of asynchronously disposable resources.~~ 
+  _`AsyncDisposableStack`_ has been deferred to a [follow-on proposal][async-using].
 
 ## Status
 
-**Stage:** 2  \
+**Stage:** 3 (conditional, [see below](#conditional-advancement))  \
 **Champion:** Ron Buckton (@rbuckton)  \
-**Last Presented:** October, 2021 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-Tkfl3NHqg7QcpUoJcnQ?e=E2FsjF),
-[notes](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update))
+**Last Presented:** November/December, 2022 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-TkoJoXa_RG_DaDAaoqA?e=A1aYah),
+notes TBA)
 
 _For more information see the [TC39 proposal process](https://tc39.es/process-document/)._
 
@@ -586,27 +587,27 @@ const { mut, cv } = data;
 
 ## Additions to `Symbol`
 
-This proposal adds the properties `dispose` and `asyncDispose` to the `Symbol` constructor whose
-values are the `@@dispose` and `@@asyncDispose` internal symbols, respectively:
+This proposal adds the `dispose` property to the `Symbol` constructor, whose value is the `@@dispose` internal symbol:
 
 **Well-known Symbols**
 | Specification Name | \[\[Description]] | Value and Purpose |
 |:-|:-|:-|
 | _@@dispose_ | *"Symbol.dispose"* | A method that explicitly disposes of resources held by the object. Called by the semantics of `using` declarations and by `DisposableStack` objects. |
-| _@@asyncDispose_ | *"Symbol.asyncDispose"* | A method that asynchronosly explicitly disposes of resources held by the object. Used by `AsyncDisposableStack` objects. |
 
 **TypeScript Definition**
 ```ts
 interface SymbolConstructor {
   readonly dispose: unique symbol;
-  readonly asyncDispose: unique symbol;
 }
 ```
 
-Even though this proposal no longer includes [novel syntax for async disposal](#out-of-scopedeferred), we still define
+~~Even though this proposal no longer includes [novel syntax for async disposal](#out-of-scopedeferred), we still define
 `Symbol.asyncDispose`. Async resource management is extremely valuable even without novel syntax, and
 `Symbol.asyncDispose` is still necessary to support the semantics of `AsyncDisposableStack`. It is our hope that
-a follow-on proposal for novel syntax will be adopted by the committee at a future date.
+a follow-on proposal for novel syntax will be adopted by the committee at a future date.~~
+
+> **NOTE: `Symbol.asyncDispose` has been moved to a [follow-on proposal][async-using], per consensus in the
+> [November/December, 2022 plenary](#conditional-advancement).**
 
 ## The `SuppressedError` Error
 
@@ -676,22 +677,12 @@ We also propose to add `Symbol.dispose` to the built-in `%IteratorPrototype%` as
 }
 ```
 
-### `%AsyncIteratorPrototype%.@@asyncDispose()`
-
-We propose to add `Symbol.asyncDispose` to the built-in `%AsyncIteratorPrototype%` as if it had the following behavior:
-
-```js
-%AsyncIteratorPrototype%[Symbol.asyncDispose] = async function () {
-  await this.return();
-}
-```
-
 ### Other Possibilities
 
 We could also consider adding `Symbol.dispose` to such objects as the return value from `Proxy.revocable()`, but that
 is currently out of scope for the current proposal.
 
-## The Common `Disposable` and `AsyncDisposable` Interfaces
+## The Common `Disposable` ~~and `AsyncDisposable`~~ Interface
 
 ### The `Disposable` Interface
 
@@ -711,27 +702,14 @@ interface Disposable {
 }
 ```
 
-### The `AsyncDisposable` Interface
+### ~~The `AsyncDisposable` Interface~~
 
-An object is _async disposable_ if it conforms to the following interface:
+> **NOTE: The `AsyncDisposable` interface has been moved to a [follow-on proposal][async-using], per consensus in the
+> [November/December, 2022 plenary](#conditional-advancement).**
 
-| Property | Value | Requirements |
-|:-|:-|:-|
-| `@@asyncDispose` | An async function that performs explicit cleanup. | The function should return a `Promise`. |
+## `DisposableStack` ~~and `AsyncDisposableStack`~~ container object
 
-**TypeScript Definition**
-```ts
-interface AsyncDisposable {
-  /**
-   * Disposes of resources within this object.
-   */
-  [Symbol.asyncDispose](): Promise<void>;
-}
-```
-
-## `DisposableStack` and `AsyncDisposableStack` container objects
-
-This proposal adds two global objects that can as containers to aggregate disposables, guaranteeing that every
+This proposal adds a global object that can act as a container to aggregate disposables, guaranteeing that every
 disposable resource in the container is disposed when the respective disposal method is called. If any disposable in the
 container throws an error during dispose, it would be thrown at the end (possibly wrapped in a `SuppressedError` if
 multiple errors were thrown):
@@ -789,59 +767,6 @@ class DisposableStack {
 
   [Symbol.toStringTag];
 }
-
-class AsyncDisposableStack {
-  constructor();
-
-  /**
-   * Gets a value indicating whether the stack has been disposed.
-   * @returns {boolean}
-   */
-  get disposed();
-
-  /**
-   * Alias for `[Symbol.asyncDispose]()`.
-   */
-  disposeAsync();
-
-  /**
-   * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
-   * @template {AsyncDisposable | Disposable | null | undefined} T
-   * @param {T} value - An `AsyncDisposable` or `Disposable` object, `null`, or `undefined`.
-   * @returns {T} The provided value.
-   */
-  use(value);
-
-  /**
-   * Adds a non-disposable resource and a disposal callback to the top of the stack.
-   * @template T
-   * @param {T} value - A resource to be disposed.
-   * @param {(value: T) => void | Promise<void>} onDisposeAsync - A callback invoked to dispose the provided value.
-   * @returns {T} The provided value.
-   */
-  adopt(value, onDisposeAsync);
-
-  /**
-   * Adds a disposal callback to the top of the stack.
-   * @param {() => void | Promise<void>} onDisposeAsync - A callback to evaluate when this object is disposed.
-   * @returns {void}
-   */
-  defer(onDisposeAsync);
-
-  /**
-   * Moves all resources currently in this stack into a new `AsyncDisposableStack`.
-   * @returns {AsyncDisposableStack} The new `AsyncDisposableStack`.
-   */
-  move();
-
-  /**
-   * Asynchronously disposes of resources within this object.
-   * @returns {Promise<void>}
-   */
-  [Symbol.asyncDispose]();
-
-  [Symbol.toStringTag];
-}
 ```
 
 These classes provided the following capabilities:
@@ -849,13 +774,16 @@ These classes provided the following capabilities:
 - Interoperation and customization
 - Assist in complex construction
 
-NOTE: `DisposableStack` and `AsyncDisposableStack` are inspired by Python's
-[`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack) and
-[`AsyncExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack).
+> **NOTE: `DisposableStack` is inspired by Python's
+> [`ExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack).**
+
+> **NOTE: `AsyncDisposableStack` has been moved to a [follow-on proposal][async-using], per consensus in the
+> [November/December, 2022 plenary](#conditional-advancement).**
+
 
 ### Aggregation
 
-The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources
+The `DisposableStack` ~~and `AsyncDisposableStack`~~ class provides the ability to aggregate multiple disposable resources
 into a single container. When the `DisposableStack` container is disposed, each object in the container is also
 guaranteed to be disposed (barring early termination of the program). If any resource throws an error during dispose,
 it will be collected and rethrown after all resources are disposed. If there were multiple errors, they will be wrapped
@@ -886,7 +814,7 @@ new SuppressedError(
 
 ### Interoperation and Customization
 
-The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a
+The `DisposableStack` ~~and `AsyncDisposableStack`~~ class also provides the ability to create a disposable resource from a
 simple callback. This callback will be executed when the stack's disposal method is executed.
 
 The ability to create a disposable resource from a callback has several benefits:
@@ -915,7 +843,7 @@ The ability to create a disposable resource from a callback has several benefits
 
 A user-defined disposable class might need to allocate and track multiple nested resources that should be disposed when
 the class instance is disposed. However, properly managing the lifetime of these nested resources in the class
-constructor can sometimes be difficult. The `move` method of `DisposableStack`/`AsyncDisposableStack` helps to more
+constructor can sometimes be difficult. The `move` method of `DisposableStack` ~~/`AsyncDisposableStack`~~ helps to more
 easily manage lifetime in these scenarios:
 
 ```js
@@ -1179,8 +1107,9 @@ be adapted by using `DisposableStack`. However, there are a number of APIs that 
 should be considered by the relevant standards bodies. The following is by no means a complete list, and primarily
 offers suggestions for consideration. The actual implementation is at the discretion of the relevant standards bodies.
 
-- `AudioContext` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
-  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
+> **NOTE: A summary of DOM APIs relevant to async disposal can be found in the
+> [Async Explicit Resource Management][async-using] proposal.**
+
 - `BroadcastChannel` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `EventSource` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `FileReader` &mdash; `@@dispose()` as an alias or [wrapper][] for `abort()`.
@@ -1196,30 +1125,21 @@ offers suggestions for consideration. The actual implementation is at the discre
   ```
 - `ImageBitmap` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `IntersectionObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
-- `MediaKeySession` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
-  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
 - `MessagePort` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `MutationObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
 - `PaymentRequest` &mdash; `@@asyncDispose()` could invoke `abort()` if the payment is still in the active state.
   - NOTE: `abort()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
 - `PerformanceObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
-- `PushSubscription` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `unsubscribe()`.
 - `RTCPeerConnection` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `RTCRtpTransceiver` &mdash; `@@dispose()` as an alias or [wrapper][] for `stop()`.
-- `ReadableStream` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `cancel()`.
 - `ReadableStreamDefaultController` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `ReadableStreamDefaultReader` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or
-  `@@asyncDispose()` as a [wrapper][] for `cancel()` (but probably not both).
 - `ResizeObserver` &mdash; `@@dispose()` as an alias or [wrapper][] for `disconnect()`.
-- `ServiceWorkerRegistration` &mdash; `@@asyncDispose()` as a [wrapper][] for `unregister()`.
 - `SourceBuffer` &mdash; `@@dispose()` as a [wrapper][] for `abort()`.
 - `TransformStreamDefaultController` &mdash; `@@dispose()` as an alias or [wrapper][] for `terminate()`.
 - `WebSocket` &mdash; `@@dispose()` as a [wrapper][] for `close()`.
 - `Worker` &mdash; `@@dispose()` as an alias or [wrapper][] for `terminate()`.
-- `WritableStream` &mdash; `@@asyncDispose()` as an alias or [wrapper][] for `close()`.
-  - NOTE: `close()` here is asynchronous, but uses the same name as similar synchronous methods on other objects.
 - `WritableStreamDefaultWriter` &mdash; Either `@@dispose()` as an alias or [wrapper][] for `releaseLock()`, or
-  `@@asyncDispose()` as a [wrapper][] for `close()` (but probably not both).
 - `XMLHttpRequest` &mdash; `@@dispose()` as an alias or [wrapper][] for `abort()`.
 
 In addition, several new APIs could be considered that leverage this functionality:
@@ -1257,6 +1177,9 @@ This proposal does not necessarily require immediate support in NodeJS, as exist
 the NodeJS maintainers. The following is by no means a complete list, and primarily offers suggestions for
 consideration. The actual implementation is at the discretion of the NodeJS maintainers.
 
+> **NOTE: A summary of NodeJS APIs relevant to async disposal can be found in the
+> [Async Explicit Resource Management][async-using] proposal.**
+
 - Anything with `ref()` and `unref()` methods &mdash; A new method or API that produces a [single-use disposer][] for
  `ref()` and `unref()`.
 - Anything with `cork()` and `uncork()` methods &mdash; A new method or API that produces a [single-use disposer][] for
@@ -1270,29 +1193,24 @@ consideration. The actual implementation is at the discretion of the NodeJS main
 - `dns.Resolver`, `dnsPromises.Resolver` &mdash; `@@dispose()` as an alias or [wrapper][] for `cancel()`.
 - `domain.Domain` &mdash; A new method or API that produces a [single-use disposer][] for `enter()` and `exit()`.
 - `events.EventEmitter` &mdash; A new method or API that produces a [single-use disposer][] for `on()` and `off()`.
-- `fs.promises.FileHandle` &mdash; `@@disposeAsync()` as an alias or [wrapper][] for `close()`.
-- `fs.Dir` &mdash; `@@disposeAsync()` as an alias or [wrapper][] for `close()`, `@@dispose()` as an alias or [wrapper][]
-  for `closeSync()`.
 - `fs.FSWatcher` &mdash; `@@dispose()` as an alias or [wrapper][] for `close()`.
 - `http.Agent` &mdash; `@@dispose()` as an alias or [wrapper][] for `destroy()`.
-- `http.ClientRequest` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
-- `http.Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
-- `http.ServerResponse` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `end()`.
-- `http.IncomingMessage` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
-- `http.OutgoingMessage` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
-- `http2.Http2Session` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
-- `http2.Http2Stream` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
-- `http2.Http2Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
-- `http2.Http2SecureServer` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
-- `http2.Http2ServerRequest` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for
+- `http.ClientRequest` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+  [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for `destroy()`.
+- `http.IncomingMessage` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+   [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for `destroy()`.
+- `http.OutgoingMessage` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+   [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for `destroy()`.
+- `http2.Http2ServerRequest` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+  [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for
   `destroy()`.
-- `http2.Http2ServerResponse` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `end()`.
-- `https.Server` &mdash; `@@disposeAsync()` as a [callback-adapting wrapper][] for `close()`.
 - `inspector` &mdash; A new API that produces a [single-use disposer][] for `open()` and `close()`.
-- `stream.Writable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()` or
-  `@@disposeAsync` only as a [callback-adapting wrapper][] for `end()` (depending on whether the disposal behavior
+- `stream.Writable` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+  [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for `destroy()` or
+  `@@asyncDispose` only as a [callback-adapting wrapper][] for `end()` (depending on whether the disposal behavior
   should be to drop immediately or to flush any pending writes).
-- `stream.Readable` &mdash; Either `@@dispose()` or `@@disposeAsync()` as an alias or [wrapper][] for `destroy()`.
+- `stream.Readable` &mdash; Either `@@dispose()` or `@@asyncDispose()` (see
+  [Async Explicit Resource Management][async-using]) as an alias or [wrapper][] for `destroy()`.
 - ... and many others in `net`, `readline`, `tls`, `udp`, and `worker_threads`.
 
 # Out-of-Scope/Deferred
@@ -1300,11 +1218,13 @@ consideration. The actual implementation is at the discretion of the NodeJS main
 Several pieces of functionality related to this proposal are currently out of scope. However, we still feel they are
 important characteristics for the ECMAScript to employ in the future and may be considered for follow-on proposals:
 
-- Bindingless [`using void`](./future/using-void-declaration.md) declarations (i.e., `using void = expr`).
-- Block-style [`using` statements](./future/using-statement.md) (i.e., `using (x = expr) {}`) for sync disposables.
-- RAII-style [`using await` declarations](./future/using-await-declaration.md) (i.e., `using await id = expr`) for async
-  disposables.
-- Block-style [`using await` statements]() (i.e., `using await (x = expr) {}`) for async disposables.
+- RAII-style [`async using` declarations][async-using] (i.e., `async using id = expr`) for async
+  disposables &mdash; _Postponed to [Follow-on Proposal][async-using]_
+- `Symbol.asyncDispose` &mdash; _Postponed to [Follow-on Proposal][async-using]_
+- `AsyncDisposableStack` &mdash; _Postponed to [Follow-on Proposal][async-using]_
+- Bindingless [`using void`](./future/using-void-declaration.md) declarations (i.e., `using void = expr`) &mdash; _Postponed to Follow-on Proposal_
+- Block-style [`using` statements](./future/using-statement.md) (i.e., `using (x = expr) {}`) for sync disposables &mdash; - _Withdrawn_.
+- Block-style [`using await` statements](./future/using-await-statement.md) (i.e., `using await (x = expr) {}`) for async disposables - _Withdrawn_.
 
 # Meeting Notes
 
@@ -1321,9 +1241,16 @@ important characteristics for the ECMAScript to employ in the future and may be 
     - YK (@wycatz) & WH (@waldemarhorwat) will be stage 3 reviewers
 * [TC39 October 10th, 2021](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#explicit-resource-management-update)
   - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2021-10/oct-27.md#conclusionresolution-1)
-      - Status Update only
-      - WH Continuing to review
-      - SYG (@syg) added as reviewer
+    - Status Update only
+    - WH Continuing to review
+    - SYG (@syg) added as reviewer
+* <a name="conditional-advancement"></a>TC39 December 1st, 2022 (notes TBA)
+  - Conclusion
+    - `using` declarations, `Symbol.dispose`, and `DisposableStack` advanced to Stage 3, under the following conditions:
+      - Resolution of [#103 - Argument order for `adopt()`](https://github.com/tc39/proposal-explicit-resource-management/issues/130)
+      - Deferral of `async using` declarations, `Symbol.asyncDispose`, and `AsyncDisposableStack`.
+    - `async using` declarations, `Symbol.asyncDispose`, and `AsyncDisposableStack` remain at Stage 2 as an independent
+      proposal.
 
 # TODO
 
@@ -1394,3 +1321,4 @@ The following is a high-level list of tasks to progress through each stage of th
 [wrapper]: #wrapper
 [callback-adapting wrapper]: #adapter
 [single-use disposer]: #disposer
+[async-using]: https://github.com/tc39/proposal-async-explicit-resource-management
