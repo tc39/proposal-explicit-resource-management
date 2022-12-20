@@ -1042,8 +1042,8 @@ contributors: Ron Buckton, Ecma International
                 1. Set _result_ to _result_.[[Value]].
                 1. Let _suppressed_ be _completion_.[[Value]].
                 1. Let _error_ be a newly created *SuppressedError* object.
-                1. Perform ! DefinePropertyOrThrow(_error_, *"error"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _result_ }).
-                1. Perform ! DefinePropertyOrThrow(_error_, *"suppressed"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _suppressed_ }).
+                1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"error"*, _result_).
+                1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"suppressed"*, _suppressed_).
                 1. Set _completion_ to ThrowCompletion(_error_).
               1. Else,
                 1. Set _completion_ to _result_.
@@ -3393,8 +3393,8 @@ contributors: Ron Buckton, Ecma International
               1. Let _msg_ be ? ToString(_message_).
               1. Perform CreateNonEnumerableDataPropertyOrThrow(_O_, *"message"*, _msg_).
             1. Perform ? InstallErrorCause(_O_, _options_).
-            1. Perform ! DefinePropertyOrThrow(_O_, *"error"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _error_ }).
-            1. Perform ! DefinePropertyOrThrow(_O_, *"suppressed"*, PropertyDescriptor { [[Configurable]]: *true*, [[Enumerable]]: *false*, [[Writable]]: *true*, [[Value]]: _suppressed_ }).
+            1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_O_, *"error"*, _error_).
+            1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_O_, *"suppressed"*, _suppressed_).
             1. Return _O_.
           </emu-alg>
         </emu-clause>
