@@ -28,7 +28,7 @@
 <pre class="metadata">
 title: ECMAScript Explicit Resource Management
 status: proposal
-stage: 2
+stage: 3
 contributors: Ron Buckton, Ecma International
 </pre>
 
@@ -1003,12 +1003,10 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
+        1. Assert: _hint_ is ~sync-dispose~.
         1. Let _method_ be ? GetMethod(_V_, @@dispose).
         1. Return _method_.
       </emu-alg>
-      <emu-note>
-        Currently, the only allowed value for _hint_ is ~sync-dispose~.
-      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-dispose" type="abstract operation">
@@ -1021,12 +1019,10 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
+        1. Assert: _hint_ is ~sync-dispose~.
         1. Perform ? Call(_method_, _V_).
         1. Return *undefined*.
       </emu-alg>
-      <emu-note>
-        Currently, the only allowed value for _hint_ is ~sync-dispose~.
-      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-disposeresources-disposable-completion-errors" type="abstract operation">

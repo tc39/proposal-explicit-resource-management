@@ -52,7 +52,7 @@ with managing multiple resources:
 
 ## Status
 
-**Stage:** 3 (conditional, [see below](#conditional-advancement))  \
+**Stage:** 3  \
 **Champion:** Ron Buckton (@rbuckton)  \
 **Last Presented:** November/December, 2022 ([slides](https://1drv.ms/p/s!AjgWTO11Fk-TkoJoXa_RG_DaDAaoqA?e=A1aYah),
 notes TBA)
@@ -1271,10 +1271,10 @@ The following is a high-level list of tasks to progress through each stage of th
 ### Stage 3 Entrance Criteria
 
 * [x] [Complete specification text][Specification].
-* [ ] Designated reviewers have signed off on the current spec text:
-  * [ ] [Waldemar Horwat][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
-  * [ ] [Shu-yu Guo][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
-* [ ] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
+* [x] Designated reviewers have signed off on the current spec text:
+  * [x] [Waldemar Horwat][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
+  * [x] [Shu-yu Guo][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
+* [x] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
 
 ### Stage 4 Entrance Criteria
 
