@@ -1283,6 +1283,9 @@ The following is a high-level list of tasks to progress through each stage of th
 * [ ] A [pull request][Ecma262PullRequest] has been sent to tc39/ecma262 with the integrated spec text.
 * [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].
 
+## Implementations
+
+- Built-ins from this proposal are available in [`core-js`](https://github.com/zloirock/core-js#explicit-resource-management)
 
 <!-- # References -->
 
