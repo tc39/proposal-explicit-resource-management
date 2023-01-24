@@ -3750,13 +3750,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
-          1. If _value_ is neither *null* nor *undefined*, then
-            1. If Type(_value_) is not Object, throw a *TypeError* exception.
-            1. Let _method_ be GetDisposeMethod(_value_, ~sync-dispose~).
-            1. If _method_ is *undefined*, then
-                1. Throw a *TypeError* exception.
-            1. Else,
-              1. Perform ? AddDisposableResource(_disposableStack_.[[DisposeCapability]], _value_, ~sync-dispose~, _method_).
+          1. Perform ? AddDisposableResource(_disposableStack_.[[DisposeCapability]], _value_, ~sync-dispose~).
           1. Return _value_.
         </emu-alg>
       </emu-clause>
