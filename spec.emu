@@ -983,7 +983,7 @@ contributors: Ron Buckton, Ecma International
       <dl class="header"></dl>
       <emu-alg>
         1. Let _stack_ be a new empty List.
-        1. Return the DisposeCapability Record { [[DisposableResourceStack]: _stack_ }.
+        1. Return the DisposeCapability Record { [[DisposableResourceStack]]: _stack_ }.
       </emu-alg>
     </emu-clause>
     
