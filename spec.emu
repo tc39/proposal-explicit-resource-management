@@ -882,6 +882,40 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-operations-on-disposable-objects">
     <h1>Operations on Disposable Objects</h1>
     <p>See Common Resource Management Interfaces (<emu-xref href="#sec-common-resource-management-interfaces"></emu-xref>).</p>
+    <emu-clause id="sec-disposecapability-records">
+      <h1>DisposeCapability Records</h1>
+      <p>A <dfn variants="DisposeCapability Records">DisposeCapability Record</dfn> is a Record value used to contain a List of DisposableResource Records that are disposed together. DisposeCapability Records are produced by the NewDisposeCapability abstract operation.</p>
+      <p>DisposeCapability Records have the fields listed in <emu-xref href="#table-disposecapability-record-fields"></emu-xref>:</p>
+      <emu-table id="table-disposecapability-record-fields" caption="DisposeCapability Record Fields">
+        <table>
+          <tbody>
+          <tr>
+            <th>
+              Field Name
+            </th>
+            <th>
+              Value
+            </th>
+            <th>
+              Meaning
+            </th>
+          </tr>
+          <tr>
+            <td>
+              [[DisposableResourceStack]]
+            </td>
+            <td>
+              A List of DisposableResource Records.
+            </td>
+            <td>
+              The resources to be disposed. Resources are added in the order they are initialized, and are disposed in reverse order.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </emu-table>
+    </emu-clause>
+
     <emu-clause id="sec-disposableresource-records">
       <h1>DisposableResource Records</h1>
       <p>A <dfn variants="DisposableResource Records">DisposableResource Record</dfn> is a Record value used to encapsulate a disposable object along with the method used to dispose the object. DisposableResource Records are produced by the CreateDisposableResource abstract operation.</p>
@@ -941,10 +975,22 @@ contributors: Ron Buckton, Ecma International
       </emu-note>
     </emu-clause>
 
+    <emu-clause id="sec-newdisposecapability" type="abstract operation">
+      <h1>
+        NewDisposeCapability (
+        )
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. Let _stack_ be a new empty List.
+        1. Return the DisposeCapability Record { [[DisposableResourceStack]: _stack_ }.
+      </emu-alg>
+    </emu-clause>
+    
     <emu-clause id="sec-adddisposableresource-disposable-v-hint-disposemethod" type="abstract operation">
       <h1>
         AddDisposableResource (
-          _disposable_ : an object with a [[DisposableResourceStack]] internal slot,
+          _disposeCapability_ : a DisposeCapability Record,
           _V_ : an ECMAScript language value,
           _hint_ : ~sync-dispose~,
           optional _method_ : a function object,
@@ -954,7 +1000,7 @@ contributors: Ron Buckton, Ecma International
       </dl>
       <emu-alg>
         1. If _method_ is not present then,
-          1. If _V_ is *null* or *undefined*, return NormalCompletion(~empty~).
+          1. If _V_ is *null* or *undefined*, return ~unused~.
           1. If Type(_V_) is not Object, throw a *TypeError* exception.
           1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
         1. Else,
@@ -963,8 +1009,8 @@ contributors: Ron Buckton, Ecma International
           1. Else,
             1. If Type(_V_) is not Object, throw a *TypeError* exception.
             1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_, _method_).
-        1. Append _resource_ to _disposable_.[[DisposableResourceStack]].
-        1. Return NormalCompletion(~empty~).
+        1. Append _resource_ to _disposeCapability_.[[DisposableResourceStack]].
+        1. Return ~unused~.
       </emu-alg>
       <emu-note>
         Currently, the only allowed value for _hint_ is ~sync-dispose~.
@@ -1028,25 +1074,24 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-disposeresources-disposable-completion-errors" type="abstract operation">
       <h1>
         DisposeResources (
-          _disposable_ : an object with a [[DisposableResourceStack]] internal slot or *undefined*,
+          _disposeCapability_ : a DisposeCapability Record,
           _completion_ : a Completion Record,
         ): a Completion Record
       </h1>
       <dl class="header"></dl>
       <emu-alg>
-        1. If _disposable_ is not *undefined*, then
-          1. For each _resource_ of _disposable_.[[DisposableResourceStack]], in reverse list order, do
-            1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
-            1. If _result_.[[Type]] is ~throw~, then
-              1. If _completion_.[[Type]] is ~throw~, then
-                1. Set _result_ to _result_.[[Value]].
-                1. Let _suppressed_ be _completion_.[[Value]].
-                1. Let _error_ be a newly created *SuppressedError* object.
-                1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"error"*, _result_).
-                1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"suppressed"*, _suppressed_).
-                1. Set _completion_ to ThrowCompletion(_error_).
-              1. Else,
-                1. Set _completion_ to _result_.
+        1. For each _resource_ of _disposeCapability_.[[DisposableResourceStack]], in reverse list order, do
+          1. Let _result_ be Dispose(_resource_.[[ResourceValue]], _resource_.[[Hint]], _resource_.[[DisposeMethod]]).
+          1. If _result_.[[Type]] is ~throw~, then
+            1. If _completion_.[[Type]] is ~throw~, then
+              1. Set _result_ to _result_.[[Value]].
+              1. Let _suppressed_ be _completion_.[[Value]].
+              1. Let _error_ be a newly created *SuppressedError* object.
+              1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"error"*, _result_).
+              1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"suppressed"*, _suppressed_).
+              1. Set _completion_ to ThrowCompletion(_error_).
+            1. Else,
+              1. Set _completion_ to _result_.
         1. Return _completion_.
       </emu-alg>
     </emu-clause>
@@ -1676,7 +1721,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-declarative-environment-records">
         <h1>Declarative Environment Records</h1>
         <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every declarative Environment Record also has a [[DisposableResourceStack]] field, which is a List of DisposableResource Records. This list is a stack of resources tracked by the `using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+        <p><ins>Every declarative Environment Record also has a [[DisposeCapability]] field, which contains a DisposeCapability Record. This field holds a stack of resources tracked by the `using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
         <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
@@ -1696,7 +1741,7 @@ contributors: Ron Buckton, Ecma International
           </dl>
           <emu-alg>
             1. Assert: _envRec_ must have an uninitialized binding for _N_.
-            1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_, _V_, _hint_).</ins>
+            1. <ins>If _hint_ is not ~normal~, perform ? AddDisposableResource(_envRec_.[[DisposeCapability]], _V_, _hint_).</ins>
             1. Set the bound value for _N_ in _envRec_ to _V_.
             1. <emu-not-ref>Record</emu-not-ref> that the binding for _N_ in _envRec_ has been initialized.
             1. Return ~unused~.
@@ -1763,6 +1808,25 @@ contributors: Ron Buckton, Ecma International
           </emu-alg>
         </emu-clause>
 
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-environment-record-operations">
+      <h1>Environment Record Operations</h1>
+      <emu-clause id="sec-newdeclarativeenvironment" type="abstract operation">
+        <h1>
+          NewDeclarativeEnvironment (
+            _E_: an Environment Record or *null*,
+          ): a Declarative Environment Record
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-alg>
+          1. Let _env_ be a new Declarative Environment Record containing no bindings.
+          1. Set _env_.[[OuterEnv]] to _E_.
+          1. <ins>Set _env_.[[DisposeCapability]] to NewDisposeCapability().</ins>
+          1. Return _env_.
+        </emu-alg>
       </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -1923,7 +1987,7 @@ contributors: Ron Buckton, Ecma International
         1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
         1. Set the running execution context's LexicalEnvironment to _blockEnv_.
         1. Let _blockValue_ be the result of evaluating |StatementList|.
-        1. <ins>Set _blockValue_ to DisposeResources(_blockEnv_, _blockValue_).</ins>
+        1. <ins>Set _blockValue_ to DisposeResources(_blockEnv_.[[DisposeCapability]], _blockValue_).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
         1. Return _blockValue_.
       </emu-alg>
@@ -2236,12 +2300,12 @@ contributors: Ron Buckton, Ecma International
           1. Set the running execution context's LexicalEnvironment to _loopEnv_.
           1. Let _forDcl_ be the result of evaluating |LexicalDeclaration|.
           1. If _forDcl_ is an abrupt completion, then
-            1. <ins>Set _forDcl_ to DisposeResources(_loopEnv_, _forDcl_).</ins>
+            1. <ins>Set _forDcl_ to DisposeResources(_loopEnv_.[[DisposeCapability]], _forDcl_).</ins>
             1. Set the running execution context's LexicalEnvironment to _oldEnv_.
             1. Return ? _forDcl_.
           1. If _isConst_ is *false*, let _perIterationLets_ be _boundNames_; otherwise let _perIterationLets_ be a new empty List.
           1. Let _bodyResult_ be Completion(ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, _perIterationLets_, _labelSet_)).
-          1. <ins>Set _bodyResult_ to DisposeResources(_loopEnv_, _bodyResult_).</ins>
+          1. <ins>Set _bodyResult_ to DisposeResources(_loopEnv_.[[DisposeCapability]], _bodyResult_).</ins>
           1. Set the running execution context's LexicalEnvironment to _oldEnv_.
           1. Return ? _bodyResult_.
         </emu-alg>
@@ -2269,13 +2333,13 @@ contributors: Ron Buckton, Ecma International
               1. <del>Let _testValue_ be ? GetValue(_testRef_).</del>
               1. <ins>Let _testValue_ be Completion(GetValue(_testRef_)).</ins>
               1. <ins>If _testValue_ is an abrupt completion, then</ins>
-                1. <ins>Return ? DisposeResources(_thisIterationEnv_, _testValue_).</ins>
+                1. <ins>Return ? DisposeResources(_thisIterationEnv_.[[DisposeCapability]], _testValue_).</ins>
               1. <ins>Else,</ins>
                 1. <ins>Set _testValue_ to _testValue_.[[Value]].</ins>
               1. <del>If ToBoolean(_testValue_) is *false*, return _V_.</del>
-              1. <ins>If ToBoolean(_testValue_) is *false*, return ? DisposeResources(_thisIterationEnv_, Completion(_V_)).</ins>
+              1. <ins>If ToBoolean(_testValue_) is *false*, return ? DisposeResources(_thisIterationEnv_.[[DisposeCapability]], Completion(_V_)).</ins>
             1. Let _result_ be the result of evaluating _stmt_.
-            1. <ins>Perform ? DisposeResources(_thisIterationEnv_, _result_).</ins>
+            1. <ins>Perform ? DisposeResources(_thisIterationEnv_.[[DisposeCapability]], _result_).</ins>
             1. If LoopContinues(_result_, _labelSet_) is *false*, return ? UpdateEmpty(_result_, _V_).
             1. If _result_.[[Value]] is not ~empty~, set _V_ to _result_.[[Value]].
             1. <del>Perform ? CreatePerIterationEnvironment(_perIterationBindings_).</del>
@@ -2285,7 +2349,7 @@ contributors: Ron Buckton, Ecma International
               1. <del>Perform ? GetValue(_incRef_).</del>
               1. <ins>Let _incrResult_ be Completion(GetValue(_incrRef_)).</ins>
               1. <ins>If _incrResult_ is an abrupt completion, then</ins>
-                1. <ins>Return ? DisposeResources(_thisIterationEnv_, _incrResult_).</ins>
+                1. <ins>Return ? DisposeResources(_thisIterationEnv_.[[DisposeCapability]], _incrResult_).</ins>
         </emu-alg>
       </emu-clause>
 
@@ -2431,7 +2495,7 @@ contributors: Ron Buckton, Ecma International
                 1. Assert: _lhs_ is a |ForDeclaration|.
                 1. Let _status_ be Completion(ForDeclarationBindingInitialization of _lhs_ with arguments _nextValue_ and _iterationEnv_).
             1. If _status_ is an abrupt completion, then
-              1. <ins>Set _status_ to DisposeResources(_iterationEnv_, _status_).</ins>
+              1. <ins>Set _status_ to DisposeResources(_iterationEnv_.[[DisposeCapability]], _status_).</ins>
               1. Set the running execution context's LexicalEnvironment to _oldEnv_.
               1. If _iteratorKind_ is ~async~, return ? AsyncIteratorClose(_iteratorRecord_, _status_).
               1. If _iterationKind_ is ~enumerate~, then
@@ -2440,7 +2504,7 @@ contributors: Ron Buckton, Ecma International
                 1. Assert: _iterationKind_ is ~iterate~.
                 1. Return ? IteratorClose(_iteratorRecord_, _status_).
             1. Let _result_ be the result of evaluating _stmt_.
-            1. <ins>Set _result_ to DisposeResources(_iterationEnv_, _result_).</ins>
+            1. <ins>Set _result_ to DisposeResources(_iterationEnv_.[[DisposeCapability]], _result_).</ins>
             1. Set the running execution context's LexicalEnvironment to _oldEnv_.
             1. If LoopContinues(_result_, _labelSet_) is *false*, then
               1. If _iterationKind_ is ~enumerate~, then
@@ -2470,8 +2534,7 @@ contributors: Ron Buckton, Ecma International
         1. Perform BlockDeclarationInstantiation(|CaseBlock|, _blockEnv_).
         1. Set the running execution context's LexicalEnvironment to _blockEnv_.
         1. Let _R_ be Completion(CaseBlockEvaluation of |CaseBlock| with argument _switchValue_).
-        1. <ins>Let _env_ be _blockEnv_'s LexicalEnvironment.</ins>
-        1. <ins>Set _R_ to DisposeResources(_env_, _R_).</ins>
+        1. <ins>Set _R_ to DisposeResources(_blockEnv_.[[DisposeCapability]], _R_).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
         1. Return _R_.
       </emu-alg>
@@ -2504,7 +2567,7 @@ contributors: Ron Buckton, Ecma International
         1. <del>Return the result of evaluating |FunctionStatementList|.</del>
         1. <ins>Let _result_ be result of evaluating |FunctionStatementList|.</ins>
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return ? DisposeResources(_env_, _result_).</ins>
+        1. <ins>Return ? DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
       </emu-alg>
     </emu-clause>
 
@@ -2658,7 +2721,7 @@ contributors: Ron Buckton, Ecma International
         1. <del>Return the result of evaluating |ClassStaticBlockStatementList|.</del>
         1. <ins>Let _result_ be result of evaluating |ClassStaticBlockStatementList|.</ins>
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return ? DisposeResources(_env_, _result_).</ins>
+        1. <ins>Return ? DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
       </emu-alg>
     </emu-clause>
 
@@ -3172,7 +3235,7 @@ contributors: Ron Buckton, Ecma International
               1. Push _moduleContext_ onto the execution context stack; _moduleContext_ is now the running execution context.
               1. Let _result_ be the result of evaluating _module_.[[ECMAScriptCode]].
               1. <ins>Let _env_ be _moduleContext_'s LexicalEnvironment.</ins>
-              1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+              1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
               1. Suspend _moduleContext_ and remove it from the execution context stack.
               1. Resume the context that is now on the top of the execution context stack as the running execution context.
               1. If _result_ is an abrupt completion, then
@@ -3549,9 +3612,9 @@ contributors: Ron Buckton, Ecma International
         <p>When the `DisposableStack` function is called, the following steps are taken:</p>
         <emu-alg>
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
-          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
+          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposeCapability]] &raquo;).
           1. Set _disposableStack_.[[DisposableState]] to ~pending~.
-          1. Set _disposableStack_.[[DisposableResourceStack]] to a new empty List.
+          1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
           1. Return _disposableStack_.
         </emu-alg>
       </emu-clause>
@@ -3594,7 +3657,7 @@ contributors: Ron Buckton, Ecma International
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *undefined*.
           1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
-          1. Return DisposeResources(_disposableStack_, NormalCompletion(*undefined*)).
+          1. Return DisposeResources(_disposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
         </emu-alg>
       </emu-clause>
 
@@ -3611,7 +3674,7 @@ contributors: Ron Buckton, Ecma International
             1. If _method_ is *undefined*, then
                 1. Throw a *TypeError* exception.
             1. Else,
-              1. Perform ? AddDisposableResource(_disposableStack_, _value_, ~sync-dispose~, _method_).
+              1. Perform ? AddDisposableResource(_disposableStack_.[[DisposeCapability]], _value_, ~sync-dispose~, _method_).
           1. Return _value_.
         </emu-alg>
       </emu-clause>
@@ -3627,7 +3690,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _F_ be a new built-in function object as defined in <emu-xref href="#sec-disposablestack-adopt-callback-functions"></emu-xref>.
           1. Set _F_.[[Argument]] to _value_.
           1. Set _F_.[[OnDisposeCallback]] to _onDispose_.
-          1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _F_).
+          1. Perform ? AddDisposableResource(_disposableStack_.[[DisposeCapability]], *undefined*, ~sync-dispose~, _F_).
           1. Return _value_.
         </emu-alg>
 
@@ -3651,7 +3714,7 @@ contributors: Ron Buckton, Ecma International
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
           1. If IsCallable(_onDispose_) is *false*, throw a *TypeError* exception.
-          1. Perform ? AddDisposableResource(_disposableStack_, *undefined*, ~sync-dispose~, _onDispose_).
+          1. Perform ? AddDisposableResource(_disposableStack_.[[DisposeCapability]], *undefined*, ~sync-dispose~, _onDispose_).
           1. Return *undefined*.
         </emu-alg>
       </emu-clause>
@@ -3663,10 +3726,10 @@ contributors: Ron Buckton, Ecma International
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
-          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposableResourceStack]] &raquo;).
+          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposeCapability]] &raquo;).
           1. Set _newDisposableStack_.[[DisposableState]] to ~pending~.
-          1. Set _newDisposableStack_.[[DisposableResourceStack]] to _disposableStack_.[[DisposableResourceStack]].
-          1. Set _disposableStack_.[[DisposableResourceStack]] to a new empty List.
+          1. Set _newDisposableStack_.[[DisposeCapability]] to _disposableStack_.[[DisposeCapability]].
+          1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
           1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
           1. Return _newDisposableStack_.
         </emu-alg>
@@ -3695,6 +3758,9 @@ contributors: Ron Buckton, Ecma International
               Internal Slot
             </th>
             <th>
+              Type
+            </th>
+            <th>
               Description
             </th>
           </tr>
@@ -3703,15 +3769,21 @@ contributors: Ron Buckton, Ecma International
               [[DisposableState]]
             </td>
             <td>
-              One of ~pending~ or ~disposed~. Governs how a disposable stack will react to incoming calls to its `@@dispose` method.
+              One of ~pending~ or ~disposed~.
+            </td>
+            <td>
+              Governs how a disposable stack will react to incoming calls to its `@@dispose` method.
             </td>
           </tr>
           <tr>
             <td>
-              [[DisposableResourceStack]]
+              [[DisposeCapability]]
             </td>
             <td>
-              A List of DisposableResource Records.
+              A DisposeCapability Record.
+            </td>
+            <td>
+              Holds the stack of disposable resources.
             </td>
           </tr>
           </tbody>
@@ -3751,7 +3823,7 @@ contributors: Ron Buckton, Ecma International
             1. Set _generator_.[[GeneratorState]] to ~completed~.
             1. Once a generator enters the ~completed~ state it never leaves it and its associated execution context is never resumed. Any execution state associated with _generator_ can be discarded at this point.
             1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
             1. If _result_.[[Type]] is ~normal~, let _resultValue_ be *undefined*.
             1. Else if _result_.[[Type]] is ~return~, let _resultValue_ be _result_.[[Value]].
             1. Else,
@@ -3795,7 +3867,7 @@ contributors: Ron Buckton, Ecma International
             1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
             1. Set _generator_.[[AsyncGeneratorState]] to ~completed~.
             1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
             1. If _result_.[[Type]] is ~normal~, set _result_ to NormalCompletion(*undefined*).
             1. If _result_.[[Type]] is ~return~, set _result_ to NormalCompletion(_result_.[[Value]]).
             1. Perform AsyncGeneratorCompleteStep(_generator_, _result_, *true*).
@@ -3834,7 +3906,7 @@ contributors: Ron Buckton, Ecma International
             1. Assert: If we return here, the async function either threw an exception or performed an implicit or explicit return; all awaiting is done.
             1. Remove _asyncContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
             1. <ins>Let _env_ be _asyncContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_, _result_).</ins>
+            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
             1. If _result_.[[Type]] is ~normal~, then
               1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
             1. Else if _result_.[[Type]] is ~return~, then
