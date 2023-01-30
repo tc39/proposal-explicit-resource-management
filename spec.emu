@@ -2456,7 +2456,7 @@ contributors: Ron Buckton, Ecma International
         ForInOfStatement[Yield, Await, Return] :
           `for` `(` [lookahead != `let` `[`] LeftHandSideExpression[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` `var` ForBinding[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-          `for` `(` ForDeclaration[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+          `for` `(` ForDeclaration[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` [lookahead &notin; {`let`, `async` `of`}] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` <ins>[lookahead != `using` `of`]</ins> ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
@@ -2480,7 +2480,7 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>ForBinding : BindingPattern</emu-grammar>
         <ul>
           <li>
-            It is a Syntax Error if this |ForBinding| is contained in a |ForDeclaration| and IsUsingDeclaration of that |ForDeclaration| is *true*.
+            It is a Syntax Error if this |ForBinding| is contained within a |ForDeclaration| and IsUsingDeclaration of that |ForDeclaration| is *true*.
           </li>
         </ul>
         </ins>
