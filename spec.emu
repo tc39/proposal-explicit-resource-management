@@ -986,7 +986,7 @@ contributors: Ron Buckton, Ecma International
         1. Return the DisposeCapability Record { [[DisposableResourceStack]]: _stack_ }.
       </emu-alg>
     </emu-clause>
-    
+
     <emu-clause id="sec-adddisposableresource-disposable-v-hint-disposemethod" type="abstract operation">
       <h1>
         AddDisposableResource (
@@ -3511,7 +3511,7 @@ contributors: Ron Buckton, Ecma International
         </ul>
 
         <emu-clause id="sec-suppressederror">
-          <h1>SuppressedError ( _error_, _suppressed_, _message_ [ , _options_ ] )</h1>
+          <h1>SuppressedError ( _error_, _suppressed_, _message_ )</h1>
           <p>This function performs the following steps when called:</p>
           <emu-alg>
             1. If NewTarget is *undefined*, let _newTarget_ be the active function object; else let _newTarget_ be NewTarget.
@@ -3519,7 +3519,6 @@ contributors: Ron Buckton, Ecma International
             1. If _message_ is not *undefined*, then
               1. Let _msg_ be ? ToString(_message_).
               1. Perform CreateNonEnumerableDataPropertyOrThrow(_O_, *"message"*, _msg_).
-            1. Perform ? InstallErrorCause(_O_, _options_).
             1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_O_, *"error"*, _error_).
             1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_O_, *"suppressed"*, _suppressed_).
             1. Return _O_.
