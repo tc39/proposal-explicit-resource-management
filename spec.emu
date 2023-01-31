@@ -1985,7 +1985,7 @@ contributors: Ron Buckton, Ecma International
 
         <ins>
         UsingDeclaration[In, Yield, Await] :
-          `using` [no LineTerminator here] BindingList[?In, ?Yield, ?Await, +Using] `;`
+          `using` [no LineTerminator here] [lookahead != `await`] BindingList[?In, ?Yield, ?Await, +Using] `;`
         </ins>
 
         BindingList[In, Yield, Await, <ins>Using</ins>] :
@@ -2008,6 +2008,9 @@ contributors: Ron Buckton, Ecma International
         <ul>
           <li>
             It is a Syntax Error if the BoundNames of |BindingList| contains *"let"*.
+          </li>
+          <li>
+            It is a Syntax Error if the BoundNames of |BindingList| contains *"await"*.
           </li>
           <li>
             It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
@@ -2331,7 +2334,7 @@ contributors: Ron Buckton, Ecma International
 
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
           LetOrConst ForBinding[?Yield, ?Await, <ins>~Using</ins>]
-          <ins>[+Using] `using` [no LineTerminator here] ForBinding[?Yield, ?Await, +Using]</ins>
+          <ins>[+Using] `using` [no LineTerminator here] [lookahead != `await`] ForBinding[?Yield, ?Await, +Using]</ins>
 
         ForBinding[Yield, Await, <ins>Using</ins>] :
           BindingIdentifier[?Yield, ?Await]
