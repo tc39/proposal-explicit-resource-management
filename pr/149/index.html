@@ -3509,7 +3509,7 @@ li.menu-search-result-term:before {
     <emu-clause id="sec-dispose" type="abstract operation" aoid="Dispose">
       <h1><span class="secnum">2.1.7</span> Dispose ( <var>V</var>, <var>hint</var>, <var>method</var> )</h1>
       <p>The abstract operation Dispose takes arguments <var>V</var> (an Object or <emu-val>undefined</emu-val>), <var>hint</var> (<emu-const>sync-dispose</emu-const>), and <var>method</var> (a <emu-xref href="#function-object"><a href="https://tc39.es/ecma262/#function-object">function object</a></emu-xref>). It performs the following steps when called:</p>
-      <emu-alg><ol><li><emu-xref href="#assert"><a href="https://tc39.es/ecma262/#assert">Assert</a></emu-xref>: <var>hint</var> is <emu-const>sync-dispose</emu-const>.</li><li>Perform ?&nbsp;<emu-xref aoid="Call"><a href="https://tc39.es/ecma262/#sec-call">Call</a></emu-xref>(<var>method</var>, <var>V</var>).</li><li>Return <emu-val>undefined</emu-val>.</li></ol></emu-alg>
+      <emu-alg><ol><li>Perform ?&nbsp;<emu-xref aoid="Call"><a href="https://tc39.es/ecma262/#sec-call">Call</a></emu-xref>(<var>method</var>, <var>V</var>).</li><li>Return <emu-val>undefined</emu-val>.</li></ol></emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-disposeresources-disposable-completion-errors" type="abstract operation" aoid="DisposeResources">
