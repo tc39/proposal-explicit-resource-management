@@ -1049,9 +1049,7 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
-        1. Assert: _hint_ is ~sync-dispose~.
-        1. Let _method_ be ? GetMethod(_V_, @@dispose).
-        1. Return _method_.
+        1. Return ? GetMethod(_V_, @@dispose).
       </emu-alg>
     </emu-clause>
 
@@ -1065,7 +1063,6 @@ contributors: Ron Buckton, Ecma International
       </h1>
       <dl class="header"></dl>
       <emu-alg>
-        1. Assert: _hint_ is ~sync-dispose~.
         1. Perform ? Call(_method_, _V_).
         1. Return *undefined*.
       </emu-alg>
