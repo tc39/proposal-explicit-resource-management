@@ -1306,7 +1306,7 @@ The following is a high-level list of tasks to progress through each stage of th
 [Prose]: #motivations
 [Examples]: #examples
 [API]: #api
-[Specification]: https://tc39.es/proposal-explicit-resource-management
+[Specification]: https://arai-a.github.io/ecma262-compare/?pr=3000
 [Transpiler]: #todo
 [Stage3Reviewer1]: https://github.com/tc39/proposal-explicit-resource-management/issues/71
 [Stage3Reviewer1SignOff]: https://github.com/tc39/proposal-explicit-resource-management/issues/71#issuecomment-1325842256
