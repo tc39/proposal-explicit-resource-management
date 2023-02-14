@@ -1004,11 +1004,8 @@ contributors: Ron Buckton, Ecma International
           1. If Type(_V_) is not Object, throw a *TypeError* exception.
           1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
         1. Else,
-          1. If _V_ is *null* or *undefined*, then
-            1. Let _resource_ be ? CreateDisposableResource(*undefined*, _hint_, _method_).
-          1. Else,
-            1. If Type(_V_) is not Object, throw a *TypeError* exception.
-            1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_, _method_).
+          1. Assert: _V_ is *undefined*.
+          1. Let _resource_ be ? CreateDisposableResource(*undefined*, _hint_, _method_).
         1. Append _resource_ to _disposeCapability_.[[DisposableResourceStack]].
         1. Return ~unused~.
       </emu-alg>
