@@ -2101,7 +2101,7 @@ contributors: Ron Buckton, Ecma International
       <h2>Syntax</h2>
       <emu-grammar type="definition">
         LexicalDeclaration[In, Yield, Await] :
-          LetOrConst BindingList[?In, ?Yield, ?Await] `;`
+          LetOrConst BindingList[?In, ?Yield, ?Await, <ins>+Pattern</ins>] `;`
           <ins>UsingDeclaration[?In, ?Yield, ?Await]</ins>
 
         LetOrConst :
@@ -2110,16 +2110,17 @@ contributors: Ron Buckton, Ecma International
 
         <ins>
         UsingDeclaration[In, Yield, Await] :
-          `using` [no LineTerminator here] [lookahead != `await`] BindingList[?In, ?Yield, ?Await] `;`
+          `using` [no LineTerminator here] [lookahead != `await`] BindingList[?In, ?Yield, ?Await, ~Pattern] `;`
         </ins>
 
-        BindingList[In, Yield, Await] :
-          LexicalBinding[?In, ?Yield, ?Await]
-          BindingList[?In, ?Yield, ?Await] `,` LexicalBinding[?In, ?Yield, ?Await]
+        BindingList[In, Yield, Await, <ins>Pattern</ins>] :
+          LexicalBinding[?In, ?Yield, ?Await, <ins>?Pattern</ins>]
+          BindingList[?In, ?Yield, ?Await, <ins>?Pattern</ins>] `,` LexicalBinding[?In, ?Yield, ?Await, <ins>?Pattern</ins>]
 
-        LexicalBinding[In, Yield, Await] :
+        LexicalBinding[In, Yield, Await, <ins>Pattern</ins>] :
           BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
-          BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
+          <del>BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</del>
+          <ins>[+Pattern] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]</ins>
       </emu-grammar>
 
       <emu-clause id="sec-let-and-const-declarations-static-semantics-early-errors">
@@ -2154,14 +2155,6 @@ contributors: Ron Buckton, Ecma International
             </li>
           </ul>
         </emu-note>
-        <emu-grammar>
-          LexicalBinding : BindingPattern Initializer
-        </emu-grammar>
-        <ul>
-          <li>
-            It is a Syntax Error if IsUsingDeclaration of the |LexicalDeclaration| containing this |LexicalBinding| is *true*.
-          </li>
-        </ul>
         </ins>
       </emu-clause>
 
@@ -2389,36 +2382,24 @@ contributors: Ron Buckton, Ecma International
       <emu-grammar type="definition">
         ForInOfStatement[Yield, Await, Return] :
           `for` `(` [lookahead != `let` `[`] LeftHandSideExpression[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-          `for` `(` `var` ForBinding[?Yield, ?Await] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+          `for` `(` `var` ForBinding[?Yield, ?Await, <ins>+Pattern</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` ForDeclaration[?Yield, ?Await, <ins>~Using</ins>] `in` Expression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` [lookahead &notin; {`let`, `async` `of`}] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-          `for` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+          `for` `(` `var` ForBinding[?Yield, ?Await, <ins>+Pattern</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           `for` `(` <ins>[lookahead != `using` `of`]</ins> ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           [+Await] `for` `await` `(` [lookahead != `let`] LeftHandSideExpression[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
-          [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
+          [+Await] `for` `await` `(` `var` ForBinding[?Yield, ?Await, <ins>+Pattern</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
           [+Await] `for` `await` `(` <ins>[lookahead != `using` `of`]</ins> ForDeclaration[?Yield, ?Await, <ins>+Using</ins>] `of` AssignmentExpression[+In, ?Yield, ?Await] `)` Statement[?Yield, ?Await, ?Return]
 
         ForDeclaration[Yield, Await, <ins>Using</ins>] :
-          LetOrConst ForBinding[?Yield, ?Await]
-          <ins>[+Using] `using` [no LineTerminator here] [lookahead != `await`] ForBinding[?Yield, ?Await]</ins>
+          LetOrConst ForBinding[?Yield, ?Await, <ins>+Pattern</ins>]
+          <ins>[+Using] `using` [no LineTerminator here] [lookahead != `await`] ForBinding[?Yield, ?Await, ~Pattern]</ins>
 
-        ForBinding[Yield, Await] :
+        ForBinding[Yield, Await, <ins>Pattern</ins>] :
           BindingIdentifier[?Yield, ?Await]
-          BindingPattern[?Yield, ?Await]
+          <del>BindingPattern[?Yield, ?Await]</del>
+          <ins>[+Pattern] BindingPattern[?Yield, ?Await]</ins>
       </emu-grammar>
-
-      <emu-clause id="sec-for-in-and-for-of-statements-static-semantics-early-errors">
-        <h1>Static Semantics: Early Errors</h1>
-
-        <ins class="block">
-        <emu-grammar>ForBinding : BindingPattern</emu-grammar>
-        <ul>
-          <li>
-            It is a Syntax Error if this |ForBinding| is contained within a |ForDeclaration| and IsUsingDeclaration of that |ForDeclaration| is *true*.
-          </li>
-        </ul>
-        </ins>
-      </emu-clause>
 
       <emu-clause id="sec-runtime-semantics-fordeclarationbindinginstantiation" oldids="sec-runtime-semantics-bindinginstantiation" type="sdo">
         <h1>
