@@ -9,7 +9,7 @@ the lifetime and management of various resources (memory, I/O, etc.). This patte
 generally includes the allocation of a resource and the ability to explicitly
 release critical resources.
 
-For example, ECMAScript Generator Functions and Async Generartor Fucntions expose this pattern through the
+For example, ECMAScript Generator Functions and Async Generator Functions expose this pattern through the
 `return` method, as a means to explicitly evaluate `finally` blocks to ensure
 user-defined cleanup logic is preserved:
 
@@ -347,7 +347,7 @@ for (await using x of y) ...
 for await (await using x of y) ...
 ```
 
-You can use a `await using` declaration in a `for-of` or `for-await-of` statement inside of an async context to
+You can use an `await using` declaration in a `for-of` or `for-await-of` statement inside of an async context to
 explicitly bind each iterated value as an async disposable resource. `for-await-of` does not implicitly make a non-async
 `using` declaration into an async `await using` declaration, as the `await` markers in  `for-await-of` and `await using`
 are explicit indicators for distinct cases: `for await` *only* indicates async iteration, while `await using` *only*
@@ -853,7 +853,7 @@ If a resource does not have a callable `[Symbol.asyncDispose]` or `[Symbol.async
 
 ### `await using` Declarations in `for-of` and `for-await-of` Loops
 
-A `await using` declaration _may_ occur in the _ForDeclaration_ of a `for-await-of` loop:
+An `await using` declaration _may_ occur in the _ForDeclaration_ of a `for-await-of` loop:
 
 ```js
 for await (await using x of iterateResources()) {
@@ -870,7 +870,7 @@ This will not dispose resources that are not iterated, such as if iteration is t
 ### Implicit Async Interleaving Points ("implicit `await`")
 
 The `await using` syntax introduces an implicit async interleaving point (i.e., an implicit `await`) whenever control
-flow exits an async function body, _Block_, or _Module_ containing a `await using` declaration. This means that two
+flow exits an async function body, _Block_, or _Module_ containing an `await using` declaration. This means that two
 statements that currently execute in the same microtask, such as:
 
 ```js
@@ -882,7 +882,7 @@ async function f() {
 }
 ```
 
-will instead execute in different microtasks if a `await using` declaration is introduced:
+will instead execute in different microtasks if an `await using` declaration is introduced:
 
 ```js
 async function f() {
@@ -896,7 +896,7 @@ async function f() {
 
 It is important that such an implicit interleaving point be adequately indicated within the syntax. We believe that
 the presence of `await using` within such a block is an adequate indicator, since it should be fairly easy to recognize
-a _Block_ containing a `await using` statement in well-formated code.
+a _Block_ containing an `await using` statement in well-formated code.
 
 It is also feasible for editors to use features such as syntax highlighting, editor decorations, and inlay hints to
 further highlight such transitions, without needing to specify additional syntax.

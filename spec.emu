@@ -2139,7 +2139,7 @@ contributors: Ron Buckton, Ecma International
               InitializeBinding(N, V<ins>, _hint_</ins>)
             </td>
             <td>
-              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from either a `using` declaration (~sync-dispose~), a `await using` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
+              Set the value of an already existing but uninitialized binding in an Environment Record. The String value _N_ is the text of the bound name. _V_ is the value for the binding and is a value of any ECMAScript language type. <ins>_hint_ indicates whether the binding came from either a `using` declaration (~sync-dispose~), an `await using` declaration (~async-dispose~), or a regular variable declaration (~normal~).</ins>
             </td>
           </tr>
           <tr>
@@ -3268,7 +3268,7 @@ contributors: Ron Buckton, Ecma International
           1. Else if IsConstructor(_superclass_) is *false*, throw a *TypeError* exception.
           1. Else,
             1. Let _protoParent_ be ? Get(_superclass_, *"prototype"*).
-            1. If _protoParent_ is not an Object and _protoParent_ is not *null*, throw a *TypeError* exception.
+            1. If _protoParent_ is neither an Object and _protoParent_ nor *null*, throw a *TypeError* exception.
             1. Let _constructorParent_ be _superclass_.
         1. Let _proto_ be OrdinaryObjectCreate(_protoParent_).
         1. If |ClassBody?| is not present, let _constructor_ be ~empty~.
@@ -4156,7 +4156,7 @@ contributors: Ron Buckton, Ecma International
         </ul>
 
         <emu-clause id="sec-suppressederror">
-          <h1>SuppressedError ( _error_, _suppressed_, _message_ [ , _options_ ] )</h1>
+          <h1>SuppressedError ( _error_, _suppressed_, _message_ )</h1>
           <p>This function performs the following steps when called:</p>
           <emu-alg>
             1. If NewTarget is *undefined*, let _newTarget_ be the active function object; else let _newTarget_ be NewTarget.
@@ -4164,7 +4164,6 @@ contributors: Ron Buckton, Ecma International
             1. If _message_ is not *undefined*, then
               1. Let _messageString_ be ? ToString(_message_).
               1. Perform CreateNonEnumerableDataPropertyOrThrow(_O_, *"message"*, _messageString_).
-            1. Perform ? InstallErrorCause(_O_, _options_).
             1. Perform CreateNonEnumerableDataPropertyOrThrow(_O_, *"error"*, _error_).
             1. Perform CreateNonEnumerableDataPropertyOrThrow(_O_, *"suppressed"*, _suppressed_).
             1. Return _O_.
@@ -4735,7 +4734,7 @@ contributors: Ron Buckton, Ecma International
               ~pending~ or ~disposed~
             </td>
             <td>
-              Governs how a disposable stack will react to incoming calls to its `@@asyncDispose` method.
+              Governs how an async disposable stack will react to incoming calls to its `@@asyncDispose` method.
             </td>
           </tr>
           <tr>
