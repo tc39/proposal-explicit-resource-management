@@ -4253,24 +4253,14 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-clause id="sec-%asynciteratorprototype%-@@asyncdispose">
         <h1>%AsyncIteratorPrototype% [ @@asyncDispose ] ( )</h1>
-        <p>The following steps are taken:</p>
+        <p>This async method performs following steps when called:</p>
         <emu-alg>
           1. Let _O_ be the *this* value.
           1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
-          1. Let _return_ be GetMethod(_O_, `"return"`).
-          1. IfAbruptRejectPromise(_return_, _promiseCapability_).
-          1. If _return_ is *undefined*, then
-            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
-          1. Else,
-            1. Let _result_ be Call(_return_, _O_, &laquo; *undefined* &raquo;).
-            1. IfAbruptRejectPromise(_result_, _promiseCapability_).
-            1. Let _resultWrapper_ be Completion(PromiseResolve(%Promise%, _result_)).
-            1. IfAbruptRejectPromise(_resultWrapper_, _promiseCapability_).
-            1. Let _unwrap_ be a new Abstract Closure that performs the following steps when called:
-              1. Return *undefined*.
-            1. Let _onFulfilled_ be CreateBuiltinFunction(_unwrap_, 1, "", &laquo; &raquo;).
-            1. Perform PerformPromiseThen(_resultWrapper_, _onFulfilled_, *undefined*, _promiseCapability_).
-          1. Return _promiseCapability_.[[Promise]].
+          1. Let _return_ be ? GetMethod(_O_, `"return"`).
+          1. If _return_ is not *undefined*, then
+            1. Perform ? Await (? Call(_return_, _O_, &laquo; &raquo;)).
+          1. Return *undefined*.
         </emu-alg>
         <p>The value of the *"name"* property of this function is *"[Symbol.asyncDispose]"*.</p>
       </emu-clause>
