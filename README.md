@@ -1799,6 +1799,125 @@ suggestions for consideration. The actual implementation is at the discretion of
 - `stream.Readable` &mdash; Either `@@dispose()` or `@@asyncDispose()` as an alias or [wrapper][] for `destroy()`.
 - ... and many others in `net`, `readline`, `tls`, `udp`, and `worker_threads`.
 
+# Best Practices
+
+## Ensuring Cleanup of Native Handles, File Descriptors, etc.
+
+When implementing a disposable that holds a native handle (i.e., a pointer, file descriptor, etc.), it is good practice
+to also use a `FinalizationRegistry` to ensure the handle is appropriately closed if the disposable object is garbage
+collected without having been disposed.
+
+The following is an example of a safe handle wrapper that could be used in this case:
+
+```js
+/**
+ * @returns {number}
+ */
+function nativeOpenFile(file) { ... }
+
+/**
+ * @param {number} handle
+ */
+function nativeCloseFile(handle) { ... }
+
+class SafeFileHandle {
+  static #finalizer = new FinalizationRegistry(nativeCloseFile);
+
+  #unregisterToken = {};
+  #handle;
+
+  constructor(file) {
+    this.#handle = nativeOpenFile(file);
+
+    // Register for finalization
+    SafeHandle.#finalizer.register(this, handle, this.#unregisterToken);
+  }
+
+  get disposed() {
+    return this.#handle === 0;
+  }
+
+  dangerousGetHandle() {
+    if (this.#handle === 0) throw new ReferenceError("Object is disposed");
+    return this.#handle;
+  }
+
+  dispose() {
+    if (this.#handle !== 0) {
+      // This instance no longer needs finalization
+      SafeHandle.#finalizer.unregister(this.#unregisterToken);
+
+      // Perform cleanup
+      const handle = this.#handle;
+      this.#handle = 0;
+      nativeCloseFile(handle);
+    }
+  }
+
+  [Symbol.dispose]() {
+    this.dispose();
+  }
+}
+
+/**
+ * @returns {SafeFileHandle}
+ */
+export function openFile(file) { ... }
+
+/**
+ * @param {SafeFileHandle} handle
+ */
+export function readFile(handle) {
+  const fd = handle.dangerousGetHandle();
+  ...
+}
+```
+
+This ensures that `SafeFileHandle` will still implicitly close the underlying file if an instance is not disposed before
+being garbage collected, while still allowing the user to explicitly close the file via `using` or an imperative call to
+`safeFileHandle.dispose()`. The call to `finalizationRegistry.unregister` prevents `nativeCloseHandle` from being called
+against an handle that may have already been closed or even reused by a different operation. The `dangerousGetHandle()`
+method allows access to the underlying handle itself for use with other APIs that may still expect a `number`, but that
+can be further protected through the use of `static {}` blocks to limit unsafe access to the handle:
+
+```js
+...
+
+/**
+ * @type {(obj: SafeFileHandle) => number}
+ */
+let dangerousGetHandle; // unreachable outside of module
+
+class SafeFileHandle {
+  #handle;
+
+  ...
+
+  // dangerousGetHandle() {
+  //   if (this.#handle === 0) throw new ReferenceError("Object is disposed");
+  //   return this.#handle;
+  // }
+
+  static {
+    dangerousGetHandle = obj => {
+      if (obj.#handle === 0) throw new ReferenceError("Object is disposed");
+      return obj.#handle;
+    };
+  }
+
+  ...
+}
+
+...
+
+export function readFile(handle) {
+  // const fd = handle.dangerousGetHandle();
+  const fd = dangerousGetHandle(handle);
+  ...
+}
+
+```
+
 # Meeting Notes
 
 * [TC39 July 24th, 2018](https://github.com/tc39/notes/blob/main/meetings/2018-07/july-24.md#explicit-resource-management)
