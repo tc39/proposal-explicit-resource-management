@@ -4396,8 +4396,15 @@ contributors: Ron Buckton, Ecma International
       <h1>Properties of the DisposableStack Constructor</h1>
       <p>The DisposableStack constructor:</p>
       <ul>
-        <li>Has a [[Prototype]] internal slot whose value is %Function.prototype%.</li>
+        <li>has a [[Prototype]] internal slot whose value is %Function.prototype%.</li>
+        <li>has the following properties:</li>
       </ul>
+
+      <emu-clause id="sec-disposablestack.prototype">
+        <h1>DisposableStack.prototype</h1>
+        <p>The initial value of `DisposableStack.prototype` is the DisposableStack prototype object.</p>
+        <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *false* }.</p>
+      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-properties-of-the-disposablestack-prototype-object">
@@ -4595,8 +4602,14 @@ contributors: Ron Buckton, Ecma International
       <h1>Properties of the AsyncDisposableStack Constructor</h1>
       <p>The AsyncDisposableStack constructor:</p>
       <ul>
-        <li>Has a [[Prototype]] internal slot whose value is %Function.prototype%.</li>
+        <li>has a [[Prototype]] internal slot whose value is %Function.prototype%.</li>
+        <li>has the following properties:</li>
       </ul>
+      <emu-clause id="sec-asyncdisposablestack.prototype">
+        <h1>AsyncDisposableStack.prototype</h1>
+        <p>The initial value of `AsyncDisposableStack.prototype` is the AsyncDisposableStack prototype object.</p>
+        <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *false* }.</p>
+      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-properties-of-the-asyncdisposablestack-prototype-object">
