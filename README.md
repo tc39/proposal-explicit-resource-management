@@ -1823,14 +1823,13 @@ function nativeCloseFile(handle) { ... }
 class SafeFileHandle {
   static #finalizer = new FinalizationRegistry(nativeCloseFile);
 
-  #unregisterToken = {};
   #handle;
 
   constructor(file) {
     this.#handle = nativeOpenFile(file);
 
     // Register for finalization
-    SafeHandle.#finalizer.register(this, handle, this.#unregisterToken);
+    SafeHandle.#finalizer.register(this, handle, /*unregisterToken*/ this);
   }
 
   get disposed() {
@@ -1845,7 +1844,7 @@ class SafeFileHandle {
   dispose() {
     if (this.#handle !== 0) {
       // This instance no longer needs finalization
-      SafeHandle.#finalizer.unregister(this.#unregisterToken);
+      SafeHandle.#finalizer.unregister(this);
 
       // Perform cleanup
       const handle = this.#handle;
