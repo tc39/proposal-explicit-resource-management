@@ -295,7 +295,7 @@ This proposal is motivated by a number of cases:
 # Definitions
 
 - _Resource_ &mdash; An object with a specific lifetime, at the end of which either a lifetime-sensitive operation
-  should be performed or a non-gargbage-collected reference (such as a file handle, socket, etc.) should be closed or
+  should be performed or a non-garbage-collected reference (such as a file handle, socket, etc.) should be closed or
   freed.
 - _Resource Management_ &mdash; A process whereby "resources" are released, triggering any lifetime-sensitive operations
   or freeing any related non-garbage-collected references.
@@ -896,7 +896,7 @@ async function f() {
 
 It is important that such an implicit interleaving point be adequately indicated within the syntax. We believe that
 the presence of `await using` within such a block is an adequate indicator, since it should be fairly easy to recognize
-a _Block_ containing an `await using` statement in well-formated code.
+a _Block_ containing an `await using` statement in well-formatted code.
 
 It is also feasible for editors to use features such as syntax highlighting, editor decorations, and inlay hints to
 further highlight such transitions, without needing to specify additional syntax.
