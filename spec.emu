@@ -875,17 +875,14 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-initializereferencedbinding" type="abstract operation">
         <h1>
           InitializeReferencedBinding (
-            _V_: unknown,
-            _W_: unknown,
+            _V_: a Reference Record,
+            _W_: a Reference Record,
             <ins>_hint_: one of ~normal~, ~sync-dispose~, or ~async-dispose~,</ins>
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header">
         </dl>
         <emu-alg>
-          1. ReturnIfAbrupt(_V_).
-          1. ReturnIfAbrupt(_W_).
-          1. Assert: _V_ is a Reference Record.
           1. Assert: IsUnresolvableReference(_V_) is *false*.
           1. Let _base_ be _V_.[[Base]].
           1. Assert: _base_ is an Environment Record.
@@ -975,7 +972,7 @@ contributors: Ron Buckton, Ecma International
               ~sync-dispose~ or ~async-dispose~.
             </td>
             <td>
-              Indicates whether the resource was added by a `using` declaration or DisposableStack object (~sync-dispose~) or a `await using` declaration or AsyncDisposableStack object (~async-dispose~).
+              Indicates whether the resource was added by a `using` declaration or DisposableStack object (~sync-dispose~) or by an `await using` declaration or AsyncDisposableStack object (~async-dispose~).
             </td>
           </tr>
           <tr>
@@ -1103,8 +1100,8 @@ contributors: Ron Buckton, Ecma International
               1. Set _result_ to _result_.[[Value]].
               1. Let _suppressed_ be _completion_.[[Value]].
               1. Let _error_ be a newly created *SuppressedError* object.
-              1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"error"*, _result_).
-              1. Perform ! CreateNonEnumerableDataPropertyOrThrow(_error_, *"suppressed"*, _suppressed_).
+              1. Perform CreateNonEnumerableDataPropertyOrThrow(_error_, *"error"*, _result_).
+              1. Perform CreateNonEnumerableDataPropertyOrThrow(_error_, *"suppressed"*, _suppressed_).
               1. Set _completion_ to ThrowCompletion(_error_).
             1. Else,
               1. Set _completion_ to _result_.
@@ -1133,11 +1130,11 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>BindingIdentifier : `yield`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"yield"* &raquo;.
+        1. Return « *"yield"* ».
       </emu-alg>
       <emu-grammar>BindingIdentifier : `await`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"await"* &raquo;.
+        1. Return « *"await"* ».
       </emu-alg>
       <emu-grammar>LexicalDeclaration : LetOrConst BindingList `;`</emu-grammar>
       <emu-alg>
@@ -1249,7 +1246,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>FunctionDeclaration : `function` `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
       <emu-grammar>FormalParameters : [empty]</emu-grammar>
       <emu-alg>
@@ -1278,7 +1275,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>GeneratorDeclaration : `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
       <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
       <emu-alg>
@@ -1286,7 +1283,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>AsyncGeneratorDeclaration : `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
       <emu-grammar>ClassDeclaration : `class` BindingIdentifier ClassTail</emu-grammar>
       <emu-alg>
@@ -1294,7 +1291,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
       <emu-grammar>
         AsyncFunctionDeclaration : `async` `function` BindingIdentifier `(` FormalParameters `)` `{` AsyncFunctionBody `}`
@@ -1306,7 +1303,7 @@ contributors: Ron Buckton, Ecma International
         AsyncFunctionDeclaration : `async` `function` `(` FormalParameters `)` `{` AsyncFunctionBody `}`
       </emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
       <emu-grammar>
         CoverCallExpressionAndAsyncArrowHead : MemberExpression Arguments
@@ -1379,7 +1376,7 @@ contributors: Ron Buckton, Ecma International
       </emu-alg>
       <emu-grammar>ExportDeclaration : `export` `default` AssignmentExpression `;`</emu-grammar>
       <emu-alg>
-        1. Return &laquo; *"\*default\*"* &raquo;.
+        1. Return « *"\*default\*"* ».
       </emu-alg>
     </emu-clause>
 
@@ -1748,8 +1745,8 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-iteratorbindinginitialization" oldids="sec-destructuring-binding-patterns-runtime-semantics-iteratorbindinginitialization,sec-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-arrow-function-definitions-runtime-semantics-iteratorbindinginitialization,sec-async-arrow-function-definitions-IteratorBindingInitialization" type="sdo">
       <h1>
         Runtime Semantics: IteratorBindingInitialization (
-          _iteratorRecord_: unknown,
-          _environment_: unknown,
+          _iteratorRecord_: an Iterator Record,
+          _environment_: an Environment Record or *undefined*,
         ): either a normal completion containing ~unused~ or an abrupt completion
       </h1>
       <dl class="header">
@@ -1802,7 +1799,8 @@ contributors: Ron Buckton, Ecma International
           1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
           1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
           1. ReturnIfAbrupt(_next_).
-          1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+          1. If _next_ is *false*, then
+            1. Set _iteratorRecord_.[[Done]] to *true*.
           1. Else,
             1. Set _v_ to Completion(IteratorValue(_next_)).
             1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
@@ -1811,7 +1809,7 @@ contributors: Ron Buckton, Ecma International
           1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
             1. Set _v_ to ? NamedEvaluation of |Initializer| with argument _bindingId_.
           1. Else,
-            1. Let _defaultValue_ be the result of evaluating |Initializer|.
+            1. Let _defaultValue_ be ? Evaluation of |Initializer|.
             1. Set _v_ to ? GetValue(_defaultValue_).
         1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _v_).
         1. Return ? InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
@@ -1823,13 +1821,14 @@ contributors: Ron Buckton, Ecma International
           1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
           1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
           1. ReturnIfAbrupt(_next_).
-          1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+          1. If _next_ is *false*, then
+            1. Set _iteratorRecord_.[[Done]] to *true*.
           1. Else,
             1. Set _v_ to Completion(IteratorValue(_next_)).
             1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
             1. ReturnIfAbrupt(_v_).
         1. If |Initializer| is present and _v_ is *undefined*, then
-          1. Let _defaultValue_ be the result of evaluating |Initializer|.
+          1. Let _defaultValue_ be ? Evaluation of |Initializer|.
           1. Set _v_ to ? GetValue(_defaultValue_).
         1. Return ? BindingInitialization of |BindingPattern| with arguments _v_ and _environment_.
       </emu-alg>
@@ -1892,7 +1891,8 @@ contributors: Ron Buckton, Ecma International
         1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
         1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
         1. ReturnIfAbrupt(_next_).
-        1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+        1. If _next_ is *false*, then
+          1. Set _iteratorRecord_.[[Done]] to *true*.
         1. Else,
           1. Set _v_ to Completion(IteratorValue(_next_)).
           1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
@@ -1913,7 +1913,8 @@ contributors: Ron Buckton, Ecma International
         1. Let _next_ be Completion(IteratorStep(_iteratorRecord_)).
         1. If _next_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
         1. ReturnIfAbrupt(_next_).
-        1. If _next_ is *false*, set _iteratorRecord_.[[Done]] to *true*.
+        1. If _next_ is *false*, then
+          1. Set _iteratorRecord_.[[Done]] to *true*.
         1. Else,
           1. Set _v_ to Completion(IteratorValue(_next_)).
           1. If _v_ is an abrupt completion, set _iteratorRecord_.[[Done]] to *true*.
@@ -2092,7 +2093,7 @@ contributors: Ron Buckton, Ecma International
   <h1>Executable Code and Execution Contexts</h1>
   <emu-clause id="sec-environment-records">
     <h1>Environment Records</h1>
-    <p><dfn>Environment Record</dfn> is a specification type used to define the association of |Identifier|s to specific variables and functions, based upon the lexical nesting structure of ECMAScript code. Usually an Environment Record is associated with some specific syntactic structure of ECMAScript code such as a |FunctionDeclaration|, a |BlockStatement|, or a |Catch| clause of a |TryStatement|. Each time such code is evaluated, a new Environment Record is created to record the identifier bindings that are created by that code.</p>
+    <p><dfn variants="Environment Records">Environment Record</dfn> is a specification type used to define the association of |Identifier|s to specific variables and functions, based upon the lexical nesting structure of ECMAScript code. Usually an Environment Record is associated with some specific syntactic structure of ECMAScript code such as a |FunctionDeclaration|, a |BlockStatement|, or a |Catch| clause of a |TryStatement|. Each time such code is evaluated, a new Environment Record is created to record the identifier bindings that are created by that code.</p>
     <p>Every Environment Record has an [[OuterEnv]] field, which is either *null* or a reference to an outer Environment Record. This is used to model the logical nesting of Environment Record values. The outer reference of an (inner) Environment Record is a reference to the Environment Record that logically surrounds the inner Environment Record. An outer Environment Record may, of course, have its own outer Environment Record. An Environment Record may serve as the outer environment for multiple inner Environment Records. For example, if a |FunctionDeclaration| contains two nested |FunctionDeclaration|s then the Environment Records of each of the nested functions will have as their outer Environment Record the Environment Record of the current evaluation of the surrounding function.</p>
     <p>Environment Records are purely specification mechanisms and need not correspond to any specific artefact of an ECMAScript implementation. It is impossible for an ECMAScript program to directly access or manipulate such values.</p>
 
@@ -2101,7 +2102,6 @@ contributors: Ron Buckton, Ecma International
       <p>The Environment Record abstract class includes the abstract specification methods defined in <emu-xref href="#table-abstract-methods-of-environment-records"></emu-xref>. These abstract methods have distinct concrete algorithms for each of the concrete subclasses.</p>
       <emu-table id="table-abstract-methods-of-environment-records" caption="Abstract Methods of Environment Records" oldids="table-15">
         <table>
-          <tbody>
           <tr>
             <th>
               Method
@@ -2190,15 +2190,14 @@ contributors: Ron Buckton, Ecma International
               If this Environment Record is associated with a `with` statement, return the with object. Otherwise, return *undefined*.
             </td>
           </tr>
-          </tbody>
         </table>
       </emu-table>
 
       <emu-clause id="sec-declarative-environment-records">
         <h1>Declarative Environment Records</h1>
-        <p>Each <dfn>declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
-        <p><ins>Every Declarative Environment Record also has a [[DisposeCapability]] field, which contains a DisposeCapability Record. This field holds a stack of resources tracked by the `using` declarations and `await using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
-        <p>The behaviour of the concrete specification methods for declarative Environment Records is defined by the following algorithms.</p>
+        <p>Each <dfn variants="Declarative Environment Records">Declarative Environment Record</dfn> is associated with an ECMAScript program scope containing variable, constant, let, class, module, import, and/or function declarations. A Declarative Environment Record binds the set of identifiers defined by the declarations contained within its scope.</p>
+        <p><ins>Every Declarative Environment Record also has a [[DisposeCapability]] field, which contains a DisposeCapability Record. This field holds a stack of resources tracked by `using` declarations and `await using` declarations that must be disposed when the Evaluation step that constructed the Environment Record has completed.</ins></p>
+        <p>The behaviour of the concrete specification methods for Declarative Environment Records is defined by the following algorithms.</p>
 
         <emu-clause id="sec-declarative-environment-records-initializebinding-n-v" type="concrete method">
           <h1>
@@ -2210,10 +2209,10 @@ contributors: Ron Buckton, Ecma International
           </h1>
           <dl class="header">
             <dt>for</dt>
-            <dd>a declarative Environment Record _envRec_</dd>
+            <dd>a Declarative Environment Record _envRec_</dd>
 
             <dt>description</dt>
-            <dd>It is used to set the bound value of the current binding of the identifier whose name is the value of the argument _N_ to the value of argument _V_. An uninitialized binding for _N_ must already exist.</dd>
+            <dd>It is used to set the bound value of the current binding of the identifier whose name is _N_ to the value _V_. An uninitialized binding for _N_ must already exist.</dd>
           </dl>
           <emu-alg>
             1. Assert: _envRec_ must have an uninitialized binding for _N_.
@@ -2316,15 +2315,15 @@ contributors: Ron Buckton, Ecma International
       <h1>
         FunctionDeclarationInstantiation (
           _func_: a function object,
-          _argumentsList_: unknown,
-        )
+          _argumentsList_: a List of ECMAScript language values,
+        ): either a normal completion containing ~unused~ or an abrupt completion
       </h1>
       <dl class="header">
         <dt>description</dt>
         <dd>_func_ is the function object for which the execution context is being established.</dd>
       </dl>
       <emu-note>
-        <p>When an execution context is established for evaluating an ECMAScript function a new function Environment Record is created and bindings for each formal parameter are instantiated in that Environment Record. Each declaration in the function body is also instantiated. If the function's formal parameters do not include any default value initializers then the body declarations are instantiated in the same Environment Record as the parameters. If default value parameter initializers exist, a second Environment Record is created for the body declarations. Formal parameters and functions are initialized as part of FunctionDeclarationInstantiation. All other bindings are initialized during evaluation of the function body.</p>
+        <p>When an execution context is established for evaluating an ECMAScript function a new Function Environment Record is created and bindings for each formal parameter are instantiated in that Environment Record. Each declaration in the function body is also instantiated. If the function's formal parameters do not include any default value initializers then the body declarations are instantiated in the same Environment Record as the parameters. If default value parameter initializers exist, a second Environment Record is created for the body declarations. Formal parameters and functions are initialized as part of FunctionDeclarationInstantiation. All other bindings are initialized during evaluation of the function body.</p>
       </emu-note>
       <p>It performs the following steps when called:</p>
       <!--
@@ -2350,7 +2349,7 @@ contributors: Ron Buckton, Ecma International
           1. If _d_ is neither a |VariableDeclaration| nor a |ForBinding| nor a |BindingIdentifier|, then
             1. Assert: _d_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
             1. Let _fn_ be the sole element of the BoundNames of _d_.
-            1. If _fn_ is not an element of _functionNames_, then
+            1. If _functionNames_ does not contain _fn_, then
               1. Insert _fn_ as the first element of _functionNames_.
               1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
               1. Insert _d_ as the first element of _functionsToInitialize_.
@@ -2358,12 +2357,12 @@ contributors: Ron Buckton, Ecma International
         1. If _func_.[[ThisMode]] is ~lexical~, then
           1. NOTE: Arrow functions never have an arguments object.
           1. Set _argumentsObjectNeeded_ to *false*.
-        1. Else if *"arguments"* is an element of _parameterNames_, then
+        1. Else if _parameterNames_ contains *"arguments"*, then
           1. Set _argumentsObjectNeeded_ to *false*.
         1. Else if _hasParameterExpressions_ is *false*, then
-          1. If *"arguments"* is an element of _functionNames_ or if *"arguments"* is an element of _lexicalNames_, then
+          1. If _functionNames_ contains *"arguments"* or _lexicalNames_ contains *"arguments"*, then
             1. Set _argumentsObjectNeeded_ to *false*.
-        1. If _strict_ is *true* or if _hasParameterExpressions_ is *false*, then
+        1. If _strict_ is *true* or _hasParameterExpressions_ is *false*, then
           1. NOTE: Only a single Environment Record is needed for the parameters, since calls to `eval` in strict mode code cannot create new bindings which are visible outside of the `eval`.
           1. Let _env_ be the LexicalEnvironment of _calleeContext_.
         1. Else,
@@ -2373,39 +2372,40 @@ contributors: Ron Buckton, Ecma International
           1. Assert: The VariableEnvironment of _calleeContext_ is _calleeEnv_.
           1. Set the LexicalEnvironment of _calleeContext_ to _env_.
         1. For each String _paramName_ of _parameterNames_, do
-          1. Let _alreadyDeclared_ be _env_.HasBinding(_paramName_).
+          1. Let _alreadyDeclared_ be ! _env_.HasBinding(_paramName_).
           1. NOTE: Early errors ensure that duplicate parameter names can only occur in non-strict functions that do not have parameter default values or rest parameters.
           1. If _alreadyDeclared_ is *false*, then
             1. Perform ! _env_.CreateMutableBinding(_paramName_, *false*).
             1. If _hasDuplicates_ is *true*, then
               1. Perform ! _env_.InitializeBinding(_paramName_, *undefined*<ins>, ~normal~</ins>).
         1. If _argumentsObjectNeeded_ is *true*, then
-          1. If _strict_ is *true* or if _simpleParameterList_ is *false*, then
+          1. If _strict_ is *true* or _simpleParameterList_ is *false*, then
             1. Let _ao_ be CreateUnmappedArgumentsObject(_argumentsList_).
           1. Else,
             1. NOTE: A mapped argument object is only provided for non-strict functions that don't have a rest parameter, any parameter default value initializers, or any destructured parameters.
             1. Let _ao_ be CreateMappedArgumentsObject(_func_, _formals_, _argumentsList_, _env_).
           1. If _strict_ is *true*, then
-            1. Perform ! _env_.CreateImmutableBinding(*"arguments"*, *false*, *false*).
+            1. Perform ! _env_.CreateImmutableBinding(*"arguments"*, *false*).
+            1. NOTE: In strict mode code early errors prevent attempting to assign to this binding, so its mutability is not observable.
           1. Else,
             1. Perform ! _env_.CreateMutableBinding(*"arguments"*, *false*).
-          1. Call _env_.InitializeBinding(*"arguments"*, _ao_<ins>, ~normal~</ins>).
-          1. Let _parameterBindings_ be the list-concatenation of _parameterNames_ and &laquo; *"arguments"* &raquo;.
+          1. Perform ! _env_.InitializeBinding(*"arguments"*, _ao_<ins>, ~normal~</ins>).
+          1. Let _parameterBindings_ be the list-concatenation of _parameterNames_ and « *"arguments"* ».
         1. Else,
           1. Let _parameterBindings_ be _parameterNames_.
         1. Let _iteratorRecord_ be CreateListIteratorRecord(_argumentsList_).
         1. If _hasDuplicates_ is *true*, then
-          1. Perform ? IteratorBindingInitialization of _formals_ with _iteratorRecord_ and *undefined* as arguments.
+          1. Perform ? IteratorBindingInitialization of _formals_ with arguments _iteratorRecord_ and *undefined*.
         1. Else,
-          1. Perform ? IteratorBindingInitialization of _formals_ with _iteratorRecord_ and _env_ as arguments.
+          1. Perform ? IteratorBindingInitialization of _formals_ with arguments _iteratorRecord_ and _env_.
         1. If _hasParameterExpressions_ is *false*, then
           1. NOTE: Only a single Environment Record is needed for the parameters and top-level vars.
           1. Let _instantiatedVarNames_ be a copy of the List _parameterBindings_.
           1. For each element _n_ of _varNames_, do
-            1. If _n_ is not an element of _instantiatedVarNames_, then
+            1. If _instantiatedVarNames_ does not contain _n_, then
               1. Append _n_ to _instantiatedVarNames_.
               1. Perform ! _env_.CreateMutableBinding(_n_, *false*).
-              1. Call _env_.InitializeBinding(_n_, *undefined*<ins>, ~normal~</ins>).
+              1. Perform ! _env_.InitializeBinding(_n_, *undefined*<ins>, ~normal~</ins>).
           1. Let _varEnv_ be _env_.
         1. Else,
           1. NOTE: A separate Environment Record is needed to ensure that closures created by expressions in the formal parameter list do not have visibility of declarations in the function body.
@@ -2413,19 +2413,21 @@ contributors: Ron Buckton, Ecma International
           1. Set the VariableEnvironment of _calleeContext_ to _varEnv_.
           1. Let _instantiatedVarNames_ be a new empty List.
           1. For each element _n_ of _varNames_, do
-            1. If _n_ is not an element of _instantiatedVarNames_, then
+            1. If _instantiatedVarNames_ does not contain _n_, then
               1. Append _n_ to _instantiatedVarNames_.
               1. Perform ! _varEnv_.CreateMutableBinding(_n_, *false*).
-              1. If _n_ is not an element of _parameterBindings_ or if _n_ is an element of _functionNames_, let _initialValue_ be *undefined*.
+              1. If _parameterBindings_ does not contain _n_, or if _functionNames_ contains _n_, then
+                1. Let _initialValue_ be *undefined*.
               1. Else,
                 1. Let _initialValue_ be ! _env_.GetBindingValue(_n_, *false*).
-              1. Call _varEnv_.InitializeBinding(_n_, _initialValue_<ins>, ~normal~</ins>).
+              1. Perform ! _varEnv_.InitializeBinding(_n_, _initialValue_<ins>, ~normal~</ins>).
               1. NOTE: A var with the same name as a formal parameter initially has the same value as the corresponding initialized parameter.
         1. [id="step-functiondeclarationinstantiation-web-compat-insertion-point"] NOTE: Annex <emu-xref href="#sec-web-compat-functiondeclarationinstantiation"></emu-xref> adds additional steps at this point.
         1. If _strict_ is *false*, then
           1. Let _lexEnv_ be NewDeclarativeEnvironment(_varEnv_).
           1. NOTE: Non-strict functions use a separate Environment Record for top-level lexical declarations so that a direct eval can determine whether any var scoped declarations introduced by the eval code conflict with pre-existing top-level lexically scoped declarations. This is not needed for strict functions because a strict direct eval always places all declarations into a new Environment Record.
-        1. Else, let _lexEnv_ be _varEnv_.
+        1. Else,
+          1. Let _lexEnv_ be _varEnv_.
         1. Set the LexicalEnvironment of _calleeContext_ to _lexEnv_.
         1. Let _lexDeclarations_ be the LexicallyScopedDeclarations of _code_.
         1. For each element _d_ of _lexDeclarations_, do
@@ -2440,7 +2442,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _fn_ be the sole element of the BoundNames of _f_.
           1. Let _fo_ be InstantiateFunctionObject of _f_ with arguments _lexEnv_ and _privateEnv_.
           1. Perform ! _varEnv_.SetMutableBinding(_fn_, _fo_, *false*).
-        1. Return NormalCompletion(~empty~).
+        1. Return ~unused~.
       </emu-alg>
       <emu-note>
         <p><emu-xref href="#sec-block-level-function-declarations-web-legacy-compatibility-semantics"></emu-xref> provides an extension to the above algorithm that is necessary for backwards compatibility with web browser implementations of ECMAScript that predate ECMAScript 2015.</p>
@@ -2500,10 +2502,10 @@ contributors: Ron Buckton, Ecma International
         1. Let _blockEnv_ be NewDeclarativeEnvironment(_oldEnv_).
         1. Perform BlockDeclarationInstantiation(|StatementList|, _blockEnv_).
         1. Set the running execution context's LexicalEnvironment to _blockEnv_.
-        1. Let _blockValue_ be the result of evaluating |StatementList|.
-        1. <ins>Set _blockValue_ to DisposeResources(_blockEnv_.[[DisposeCapability]], _blockValue_).</ins>
+        1. Let _blockValue_ be Completion(Evaluation of |StatementList|).
+        1. <ins>Set _blockValue_ to Completion(DisposeResources(_blockEnv_.[[DisposeCapability]], _blockValue_)).</ins>
         1. Set the running execution context's LexicalEnvironment to _oldEnv_.
-        1. Return _blockValue_.
+        1. Return ? _blockValue_.
       </emu-alg>
       <emu-note>
         <p>No matter how control leaves the |Block| the LexicalEnvironment is always restored to its former state.</p>
@@ -2514,15 +2516,15 @@ contributors: Ron Buckton, Ecma International
       <h1>
         BlockDeclarationInstantiation (
           _code_: a Parse Node,
-          _env_: a declarative Environment Record,
-        )
+          _env_: a Declarative Environment Record,
+        ): ~unused~
       </h1>
       <dl class="header">
         <dt>description</dt>
         <dd>_code_ is the Parse Node corresponding to the body of the block. _env_ is the Environment Record in which bindings are to be created.</dd>
       </dl>
       <emu-note>
-        <p>When a |Block| or |CaseBlock| is evaluated a new declarative Environment Record is created and bindings for each block scoped variable, constant, function, or class declared in the block are instantiated in the Environment Record.</p>
+        <p>When a |Block| or |CaseBlock| is evaluated a new Declarative Environment Record is created and bindings for each block scoped variable, constant, function, or class declared in the block are instantiated in the Environment Record.</p>
       </emu-note>
       <p>It performs the following steps when called:</p>
       <!--
@@ -2539,10 +2541,10 @@ contributors: Ron Buckton, Ecma International
               1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*).
             1. Else,
               1. [id="step-blockdeclarationinstantiation-createmutablebinding"] Perform ! _env_.CreateMutableBinding(_dn_, *false*). NOTE: This step is replaced in section <emu-xref href="#sec-web-compat-blockdeclarationinstantiation"></emu-xref>.
-          1. If _d_ is a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
+          1. If _d_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
             1. Let _fn_ be the sole element of the BoundNames of _d_.
             1. Let _fo_ be InstantiateFunctionObject of _d_ with arguments _env_ and _privateEnv_.
-            1. [id="step-blockdeclarationinstantiation-initializebinding"] Perform _env_.InitializeBinding(_fn_, _fo_<ins>, ~normal~</ins>). NOTE: This step is replaced in section <emu-xref href="#sec-web-compat-blockdeclarationinstantiation"></emu-xref>.
+            1. [id="step-blockdeclarationinstantiation-initializebinding"] Perform ! _env_.InitializeBinding(_fn_, _fo_<ins>, ~normal~</ins>). NOTE: This step is replaced in section <emu-xref href="#sec-web-compat-blockdeclarationinstantiation"></emu-xref>.
       </emu-alg>
     </emu-clause>
   </emu-clause>
@@ -2550,7 +2552,7 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-declarations-and-the-variable-statement">
     <h1>Declarations and the Variable Statement</h1>
     <emu-clause id="sec-let-and-const-declarations">
-      <h1>Let<del> and Const</del><ins>, Const, and Using</ins> Declarations</h1>
+      <h1>Let<del> and Const</del><ins>, Const, Using, and Await Using</ins> Declarations</h1>
       <h2>Syntax</h2>
       <emu-grammar type="definition">
         LexicalDeclaration[In, Yield, Await] :
@@ -2634,7 +2636,10 @@ contributors: Ron Buckton, Ecma International
               |Block|, |CaseBlock|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, |ClassStaticBlockBody|, and |ClassBody| each introduce an explicit block scope.
             </li>
             <li>
-              |ForStatement| and |ForInOfStatement| both introduce an implicit block scope per iteration.
+              |ForStatement| introduces an implicit block scope for the entire statement.
+            </li>
+            <li>
+              |ForInOfStatement| introduces an implicit block scope per iteration.
             </li>
           </ul>
         </emu-note>
@@ -2717,8 +2722,9 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>LexicalBinding : BindingIdentifier</emu-grammar>
         <emu-alg>
           1. Assert: _hint_ is ~normal~.
-          1. Let _lhs_ be ? ResolveBinding(StringValue of |BindingIdentifier|).
-          1. Return ? InitializeReferencedBinding(_lhs_, *undefined*, ~normal~).
+          1. Let _lhs_ be ! ResolveBinding(StringValue of |BindingIdentifier|).
+          1. Perform ! InitializeReferencedBinding(_lhs_, *undefined*, ~normal~).
+          1. Return ~unused~.
         </emu-alg>
         <emu-note>
           <p>A static semantics rule ensures that this form of |LexicalBinding| never occurs in a `const`, `using`, or `await using` declaration.</p>
@@ -2726,18 +2732,19 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>LexicalBinding : BindingIdentifier Initializer</emu-grammar>
         <emu-alg>
           1. Let _bindingId_ be StringValue of |BindingIdentifier|.
-          1. Let _lhs_ be ? ResolveBinding(_bindingId_).
+          1. Let _lhs_ be ! ResolveBinding(_bindingId_).
           1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
-            1. Let _value_ be NamedEvaluation of |Initializer| with argument _bindingId_.
+            1. Let _value_ be ? NamedEvaluation of |Initializer| with argument _bindingId_.
           1. Else,
-            1. Let _rhs_ be the result of evaluating |Initializer|.
+            1. Let _rhs_ be the ? Evaluation of |Initializer|.
             1. Let _value_ be ? GetValue(_rhs_).
-          1. Return ? InitializeReferencedBinding(_lhs_, _value_, _hint_).
+          1. Perform ! InitializeReferencedBinding(_lhs_, _value_, _hint_).
+          1. Return ~empty~.
         </emu-alg>
         <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
         <emu-alg>
           1. Assert: _hint_ is ~normal~.
-          1. Let _rhs_ be the result of evaluating |Initializer|.
+          1. Let _rhs_ be ? Evaluation of |Initializer|.
           1. Let _value_ be ? GetValue(_rhs_).
           1. Let _env_ be the running execution context's LexicalEnvironment.
           1. Return ? BindingInitialization of |BindingPattern| with arguments _value_ and _env_.
@@ -2752,9 +2759,9 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-destructuring-binding-patterns-runtime-semantics-restbindinginitialization" type="sdo">
         <h1>
           Runtime Semantics: RestBindingInitialization (
-            _value_: unknown,
-            _environment_: unknown,
-            _excludedNames_: unknown,
+            _value_: an ECMAScript language value,
+            _environment_: an Environment Record or *undefined*,
+            _excludedNames_: a List of property keys,
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header">
@@ -2764,7 +2771,7 @@ contributors: Ron Buckton, Ecma International
           1. Let _lhs_ be ? ResolveBinding(StringValue of |BindingIdentifier|, _environment_).
           1. Let _restObj_ be OrdinaryObjectCreate(%Object.prototype%).
           1. Perform ? CopyDataProperties(_restObj_, _value_, _excludedNames_).
-          1. If _environment_ is *undefined*, return PutValue(_lhs_, _restObj_).
+          1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _restObj_).
           1. Return ? InitializeReferencedBinding(_lhs_, _restObj_<ins>, ~normal~</ins>).
         </emu-alg>
       </emu-clause>
@@ -2772,9 +2779,9 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-runtime-semantics-keyedbindinginitialization" type="sdo">
         <h1>
           Runtime Semantics: KeyedBindingInitialization (
-            _value_: unknown,
-            _environment_: unknown,
-            _propertyName_: unknown,
+            _value_: an ECMAScript language value,
+            _environment_: an Environment Record or *undefined*,
+            _propertyName_: a property key,
           ): either a normal completion containing ~unused~ or an abrupt completion
         </h1>
         <dl class="header">
@@ -2786,7 +2793,7 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Let _v_ be ? GetV(_value_, _propertyName_).
           1. If |Initializer| is present and _v_ is *undefined*, then
-            1. Let _defaultValue_ be the result of evaluating |Initializer|.
+            1. Let _defaultValue_ be ? Evaluation of |Initializer|.
             1. Set _v_ to ? GetValue(_defaultValue_).
           1. Return ? BindingInitialization of |BindingPattern| with arguments _v_ and _environment_.
         </emu-alg>
@@ -2797,9 +2804,9 @@ contributors: Ron Buckton, Ecma International
           1. Let _v_ be ? GetV(_value_, _propertyName_).
           1. If |Initializer| is present and _v_ is *undefined*, then
             1. If IsAnonymousFunctionDefinition(|Initializer|) is *true*, then
-              1. Set _v_ to ? NamedEvaluation for |Initializer| with argument _bindingId_.
+              1. Set _v_ to ? NamedEvaluation of |Initializer| with argument _bindingId_.
             1. Else,
-              1. Let _defaultValue_ be the result of evaluating |Initializer|.
+              1. Let _defaultValue_ be ? Evaluation of |Initializer|.
               1. Set _v_ to ? GetValue(_defaultValue_).
           1. If _environment_ is *undefined*, return ? PutValue(_lhs_, _v_).
           1. Return ? InitializeReferencedBinding(_lhs_, _v_<ins>, ~normal~</ins>).
@@ -2817,7 +2824,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-runtime-semantics-forloopevaluation" oldids="sec-for-statement-runtime-semantics-labelledevaluation" type="sdo">
         <h1>
           Runtime Semantics: ForLoopEvaluation (
-            _labelSet_: unknown,
+            _labelSet_: a List of Strings,
           ): either a normal completion containing an ECMAScript language value or an abrupt completion
         </h1>
         <dl class="header">
@@ -2825,15 +2832,18 @@ contributors: Ron Buckton, Ecma International
         <emu-grammar>ForStatement : `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement</emu-grammar>
         <emu-alg>
           1. If the first |Expression| is present, then
-            1. Let _exprRef_ be the result of evaluating the first |Expression|.
+            1. Let _exprRef_ be ? Evaluation of the first |Expression|.
             1. Perform ? GetValue(_exprRef_).
-          1. Return ? ForBodyEvaluation(the second |Expression|, the third |Expression|, |Statement|, &laquo; &raquo;, _labelSet_).
+          1. If the second |Expression| is present, let _test_ be the second |Expression|; otherwise, let _test_ be ~empty~.
+          1. If the third |Expression| is present, let _increment_ be the third |Expression|; otherwise, let _increment_ be ~empty~.
+          1. Return ? ForBodyEvaluation(_test_, _increment_, |Statement|, « », _labelSet_).
         </emu-alg>
         <emu-grammar>ForStatement : `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement</emu-grammar>
         <emu-alg>
-          1. Let _varDcl_ be the result of evaluating |VariableDeclarationList|.
-          1. ReturnIfAbrupt(_varDcl_).
-          1. Return ? ForBodyEvaluation(the first |Expression|, the second |Expression|, |Statement|, &laquo; &raquo;, _labelSet_).
+          1. Perform ? Evaluation of |VariableDeclarationList|.
+          1. If the first |Expression| is present, let _test_ be the first |Expression|; otherwise, let _test_ be ~empty~.
+          1. If the second |Expression| is present, let _increment_ be the second |Expression|; otherwise, let _increment_ be ~empty~.
+          1. Return ? ForBodyEvaluation(_test_, _increment_, |Statement|, « », _labelSet_).
         </emu-alg>
         <emu-grammar>ForStatement : `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement</emu-grammar>
         <emu-alg>
@@ -2890,18 +2900,20 @@ contributors: Ron Buckton, Ecma International
           <del>BindingPattern[?Yield, ?Await]</del>
           <ins>[+Pattern] BindingPattern[?Yield, ?Await]</ins>
       </emu-grammar>
+      <emu-note>
+        <p>This section is extended by Annex <emu-xref href="#sec-initializers-in-forin-statement-heads"></emu-xref>.</p>
+      </emu-note>
 
       <emu-clause id="sec-runtime-semantics-fordeclarationbindinginstantiation" oldids="sec-runtime-semantics-bindinginstantiation" type="sdo">
         <h1>
           Runtime Semantics: ForDeclarationBindingInstantiation (
-            _environment_: unknown,
-          )
+            _environment_: a Declarative Environment Record,
+          ): ~unused~
         </h1>
         <dl class="header">
         </dl>
         <emu-grammar>ForDeclaration : LetOrConst ForBinding</emu-grammar>
         <emu-alg>
-          1. Assert: _environment_ is a declarative Environment Record.
           1. For each element _name_ of the BoundNames of |ForBinding|, do
             1. If IsConstantDeclaration of |LetOrConst| is *true*, then
               1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*).
@@ -2915,7 +2927,6 @@ contributors: Ron Buckton, Ecma International
             `await` `using` ForBinding
         </emu-grammar>
         <emu-alg>
-          1. Assert: _environment_ is a declarative Environment Record.
           1. For each element _name_ of the BoundNames of |ForBinding|, do
             1. Perform ! _environment_.CreateImmutableBinding(_name_, *true*).
         </emu-alg>
@@ -2925,12 +2936,12 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset" type="abstract operation">
         <h1>
           ForIn/OfBodyEvaluation (
-            _lhs_: unknown,
-            _stmt_: unknown,
-            _iteratorRecord_: unknown,
-            _iterationKind_: unknown,
+            _lhs_: a Parse Node,
+            _stmt_: a |Statement| Parse Node,
+            _iteratorRecord_: an Iterator Record,
+            _iterationKind_: ~enumerate~ or ~iterate~,
             _lhsKind_: ~assignment~, ~varBinding~, or ~lexicalBinding~,
-            _labelSet_: unknown,
+            _labelSet_: a List of Strings,
             optional _iteratorKind_: ~sync~ or ~async~,
           ): either a normal completion containing an ECMAScript language value or an abrupt completion
         </h1>
@@ -2947,7 +2958,7 @@ contributors: Ron Buckton, Ecma International
           1. <ins>Else, </ins>
             1. <ins>Let _hint_ be ~normal~.</ins>
           1. Let _destructuring_ be IsDestructuring of _lhs_.
-          1. If _destructuring_ is *true* and if _lhsKind_ is ~assignment~, then
+          1. If _destructuring_ is *true* and _lhsKind_ is ~assignment~, then
             1. Assert: _lhs_ is a |LeftHandSideExpression|.
             1. Let _assignmentPattern_ be the |AssignmentPattern| that is covered by _lhs_.
           1. Repeat,
@@ -3054,8 +3065,8 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-evaluatefunctionbody" oldids="sec-function-definitions-runtime-semantics-evaluatebody" type="sdo">
       <h1>
         Runtime Semantics: EvaluateFunctionBody (
-          _functionObject_: unknown,
-          _argumentsList_: a List,
+          _functionObject_: a function object,
+          _argumentsList_: a List of ECMAScript language values,
         ): either a normal completion containing an ECMAScript language value or an abrupt completion
       </h1>
       <dl class="header">
@@ -3073,18 +3084,18 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-instantiateordinaryfunctionexpression" type="sdo">
       <h1>
         Runtime Semantics: InstantiateOrdinaryFunctionExpression (
-          optional _name_: unknown,
-        )
+          optional _name_: a property key or a Private Name,
+        ): a function object
       </h1>
       <dl class="header">
       </dl>
       <emu-grammar>FunctionExpression : `function` `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
       <emu-alg>
         1. If _name_ is not present, set _name_ to *""*.
-        1. Let _scope_ be the LexicalEnvironment of the running execution context.
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _env_ be the LexicalEnvironment of the running execution context.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |FunctionExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%Function.prototype%, _sourceText_, |FormalParameters|, |FunctionBody|, ~non-lexical-this~, _scope_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%Function.prototype%, _sourceText_, |FormalParameters|, |FunctionBody|, ~non-lexical-this~, _env_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Perform MakeConstructor(_closure_).
         1. Return _closure_.
@@ -3093,12 +3104,12 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Assert: _name_ is not present.
         1. Set _name_ to StringValue of |BindingIdentifier|.
-        1. Let _scope_ be the running execution context's LexicalEnvironment.
-        1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
-        1. Perform _funcEnv_.CreateImmutableBinding(_name_, *false*).
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _outerEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _funcEnv_ be NewDeclarativeEnvironment(_outerEnv_).
+        1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |FunctionExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%Function.prototype%, _sourceText_, |FormalParameters|, |FunctionBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%Function.prototype%, _sourceText_, |FormalParameters|, |FunctionBody|, ~non-lexical-this~, _funcEnv_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Perform MakeConstructor(_closure_).
         1. Perform ! _funcEnv_.InitializeBinding(_name_, _closure_<ins>, ~normal~</ins>).
@@ -3112,21 +3123,22 @@ contributors: Ron Buckton, Ecma International
 
   <emu-clause id="sec-generator-function-definitions">
     <h1>Generator Function Definitions</h1>
+
     <emu-clause id="sec-runtime-semantics-instantiategeneratorfunctionexpression" type="sdo">
       <h1>
         Runtime Semantics: InstantiateGeneratorFunctionExpression (
-          optional _name_: unknown,
-        )
+          optional _name_: a property key or a Private Name,
+        ): a function object
       </h1>
       <dl class="header">
       </dl>
       <emu-grammar>GeneratorExpression : `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
       <emu-alg>
         1. If _name_ is not present, set _name_ to *""*.
-        1. Let _scope_ be the LexicalEnvironment of the running execution context.
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _env_ be the LexicalEnvironment of the running execution context.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |GeneratorExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%GeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |GeneratorBody|, ~non-lexical-this~, _scope_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%GeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |GeneratorBody|, ~non-lexical-this~, _env_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Let _prototype_ be OrdinaryObjectCreate(%GeneratorFunction.prototype.prototype%).
         1. Perform ! DefinePropertyOrThrow(_closure_, *"prototype"*, PropertyDescriptor { [[Value]]: _prototype_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
@@ -3136,12 +3148,12 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Assert: _name_ is not present.
         1. Set _name_ to StringValue of |BindingIdentifier|.
-        1. Let _scope_ be the running execution context's LexicalEnvironment.
-        1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
+        1. Let _outerEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _funcEnv_ be NewDeclarativeEnvironment(_outerEnv_).
         1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |GeneratorExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%GeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |GeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%GeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |GeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Let _prototype_ be OrdinaryObjectCreate(%GeneratorFunction.prototype.prototype%).
         1. Perform ! DefinePropertyOrThrow(_closure_, *"prototype"*, PropertyDescriptor { [[Value]]: _prototype_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
@@ -3160,8 +3172,8 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-instantiateasyncgeneratorfunctionexpression" type="sdo">
       <h1>
         Runtime Semantics: InstantiateAsyncGeneratorFunctionExpression (
-          optional _name_: unknown,
-        )
+          optional _name_: a property key or a Private Name,
+        ): a function object
       </h1>
       <dl class="header">
       </dl>
@@ -3170,10 +3182,10 @@ contributors: Ron Buckton, Ecma International
       </emu-grammar>
       <emu-alg>
         1. If _name_ is not present, set _name_ to *""*.
-        1. Let _scope_ be the LexicalEnvironment of the running execution context.
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _env_ be the LexicalEnvironment of the running execution context.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncGeneratorExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncGeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncGeneratorBody|, ~non-lexical-this~, _scope_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncGeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncGeneratorBody|, ~non-lexical-this~, _env_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Let _prototype_ be OrdinaryObjectCreate(%AsyncGeneratorFunction.prototype.prototype%).
         1. Perform ! DefinePropertyOrThrow(_closure_, *"prototype"*, PropertyDescriptor { [[Value]]: _prototype_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
@@ -3185,12 +3197,12 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Assert: _name_ is not present.
         1. Set _name_ to StringValue of |BindingIdentifier|.
-        1. Let _scope_ be the running execution context's LexicalEnvironment.
-        1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
+        1. Let _outerEnv_ be the running execution context's LexicalEnvironment.
+        1. Let _funcEnv_ be NewDeclarativeEnvironment(_outerEnv_).
         1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncGeneratorExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncGeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncGeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncGeneratorFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncGeneratorBody|, ~non-lexical-this~, _funcEnv_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Let _prototype_ be OrdinaryObjectCreate(%AsyncGeneratorFunction.prototype.prototype%).
         1. Perform ! DefinePropertyOrThrow(_closure_, *"prototype"*, PropertyDescriptor { [[Value]]: _prototype_, [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *false* }).
@@ -3209,14 +3221,14 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-evaluateclassstaticblockbody" type="sdo">
       <h1>
         Runtime Semantics: EvaluateClassStaticBlockBody (
-          _functionObject_: unknown,
+          _functionObject_: a function object,
         ): either a normal completion containing an ECMAScript language value or an abrupt completion
       </h1>
       <dl class="header">
       </dl>
       <emu-grammar>ClassStaticBlockBody : ClassStaticBlockStatementList</emu-grammar>
       <emu-alg>
-        1. Perform ? FunctionDeclarationInstantiation(_functionObject_, &laquo; &raquo;).
+        1. Perform ? FunctionDeclarationInstantiation(_functionObject_, « »).
         1. <del>Return ? Evaluation of |ClassStaticBlockStatementList|.</del>
         1. <ins>Let _result_ be Completion(Evaluation of |ClassStaticBlockStatementList|).</ins>
         1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
@@ -3227,9 +3239,9 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-classdefinitionevaluation" oldids="sec-default-constructor-functions" type="sdo">
       <h1>
         Runtime Semantics: ClassDefinitionEvaluation (
-          _classBinding_: unknown,
-          _className_: unknown,
-        )
+          _classBinding_: a String or *undefined*,
+          _className_: a property key or a Private Name,
+        ): either a normal completion containing a function object or an abrupt completion
       </h1>
       <dl class="header">
       </dl>
@@ -3248,10 +3260,10 @@ contributors: Ron Buckton, Ecma International
         1. Let _classPrivateEnvironment_ be NewPrivateEnvironment(_outerPrivateEnvironment_).
         1. If |ClassBody?| is present, then
           1. For each String _dn_ of the PrivateBoundIdentifiers of |ClassBody?|, do
-            1. If _classPrivateEnvironment_.[[Names]] contains a Private Name whose [[Description]] is _dn_, then
+            1. If _classPrivateEnvironment_.[[Names]] contains a Private Name _pn_ such that _pn_.[[Description]] is _dn_, then
               1. Assert: This is only possible for getter/setter pairs.
             1. Else,
-              1. Let _name_ be a new Private Name whose [[Description]] value is _dn_.
+              1. Let _name_ be a new Private Name whose [[Description]] is _dn_.
               1. Append _name_ to _classPrivateEnvironment_.[[Names]].
         1. If |ClassHeritage?| is not present, then
           1. Let _protoParent_ be %Object.prototype%.
@@ -3265,10 +3277,11 @@ contributors: Ron Buckton, Ecma International
           1. If _superclass_ is *null*, then
             1. Let _protoParent_ be *null*.
             1. Let _constructorParent_ be %Function.prototype%.
-          1. Else if IsConstructor(_superclass_) is *false*, throw a *TypeError* exception.
+          1. Else if IsConstructor(_superclass_) is *false*, then
+            1. Throw a *TypeError* exception.
           1. Else,
             1. Let _protoParent_ be ? Get(_superclass_, *"prototype"*).
-            1. If _protoParent_ is neither an Object and _protoParent_ nor *null*, throw a *TypeError* exception.
+            1. If _protoParent_ is not an Object and _protoParent_ is not *null*, throw a *TypeError* exception.
             1. Let _constructorParent_ be _superclass_.
         1. Let _proto_ be OrdinaryObjectCreate(_protoParent_).
         1. If |ClassBody?| is not present, let _constructor_ be ~empty~.
@@ -3319,14 +3332,13 @@ contributors: Ron Buckton, Ecma International
             1. Assert: _element_.[[Kind]] is either ~method~ or ~accessor~.
             1. If IsStatic of _e_ is *false*, let _container_ be _instancePrivateMethods_.
             1. Else, let _container_ be _staticPrivateMethods_.
-            1. If _container_ contains a PrivateElement whose [[Key]] is _element_.[[Key]], then
-              1. Let _existing_ be that PrivateElement.
-              1. Assert: _element_.[[Kind]] and _existing_.[[Kind]] are both ~accessor~.
+            1. If _container_ contains a PrivateElement _pe_ such that _pe_.[[Key]] is _element_.[[Key]], then
+              1. Assert: _element_.[[Kind]] and _pe_.[[Kind]] are both ~accessor~.
               1. If _element_.[[Get]] is *undefined*, then
-                1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _existing_.[[Get]], [[Set]]: _element_.[[Set]] }.
+                1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _pe_.[[Get]], [[Set]]: _element_.[[Set]] }.
               1. Else,
-                1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _element_.[[Get]], [[Set]]: _existing_.[[Set]] }.
-              1. Replace _existing_ in _container_ with _combined_.
+                1. Let _combined_ be PrivateElement { [[Key]]: _element_.[[Key]], [[Kind]]: ~accessor~, [[Get]]: _element_.[[Get]], [[Set]]: _pe_.[[Set]] }.
+              1. Replace _pe_ in _container_ with _combined_.
             1. Else,
               1. Append _element_ to _container_.
           1. Else if _element_ is a ClassFieldDefinition Record, then
@@ -3336,7 +3348,7 @@ contributors: Ron Buckton, Ecma International
             1. Append _element_ to _staticElements_.
         1. Set the running execution context's LexicalEnvironment to _env_.
         1. If _classBinding_ is not *undefined*, then
-          1. Perform ! _classScope_.InitializeBinding(_classBinding_, _F_<ins>, ~normal~</ins>).
+          1. Perform ! _classEnv_.InitializeBinding(_classBinding_, _F_<ins>, ~normal~</ins>).
         1. Set _F_.[[PrivateMethods]] to _instancePrivateMethods_.
         1. Set _F_.[[Fields]] to _instanceFields_.
         1. For each PrivateElement _method_ of _staticPrivateMethods_, do
@@ -3374,8 +3386,8 @@ contributors: Ron Buckton, Ecma International
     <emu-clause id="sec-runtime-semantics-instantiateasyncfunctionexpression" type="sdo">
       <h1>
         Runtime Semantics: InstantiateAsyncFunctionExpression (
-          optional _name_: unknown,
-        )
+          optional _name_: a property key or a Private Name,
+        ): a function object
       </h1>
       <dl class="header">
       </dl>
@@ -3384,10 +3396,10 @@ contributors: Ron Buckton, Ecma International
       </emu-grammar>
       <emu-alg>
         1. If _name_ is not present, set _name_ to *""*.
-        1. Let _scope_ be the LexicalEnvironment of the running execution context.
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _env_ be the LexicalEnvironment of the running execution context.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncFunctionExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncFunctionBody|, ~non-lexical-this~, _scope_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncFunctionBody|, ~non-lexical-this~, _env_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Return _closure_.
       </emu-alg>
@@ -3397,12 +3409,12 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Assert: _name_ is not present.
         1. Set _name_ to StringValue of |BindingIdentifier|.
-        1. Let _scope_ be the LexicalEnvironment of the running execution context.
-        1. Let _funcEnv_ be NewDeclarativeEnvironment(_scope_).
+        1. Let _outerEnv_ be the LexicalEnvironment of the running execution context.
+        1. Let _funcEnv_ be NewDeclarativeEnvironment(_outerEnv_).
         1. Perform ! _funcEnv_.CreateImmutableBinding(_name_, *false*).
-        1. Let _privateScope_ be the running execution context's PrivateEnvironment.
+        1. Let _privateEnv_ be the running execution context's PrivateEnvironment.
         1. Let _sourceText_ be the source text matched by |AsyncFunctionExpression|.
-        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncFunctionBody|, ~non-lexical-this~, _funcEnv_, _privateScope_).
+        1. Let _closure_ be OrdinaryFunctionCreate(%AsyncFunction.prototype%, _sourceText_, |FormalParameters|, |AsyncFunctionBody|, ~non-lexical-this~, _funcEnv_, _privateEnv_).
         1. Perform SetFunctionName(_closure_, _name_).
         1. Perform ! _funcEnv_.InitializeBinding(_name_, _closure_<ins>, ~normal~</ins>).
         1. Return _closure_.
@@ -3862,7 +3874,7 @@ contributors: Ron Buckton, Ecma International
           <emu-alg>
             1. For each ExportEntry Record _e_ of _module_.[[IndirectExportEntries]], do
               1. Let _resolution_ be _module_.ResolveExport(_e_.[[ExportName]]).
-              1. If _resolution_ is *null* or ~ambiguous~, throw a *SyntaxError* exception.
+              1. If _resolution_ is either *null* or ~ambiguous~, throw a *SyntaxError* exception.
               1. Assert: _resolution_ is a ResolvedBinding Record.
             1. Assert: All named exports from _module_ are resolvable.
             1. Let _realm_ be _module_.[[Realm]].
@@ -3877,7 +3889,7 @@ contributors: Ron Buckton, Ecma International
                 1. Perform ! _env_.InitializeBinding(_in_.[[LocalName]], _namespace_, <ins>~normal~</ins>).
               1. Else,
                 1. Let _resolution_ be _importedModule_.ResolveExport(_in_.[[ImportName]]).
-                1. If _resolution_ is *null* or ~ambiguous~, throw a *SyntaxError* exception.
+                1. If _resolution_ is either *null* or ~ambiguous~, throw a *SyntaxError* exception.
                 1. If _resolution_.[[BindingName]] is ~namespace~, then
                   1. Let _namespace_ be GetModuleNamespace(_resolution_.[[Module]]).
                   1. Perform ! _env_.CreateImmutableBinding(_in_.[[LocalName]], *true*).
@@ -3899,7 +3911,7 @@ contributors: Ron Buckton, Ecma International
             1. Let _declaredVarNames_ be a new empty List.
             1. For each element _d_ of _varDeclarations_, do
               1. For each element _dn_ of the BoundNames of _d_, do
-                1. If _dn_ is not an element of _declaredVarNames_, then
+                1. If _declaredVarNames_ does not contain _dn_, then
                   1. Perform ! _env_.CreateMutableBinding(_dn_, *false*).
                   1. Perform ! _env_.InitializeBinding(_dn_, *undefined*, <ins>~normal~</ins>).
                   1. Append _dn_ to _declaredVarNames_.
@@ -3911,7 +3923,7 @@ contributors: Ron Buckton, Ecma International
                   1. Perform ! _env_.CreateImmutableBinding(_dn_, *true*).
                 1. Else,
                   1. Perform ! _env_.CreateMutableBinding(_dn_, *false*).
-                1. If _d_ is a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
+                1. If _d_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|, then
                   1. Let _fo_ be InstantiateFunctionObject of _d_ with arguments _env_ and _privateEnv_.
                   1. Perform ! _env_.InitializeBinding(_dn_, _fo_, <ins>~normal~</ins>).
             1. Remove _moduleContext_ from the execution context stack.
@@ -3995,19 +4007,22 @@ contributors: Ron Buckton, Ecma International
 
 <emu-clause id="sec-global-object">
   <h1>The Global Object</h1>
+
   <emu-clause id="sec-function-properties-of-the-global-object">
     <h1>Function Properties of the Global Object</h1>
+
     <emu-clause id="sec-eval-x">
       <h1>eval ( _x_ )</h1>
+
       <emu-clause id="sec-evaldeclarationinstantiation" type="abstract operation">
         <h1>
           EvalDeclarationInstantiation (
-            _body_: unknown,
-            _varEnv_: unknown,
-            _lexEnv_: unknown,
-            _privateEnv_: unknown,
-            _strict_: unknown,
-          )
+            _body_: a |ScriptBody| Parse Node,
+            _varEnv_: an Environment Record,
+            _lexEnv_: a Declarative Environment Record,
+            _privateEnv_: a PrivateEnvironment Record or *null*,
+            _strict_: a Boolean,
+          ): either a normal completion containing ~unused~ or a throw completion
         </h1>
         <dl class="header">
         </dl>
@@ -4027,7 +4042,7 @@ contributors: Ron Buckton, Ecma International
                 1. NOTE: `eval` will not create a global var declaration that would be shadowed by a global lexical declaration.
             1. Let _thisEnv_ be _lexEnv_.
             1. Assert: The following loop will terminate.
-            1. Repeat, while _thisEnv_ is not the same as _varEnv_,
+            1. Repeat, while _thisEnv_ is not _varEnv_,
               1. If _thisEnv_ is not an Object Environment Record, then
                 1. NOTE: The environment of with statements cannot contain any lexical declaration so it doesn't need to be checked for var/let hoisting conflicts.
                 1. For each element _name_ of _varNames_, do
@@ -4046,11 +4061,11 @@ contributors: Ron Buckton, Ecma International
           1. Let _functionsToInitialize_ be a new empty List.
           1. Let _declaredFunctionNames_ be a new empty List.
           1. For each element _d_ of _varDeclarations_, in reverse List order, do
-            1. If _d_ is neither a |VariableDeclaration| nor a |ForBinding| nor a |BindingIdentifier|, then
+            1. If _d_ is not either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
               1. Assert: _d_ is either a |FunctionDeclaration|, a |GeneratorDeclaration|, an |AsyncFunctionDeclaration|, or an |AsyncGeneratorDeclaration|.
               1. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
               1. Let _fn_ be the sole element of the BoundNames of _d_.
-              1. If _fn_ is not an element of _declaredFunctionNames_, then
+              1. If _declaredFunctionNames_ does not contain _fn_, then
                 1. If _varEnv_ is a Global Environment Record, then
                   1. Let _fnDefinable_ be ? _varEnv_.CanDeclareGlobalFunction(_fn_).
                   1. If _fnDefinable_ is *false*, throw a *TypeError* exception.
@@ -4059,13 +4074,13 @@ contributors: Ron Buckton, Ecma International
           1. [id="step-evaldeclarationinstantiation-web-compat-insertion-point"] NOTE: Annex <emu-xref href="#sec-web-compat-evaldeclarationinstantiation"></emu-xref> adds additional steps at this point.
           1. Let _declaredVarNames_ be a new empty List.
           1. For each element _d_ of _varDeclarations_, do
-            1. If _d_ is a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
+            1. If _d_ is either a |VariableDeclaration|, a |ForBinding|, or a |BindingIdentifier|, then
               1. For each String _vn_ of the BoundNames of _d_, do
-                1. If _vn_ is not an element of _declaredFunctionNames_, then
+                1. If _declaredFunctionNames_ does not contain _vn_, then
                   1. If _varEnv_ is a Global Environment Record, then
                     1. Let _vnDefinable_ be ? _varEnv_.CanDeclareGlobalVar(_vn_).
                     1. If _vnDefinable_ is *false*, throw a *TypeError* exception.
-                  1. If _vn_ is not an element of _declaredVarNames_, then
+                  1. If _declaredVarNames_ does not contain _vn_, then
                     1. Append _vn_ to _declaredVarNames_.
           1. [id="step-evaldeclarationinstantiation-post-validation"] NOTE: No abnormal terminations occur after this algorithm step unless _varEnv_ is a Global Environment Record and the global object is a Proxy exotic object.
           1. Let _lexDeclarations_ be the LexicallyScopedDeclarations of _body_.
@@ -4087,7 +4102,7 @@ contributors: Ron Buckton, Ecma International
                 1. NOTE: The following invocation cannot return an abrupt completion because of the validation preceding step <emu-xref href="#step-evaldeclarationinstantiation-post-validation"></emu-xref>.
                 1. Perform ! _varEnv_.CreateMutableBinding(_fn_, *true*).
                 1. Perform ! _varEnv_.InitializeBinding(_fn_, _fo_, <ins>~normal~</ins>).
-              1. Else,
+                1. Else,
                 1. Perform ! _varEnv_.SetMutableBinding(_fn_, _fo_, *false*).
           1. For each String _vn_ of _declaredVarNames_, do
             1. If _varEnv_ is a Global Environment Record, then
@@ -4114,7 +4129,7 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-error-objects">
     <h1>Error Objects</h1>
     <p>Instances of Error objects are thrown as exceptions when runtime errors occur. The Error objects may also serve as base objects for user-defined exception classes.</p>
-    <p>When an ECMAScript implementation detects a runtime error, it throws a new instance of one of the _NativeError_ objects defined in <emu-xref href="#sec-native-error-types-used-in-this-standard"></emu-xref> or a new instance of <ins>either the</ins> AggregateError object defined in <emu-xref href="#sec-aggregate-error-objects"></emu-xref><ins>, or the SuppressedError object defined in <emu-xref href="#sec-suppressederror-objects"></emu-xref></ins>. Each of these objects has the structure described below, differing only in the name used as the constructor name instead of _NativeError_, in the *"name"* property of the prototype object, in the implementation-defined *"message"* property of the prototype object, and in the presence of the %AggregateError%-specific *"errors"* property<ins> or the %SuppressedError%-specific *"error"* and *"suppressed"* properties</ins>.</p>
+    <p>When an ECMAScript implementation detects a runtime error, it throws a new instance of one of the _NativeError_ objects defined in <emu-xref href="#sec-native-error-types-used-in-this-standard"></emu-xref> or a new instance of <ins>either the</ins> AggregateError object defined in <emu-xref href="#sec-aggregate-error-objects"></emu-xref><ins>, or the SuppressedError object defined in <emu-xref href="#sec-suppressederror-objects"></emu-xref></ins>. Each of these objects has the structure described below, differing only in the name used as the constructor name instead of _NativeError_, in the *"name"* property of the prototype object, in the implementation-defined *"message"* property of the prototype object, and in <ins>either</ins> the presence of the %AggregateError%-specific *"errors"* property<ins> or the %SuppressedError%-specific *"error"* and *"suppressed"* properties</ins>.</p>
 
     <emu-clause id="sec-properties-of-error-instances">
       <h1>Properties of Error Instances</h1>
@@ -4192,7 +4207,7 @@ contributors: Ron Buckton, Ecma International
         <ul>
           <li>is <dfn>%SuppressedError.prototype%</dfn>.</li>
           <li>is an ordinary object.</li>
-          <li>is not an Error instance or an SuppressedError instance and does not have an [[ErrorData]] internal slot.</li>
+          <li>is not an Error instance or a SuppressedError instance and does not have an [[ErrorData]] internal slot.</li>
           <li>has a [[Prototype]] internal slot whose value is %Error.prototype%.</li>
         </ul>
 
@@ -4234,12 +4249,12 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-clause id="sec-%iteratorprototype%-@@dispose">
         <h1>%IteratorPrototype% [ @@dispose ] ( )</h1>
-        <p>The following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _O_ be the *this* value.
           1. Let _return_ be ? GetMethod(_O_, `"return"`).
           1. If _return_ is not *undefined*, then
-            1. Perform ? Call(_return_, _O_, &laquo; &raquo;).
+            1. Perform ? Call(_return_, _O_, « »).
           1. Return NormalCompletion(~empty~).
         </emu-alg>
         <p>The value of the *"name"* property of this function is *"[Symbol.dispose]"*.</p>
@@ -4253,22 +4268,22 @@ contributors: Ron Buckton, Ecma International
       <ins class="block">
       <emu-clause id="sec-%asynciteratorprototype%-@@asyncdispose">
         <h1>%AsyncIteratorPrototype% [ @@asyncDispose ] ( )</h1>
-        <p>The following steps are taken:</p>
+        <p>The method performs the following steps when called:</p>
         <emu-alg>
           1. Let _O_ be the *this* value.
           1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
           1. Let _return_ be GetMethod(_O_, `"return"`).
           1. IfAbruptRejectPromise(_return_, _promiseCapability_).
           1. If _return_ is *undefined*, then
-            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
+            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « *undefined* »).
           1. Else,
-            1. Let _result_ be Call(_return_, _O_, &laquo; *undefined* &raquo;).
+            1. Let _result_ be Call(_return_, _O_, « *undefined* »).
             1. IfAbruptRejectPromise(_result_, _promiseCapability_).
             1. Let _resultWrapper_ be Completion(PromiseResolve(%Promise%, _result_)).
             1. IfAbruptRejectPromise(_resultWrapper_, _promiseCapability_).
             1. Let _unwrap_ be a new Abstract Closure that performs the following steps when called:
               1. Return *undefined*.
-            1. Let _onFulfilled_ be CreateBuiltinFunction(_unwrap_, 1, "", &laquo; &raquo;).
+            1. Let _onFulfilled_ be CreateBuiltinFunction(_unwrap_, 1, "", « »).
             1. Perform PerformPromiseThen(_resultWrapper_, _onFulfilled_, *undefined*, _promiseCapability_).
           1. Return _promiseCapability_.[[Promise]].
         </emu-alg>
@@ -4286,8 +4301,8 @@ contributors: Ron Buckton, Ecma International
       <h1>Common Resource Management Interfaces</h1>
 
       <emu-clause id="sec-disposable-interface">
-        <h1>The <em>Disposable</em> Interface</h1>
-        <p>The <em>Disposable</em> interface includes the property described in <emu-xref href="#table-disposable-interface-required-properties"></emu-xref>:</p>
+        <h1>The <i>Disposable</i> Interface</h1>
+        <p>The <i>Disposable</i> interface includes the property described in <emu-xref href="#table-disposable-interface-required-properties"></emu-xref>:</p>
         <emu-table id="table-disposable-interface-required-properties" caption="&lt;em&gt;Disposable&lt;/em&gt; Interface Required Properties">
           <table>
             <tbody>
@@ -4307,12 +4322,12 @@ contributors: Ron Buckton, Ecma International
                 `@@dispose`
               </td>
               <td>
-                A function.
+                a function
               </td>
               <td>
-                <p>Invoking this method notifies the <em>Disposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
+                <p>Invoking this method notifies the <i>Disposable</i> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using a <em>Disposable</em> object, it is good practice to create the instance with a `using` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
+                <p>When using a <i>Disposable</i> object, it is good practice to create the instance with a `using` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
@@ -4321,8 +4336,8 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposable-interface">
-        <h1>The <em>AsyncDisposable</em> Interface</h1>
-        <p>The <em>AsyncDisposable</em> interface includes the property described in <emu-xref href="#table-asyncdisposable-interface-required-properties"></emu-xref>:</p>
+        <h1>The <i>AsyncDisposable</i> Interface</h1>
+        <p>The <i>AsyncDisposable</i> interface includes the property described in <emu-xref href="#table-asyncdisposable-interface-required-properties"></emu-xref>:</p>
         <emu-table id="table-asyncdisposable-interface-required-properties" caption="&lt;em&gt;AsyncDisposable&lt;/em&gt; Interface Required Properties">
           <table>
             <tbody>
@@ -4342,12 +4357,12 @@ contributors: Ron Buckton, Ecma International
                 `@@asyncDispose`
               </td>
               <td>
-                A function that returns a promise.
+                a function that returns a promise
               </td>
               <td>
-                <p>Invoking this method notifies the <em>AsyncDisposable</em> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <em>AsyncDisposable</em> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
+                <p>Invoking this method notifies the <i>AsyncDisposable</i> object that the caller does not intend to continue to use this object. This method should perform any necessary logic to perform explicit clean-up of the resource including, but not limited to, file system handles, streams, host objects, etc. When an exception is thrown from this method, it typically means that the resource could not be explicitly freed. An <i>AsyncDisposable</i> object is not considered "disposed" until the resulting Promise has been fulfilled.</p>
                 <p>If called more than once on the same object, the function should not throw an exception. However, this requirement is not enforced.</p>
-                <p>When using an <em>AsyncDisposable</em> object, it is good practice to create the instance with a `await using` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
+                <p>When using an <i>AsyncDisposable</i> object, it is good practice to create the instance with a `await using` declaration, as the resource will be automatically disposed when the |Block| or |Module| immediately containing the declaration has been evaluated.</p>
               </td>
             </tr>
             </tbody>
@@ -4381,10 +4396,10 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-disposablestack">
         <h1>DisposableStack ( )</h1>
-        <p>When the `DisposableStack` function is called, the following steps are taken:</p>
+        <p>This function performs the following steps when called:</p>
         <emu-alg>
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
-          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposeCapability]] &raquo;).
+          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]] »).
           1. Set _disposableStack_.[[DisposableState]] to ~pending~.
           1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
           1. Return _disposableStack_.
@@ -4423,7 +4438,7 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-disposablestack.prototype.dispose">
         <h1>DisposableStack.prototype.dispose ()</h1>
-        <p>When the `dispose` method is called, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
@@ -4435,7 +4450,7 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-disposablestack.prototype.use">
         <h1>DisposableStack.prototype.use( _value_ )</h1>
-        <p>When the `use` function is called with one argument, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
@@ -4447,7 +4462,7 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-disposablestack.prototype.adopt">
         <h1>DisposableStack.prototype.adopt( _value_, _onDispose_ )</h1>
-        <p>When the `adopt` function is called with two arguments, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
@@ -4467,14 +4482,14 @@ contributors: Ron Buckton, Ecma International
           <emu-alg>
             1. Let _F_ be the active function object.
             1. Assert: IsCallable(_F_.[[OnDisposeCallback]]) is *true*.
-            1. Return Call(_F_.[[OnDisposeCallback]], *undefined*, &laquo; _F_.[[Argument]] &raquo;).
+            1. Return Call(_F_.[[OnDisposeCallback]], *undefined*, « _F_.[[Argument]] »).
           </emu-alg>
         </emu-clause>
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype.defer">
         <h1>DisposableStack.prototype.defer( _onDispose_ )</h1>
-        <p>When the `defer` function is called with one argument, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
@@ -4487,12 +4502,12 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-disposablestack.prototype.move">
         <h1>DisposableStack.prototype.move()</h1>
-        <p>When the `move` function is called, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
-          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, &laquo; [[DisposableState]], [[DisposeCapability]] &raquo;).
+          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]] »).
           1. Set _newDisposableStack_.[[DisposableState]] to ~pending~.
           1. Set _newDisposableStack_.[[DisposeCapability]] to _disposableStack_.[[DisposeCapability]].
           1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
@@ -4535,7 +4550,7 @@ contributors: Ron Buckton, Ecma International
               [[DisposableState]]
             </td>
             <td>
-              One of ~pending~ or ~disposed~.
+              ~pending~ or ~disposed~.
             </td>
             <td>
               Governs how a disposable stack will react to incoming calls to its `@@dispose` method.
@@ -4546,7 +4561,7 @@ contributors: Ron Buckton, Ecma International
               [[DisposeCapability]]
             </td>
             <td>
-              A DisposeCapability Record.
+              a DisposeCapability Record
             </td>
             <td>
               Holds the stack of disposable resources.
@@ -4580,10 +4595,10 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack">
         <h1>AsyncDisposableStack ( )</h1>
-        <p>When the `AsyncDisposableStack` function is called, the following steps are taken:</p>
+        <p>This function performs the following steps when called:</p>
         <emu-alg>
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
-          1. Let _asyncDisposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%AsyncDisposableStack.prototype%"*, &laquo; [[AsyncDisposableState]], [[DisposeCapability]] &raquo;).
+          1. Let _asyncDisposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%AsyncDisposableStack.prototype%"*, « [[AsyncDisposableState]], [[DisposeCapability]] »).
           1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~pending~.
           1. Set _asyncDisposableStack_.[[DisposeCapability]] to NewDisposeCapability().
           1. Return _asyncDisposableStack_.
@@ -4622,27 +4637,27 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack.prototype.disposeAsync">
         <h1>AsyncDisposableStack.prototype.disposeAsync()</h1>
-        <p>When the `disposeAsync` method is called, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
           1. If _asyncDisposableStack_ does not have an [[AsyncDisposableState]] internal slot, then
-            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; a newly created *TypeError* object &raquo;).
+            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, « a newly created *TypeError* object »).
             1. Return _promiseCapability_.[[Promise]].
           1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, then
-            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
+            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « *undefined* »).
             1. Return _promiseCapability_.[[Promise]].
           1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
           1. Let _result_ be DisposeResources(_asyncDisposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
           1. IfAbruptRejectPromise(_result_, _promiseCapability_).
-          1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_ &raquo;).
+          1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « _result_ »).
           1. Return _promiseCapability_.[[Promise]].
         </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposablestack.prototype.use">
         <h1>AsyncDisposableStack.prototype.use( _value_ )</h1>
-        <p>When the `use` function is called with one argument, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_asyncDisposableStack_, [[AsyncDisposableState]]).
@@ -4654,14 +4669,14 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack.prototype.adopt">
         <h1>AsyncDisposableStack.prototype.adopt( _value_, _onDisposeAsync_ )</h1>
-        <p>When the `adopt` function is called with two arguments, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_asyncDisposableStack_, [[AsyncDisposableState]]).
           1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, throw a *ReferenceError* exception.
           1. If IsCallable(_onDisposeAsync_) is *false*, throw a *TypeError* exception.
           1. Let _closure_ be a new Abstract Closure with no parameters that captures _value_ and _onDisposeAsync_ and performs the following steps when called:
-            1. Return ? Call(_onDisposeAsync_, *undefined*, &laquo; _value_ &raquo;).
+            1. Return ? Call(_onDisposeAsync_, *undefined*, « _value_ »).
           1. Let _F_ be CreateBuiltinFunction(_closure_, 0, *""*, « »).
           1. Perform ? AddDisposableResource(_asyncDisposableStack_.[[DisposeCapability]], *undefined*, ~async-dispose~, _F_).
           1. Return _value_.
@@ -4670,7 +4685,7 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack.prototype.defer">
         <h1>AsyncDisposableStack.prototype.defer( _onDisposeAsync_ )</h1>
-        <p>When the `defer` function is called with one argument, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_asyncDisposableStack_, [[AsyncDisposableState]]).
@@ -4683,12 +4698,12 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack.prototype.move">
         <h1>AsyncDisposableStack.prototype.move()</h1>
-        <p>When the `move` function is called, the following steps are taken:</p>
+        <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_asyncDisposableStack_, [[AsyncDisposableState]]).
           1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, throw a *ReferenceError* exception.
-          1. Let _newAsyncDisposableStack_ be ? OrdinaryCreateFromConstructor(%AsyncDisposableStack%, *"%AsyncDisposableStack.prototype%"*, &laquo; [[AsyncDisposableState]], [[DisposeCapability]] &raquo;).
+          1. Let _newAsyncDisposableStack_ be ? OrdinaryCreateFromConstructor(%AsyncDisposableStack%, *"%AsyncDisposableStack.prototype%"*, « [[AsyncDisposableState]], [[DisposeCapability]] »).
           1. Set _newAsyncDisposableStack_.[[AsyncDisposableState]] to ~pending~.
           1. Set _newAsyncDisposableStack_.[[DisposeCapability]] to _asyncDisposableStack_.[[DisposeCapability]].
           1. Set _asyncDisposableStack_.[[DisposeCapability]] to NewDisposeCapability().
@@ -4764,7 +4779,7 @@ contributors: Ron Buckton, Ecma International
       <emu-clause id="sec-generatorstart" type="abstract operation">
         <h1>
           GeneratorStart (
-            _generator_: unknown,
+            _generator_: a Generator,
             _generatorBody_: a |FunctionBody| Parse Node or an Abstract Closure with no parameters,
           ): ~unused~
         </h1>
@@ -4774,24 +4789,29 @@ contributors: Ron Buckton, Ecma International
           1. Assert: The value of _generator_.[[GeneratorState]] is *undefined*.
           1. Let _genContext_ be the running execution context.
           1. Set the Generator component of _genContext_ to _generator_.
-          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
+          1. Let _closure_ be a new Abstract Closure with no parameters that captures _generatorBody_ and performs the following steps when called:
+            1. Let _acGenContext_ be the running execution context.
+            1. Let _acGenerator_ be the Generator component of _acGenContext_.
             1. If _generatorBody_ is a Parse Node, then
-              1. Let _result_ be the result of evaluating _generatorBody_.
+              1. Let _result_ be Completion(Evaluation of _generatorBody_).
             1. Else,
               1. Assert: _generatorBody_ is an Abstract Closure with no parameters.
               1. Let _result_ be _generatorBody_().
             1. Assert: If we return here, the generator either threw an exception or performed either an implicit or explicit return.
-            1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. Set _generator_.[[GeneratorState]] to ~completed~.
-            1. Once a generator enters the ~completed~ state it never leaves it and its associated execution context is never resumed. Any execution state associated with _generator_ can be discarded at this point.
-            1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
-            1. If _result_.[[Type]] is ~normal~, let _resultValue_ be *undefined*.
-            1. Else if _result_.[[Type]] is ~return~, let _resultValue_ be _result_.[[Value]].
+            1. Remove _acGenContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
+            1. Set _acGenerator_.[[GeneratorState]] to ~completed~.
+            1. NOTE: Once a generator enters the ~completed~ state it never leaves it and its associated execution context is never resumed. Any execution state associated with _acGenerator_ can be discarded at this point.
+            1. <ins>Let _env_ be _acGenContext_'s LexicalEnvironment.</ins>
+            1. <ins>Set _result_ to Completion(DisposeResources(_env_.[[DisposeCapability]], _result_)).</ins>
+            1. If _result_.[[Type]] is ~normal~, then
+              1. Let _resultValue_ be *undefined*.
+            1. Else if _result_.[[Type]] is ~return~, then
+              1. Let _resultValue_ be _result_.[[Value]].
             1. Else,
               1. Assert: _result_.[[Type]] is ~throw~.
               1. Return ? _result_.
             1. Return CreateIterResultObject(_resultValue_, *true*).
+          1. Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context, _closure_ will be called with no arguments.
           1. Set _generator_.[[GeneratorContext]] to _genContext_.
           1. Set _generator_.[[GeneratorState]] to ~suspendedStart~.
           1. Return ~unused~.
@@ -4819,22 +4839,25 @@ contributors: Ron Buckton, Ecma International
           1. Assert: _generator_.[[AsyncGeneratorState]] is *undefined*.
           1. Let _genContext_ be the running execution context.
           1. Set the Generator component of _genContext_ to _generator_.
-          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
+          1. Let _closure_ be a new Abstract Closure with no parameters that captures _generatorBody_ and performs the following steps when called:
+            1. Let _acGenContext_ be the running execution context.
+            1. Let _acGenerator_ be the Generator component of _acGenContext_.
             1. If _generatorBody_ is a Parse Node, then
-              1. Let _result_ be the result of evaluating _generatorBody_.
+              1. Let _result_ be Completion(Evaluation of _generatorBody_).
             1. Else,
               1. Assert: _generatorBody_ is an Abstract Closure with no parameters.
               1. Let _result_ be Completion(_generatorBody_()).
             1. Assert: If we return here, the async generator either threw an exception or performed either an implicit or explicit return.
-            1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. Set _generator_.[[AsyncGeneratorState]] to ~completed~.
-            1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
+            1. Remove _acGenContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
+            1. Set _acGenerator_.[[AsyncGeneratorState]] to ~completed~.
+            1. <ins>Let _env_ be _acGenContext_'s LexicalEnvironment.</ins>
             1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
             1. If _result_.[[Type]] is ~normal~, set _result_ to NormalCompletion(*undefined*).
             1. If _result_.[[Type]] is ~return~, set _result_ to NormalCompletion(_result_.[[Value]]).
-            1. Perform AsyncGeneratorCompleteStep(_generator_, _result_, *true*).
-            1. Perform AsyncGeneratorDrainQueue(_generator_).
+            1. Perform AsyncGeneratorCompleteStep(_acGenerator_, _result_, *true*).
+            1. Perform AsyncGeneratorDrainQueue(_acGenerator_).
             1. Return *undefined*.
+          1. Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context, _closure_ will be called with no arguments.
           1. Set _generator_.[[AsyncGeneratorContext]] to _genContext_.
           1. Set _generator_.[[AsyncGeneratorState]] to ~suspendedStart~.
           1. Set _generator_.[[AsyncGeneratorQueue]] to a new empty List.
@@ -4863,20 +4886,22 @@ contributors: Ron Buckton, Ecma International
         <emu-alg>
           1. Assert: _promiseCapability_ is a PromiseCapability Record.
           1. Let _runningContext_ be the running execution context.
-          1. [fence-effects="user-code"] Set the code evaluation state of _asyncContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
-            1. Let _result_ be the result of evaluating _asyncBody_.
+          1. Let _closure_ be a new Abstract Closure with no parameters that captures _promiseCapability_ and _asyncBody_ and performs the following steps when called:
+            1. Let _acAsyncContext_ be the running execution context.
+            1. Let _result_ be Completion(Evaluation of _asyncBody_).
             1. Assert: If we return here, the async function either threw an exception or performed an implicit or explicit return; all awaiting is done.
-            1. Remove _asyncContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. <ins>Let _env_ be _asyncContext_'s LexicalEnvironment.</ins>
+            1. Remove _acAsyncContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
+            1. <ins>Let _env_ be _acAsyncContext_'s LexicalEnvironment.</ins>
             1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
             1. If _result_.[[Type]] is ~normal~, then
-              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
+              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « *undefined* »).
             1. Else if _result_.[[Type]] is ~return~, then
-              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_.[[Value]] &raquo;).
+              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « _result_.[[Value]] »).
             1. Else,
               1. Assert: _result_.[[Type]] is ~throw~.
-              1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; _result_.[[Value]] &raquo;).
+              1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, « _result_.[[Value]] »).
             1. [id="step-asyncblockstart-return-undefined"] Return ~unused~.
+          1. Set the code evaluation state of _asyncContext_ such that when evaluation is resumed for that execution context, _closure_ will be called with no arguments.
           1. Push _asyncContext_ onto the execution context stack; _asyncContext_ is now the running execution context.
           1. <emu-meta effects="user-code">Resume the suspended evaluation of _asyncContext_</emu-meta>. Let _result_ be the value returned by the resumed computation.
           1. Assert: When we return here, _asyncContext_ has already been removed from the execution context stack and _runningContext_ is the currently running execution context.
@@ -4890,10 +4915,13 @@ contributors: Ron Buckton, Ecma International
 
 <emu-annex id="sec-additional-ecmascript-features-for-web-browsers" namespace="annexB" normative>
   <h1>Additional ECMAScript Features for Web Browsers</h1>
+
   <emu-annex id="sec-other-additional-features">
     <h1>Other Additional Features</h1>
+
     <emu-annex id="sec-block-level-function-declarations-web-legacy-compatibility-semantics">
       <h1>Block-Level Function Declarations Web Legacy Compatibility Semantics</h1>
+
       <emu-annex id="sec-web-compat-blockdeclarationinstantiation">
         <h1>Changes to BlockDeclarationInstantiation</h1>
         <p>During BlockDeclarationInstantiation the following steps are performed in place of step <emu-xref href="#step-blockdeclarationinstantiation-createmutablebinding"></emu-xref>:</p>
@@ -4903,11 +4931,12 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
         <p>During BlockDeclarationInstantiation the following steps are performed in place of step <emu-xref href="#step-blockdeclarationinstantiation-initializebinding"></emu-xref>:</p>
         <emu-alg replaces-step="step-blockdeclarationinstantiation-initializebinding">
-          1. If the binding for _fn_ in _env_ is an uninitialized binding, then
-            1. Perform _env_.InitializeBinding(_fn_, _fo_<ins>, ~normal~</ins>).
-          1. Else,
-            1. Assert: _d_ is a |FunctionDeclaration|.
-            1. Perform _env_.SetMutableBinding(_fn_, _fo_, *false*).
+          1. Perform the following steps:
+            1. If the binding for _fn_ in _env_ is an uninitialized binding, then
+              1. Perform ! _env_.InitializeBinding(_fn_, _fo_<ins>, ~normal~</ins>).
+            1. Else,
+              1. Assert: _d_ is a |FunctionDeclaration|.
+              1. Perform ! _env_.SetMutableBinding(_fn_, _fo_, *false*).
         </emu-alg>
       </emu-annex>
     </emu-annex>
