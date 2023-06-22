@@ -4622,21 +4622,13 @@ contributors: Ron Buckton, Ecma International
 
       <emu-clause id="sec-asyncdisposablestack.prototype.disposeAsync">
         <h1>AsyncDisposableStack.prototype.disposeAsync()</h1>
-        <p>When the `disposeAsync` method is called, the following steps are taken:</p>
+        <p>When the `disposeAsync` async method is called, the following steps are taken:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
-          1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
-          1. If _asyncDisposableStack_ does not have an [[AsyncDisposableState]] internal slot, then
-            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; a newly created *TypeError* object &raquo;).
-            1. Return _promiseCapability_.[[Promise]].
-          1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, then
-            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
-            1. Return _promiseCapability_.[[Promise]].
-          1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
-          1. Let _result_ be DisposeResources(_asyncDisposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
-          1. IfAbruptRejectPromise(_result_, _promiseCapability_).
-          1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_ &raquo;).
-          1. Return _promiseCapability_.[[Promise]].
+          1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+          1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *undefined*.
+          1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
+          1. Return DisposeResources(_disposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
         </emu-alg>
       </emu-clause>
 
