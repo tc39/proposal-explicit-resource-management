@@ -1019,8 +1019,9 @@ contributors: Ron Buckton, Ecma International
       </dl>
       <emu-alg>
         1. If _method_ is not present then,
-          1. If _V_ is *null* or *undefined*, return ~unused~.
-          1. If Type(_V_) is not Object, throw a *TypeError* exception.
+          1. If _V_ is either *null* or *undefined* and _hint_ is ~sync-dispose~, then
+            1. Return ~unused~.
+          1. NOTE: When _V_ is either *null* or *undefined* and _hint_ is ~async-dispose~, we record that the resource was evaluated to ensure we will still perform an Await when resources are later disposed.
           1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
         1. Else,
           1. Assert: _V_ is *undefined*.
@@ -1041,9 +1042,13 @@ contributors: Ron Buckton, Ecma International
       <dl class="header"></dl>
       <emu-alg>
         1. If _method_ is not present, then
-          1. If _V_ is *undefined*, throw a *TypeError* exception.
-          1. Set _method_ to ? GetDisposeMethod(_V_, _hint_).
-          1. If _method_ is *undefined*, throw a *TypeError* exception.
+          1. If _V_ is either *null* or *undefined*, then
+            1. Set _V_ to *undefined*.
+            1. Set _method_ to *undefined*.
+          1. Else,
+            1. If _V_ is not an Object, throw a *TypeError* exception.
+            1. Set _method_ to ? GetDisposeMethod(_V_, _hint_).
+            1. If _method_ is *undefined*, throw a *TypeError* exception.
         1. Else,
           1. If IsCallable(_method_) is *false*, throw a *TypeError* exception.
         1. Return the DisposableResource Record { [[ResourceValue]]: _V_, [[Hint]]: _hint_, [[DisposeMethod]]: _method_ }.
