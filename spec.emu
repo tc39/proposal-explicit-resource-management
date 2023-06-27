@@ -2304,6 +2304,44 @@ contributors: Ron Buckton, Ecma International
           1. Return _env_.
         </emu-alg>
       </emu-clause>
+
+      <emu-clause id="sec-newfunctionenvironment" type="abstract operation">
+        <h1>
+          NewFunctionEnvironment (
+            _F_: an ECMAScript function,
+            _newTarget_: an Object or *undefined*,
+          ): a Function Environment Record
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-alg>
+          1. Let _env_ be a new Function Environment Record containing no bindings.
+          1. Set _env_.[[FunctionObject]] to _F_.
+          1. If _F_.[[ThisMode]] is ~lexical~, set _env_.[[ThisBindingStatus]] to ~lexical~.
+          1. Else, set _env_.[[ThisBindingStatus]] to ~uninitialized~.
+          1. Set _env_.[[NewTarget]] to _newTarget_.
+          1. Set _env_.[[OuterEnv]] to _F_.[[Environment]].
+          1. <ins>Set _env_.[[DisposeCapability]] to NewDisposeCapability().</ins>
+          1. Return _env_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-newmoduleenvironment" type="abstract operation">
+        <h1>
+          NewModuleEnvironment (
+            _E_: an Environment Record,
+          ): a Module Environment Record
+        </h1>
+        <dl class="header">
+        </dl>
+        <emu-alg>
+          1. Let _env_ be a new Module Environment Record containing no bindings.
+          1. Set _env_.[[OuterEnv]] to _E_.
+          1. <ins>Set _env_.[[DisposeCapability]] to NewDisposeCapability().</ins>
+          1. Return _env_.
+        </emu-alg>
+      </emu-clause>
+
     </emu-clause>
   </emu-clause>
 </emu-clause>
