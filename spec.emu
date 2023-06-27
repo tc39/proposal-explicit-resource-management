@@ -1021,6 +1021,7 @@ contributors: Ron Buckton, Ecma International
         1. If _method_ is not present then,
           1. If _V_ is either *null* or *undefined* and _hint_ is ~sync-dispose~, then
             1. Return ~unused~.
+          1. NOTE: When _V_ is either *null* or *undefined* and _hint_ is ~async-dispose~, we record that the resource was evaluated to ensure we will still perform an Await when resources are later disposed.
           1. Let _resource_ be ? CreateDisposableResource(_V_, _hint_).
         1. Else,
           1. Assert: _V_ is *undefined*.
