@@ -666,7 +666,7 @@ This will not dispose resources that are not iterated, such as if iteration is t
 
 ```grammarkdown
 UsingDeclaration :
-  `using` `await` BindingList `;`
+  `await` `using` BindingList `;`
 
 LexicalBinding :
     BindingIdentifier Initializer
