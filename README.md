@@ -818,10 +818,9 @@ order.
 
 ### `await using` Declarations and `null` or `undefined` Values
 
-This proposal has opted to ignore `null` and `undefined` values provided to `await using` declarations. This is similar
-to the behavior of `using` in the original [Explicit Resource Management][using] proposal, which also
-allows `null` and `undefined`, as well as C#, which also allows `null`,. One primary reason for this behavior is to
-simplify a common case where a resource might be optional, without requiring duplication of work or needless
+This proposal has opted to ignore `null` and `undefined` values provided to `await using` declarations. This is
+consistent with the proposed behavior for the `using` declarations in this proposal. Like in the sync case, this allows
+simplifying a common case where a resource might be optional, without requiring duplication of work or needless
 allocations:
 
 ```js
