@@ -1119,6 +1119,7 @@ contributors: Ron Buckton, Ecma International
               1. Set _completion_ to ThrowCompletion(_error_).
             1. Else,
               1. Set _completion_ to _result_.
+        1. NOTE: After a DisposeCapability record has been disposed, it will never be used again. The contents of _disposeCapability_.[[DisposableResourceStack]] can be discarded at this point.
         1. Return _completion_.
       </emu-alg>
     </emu-clause>
