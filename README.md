@@ -1317,7 +1317,7 @@ new SuppressedError(
 
 ### Interoperation and Customization
 
-The `DisposableStack` and `AsyncDisposableStack` classes also provid the ability to create a disposable resource from a
+The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a
 simple callback. This callback will be executed when the stack's disposal method is executed.
 
 The ability to create a disposable resource from a callback has several benefits:
