@@ -2996,10 +2996,7 @@ contributors: Ron Buckton, Ecma International
                 1. Let _lhsName_ be the sole element of BoundNames of _lhs_.
                 1. Let _lhsRef_ be ! ResolveBinding(_lhsName_).
                 1. <del>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_)).</del>
-                1. <ins>If IsUsingDeclaration of _lhs_ is *true*, then</ins>
-                  1. <ins>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_, ~sync-dispose~)).</ins>
-                1. <ins>Else,</ins>
-                  1. <ins>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_, ~normal~)).</ins>
+                1. <ins>Let _status_ be Completion(InitializeReferencedBinding(_lhsRef_, _nextValue_, _hint_)).</ins>
             1. If _status_ is an abrupt completion, then
               1. <ins>If _iterationEnv_ is not *undefined*, then</ins>
                 1. <ins>Set _status_ to Completion(DisposeResources(_iterationEnv_.[[DisposeCapability]], _status_)).</ins>
