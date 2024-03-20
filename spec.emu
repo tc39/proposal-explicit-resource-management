@@ -3097,25 +3097,6 @@ contributors: Ron Buckton, Ecma International
   <emu-clause id="sec-function-definitions">
     <h1>Function Definitions</h1>
 
-    <emu-clause id="sec-runtime-semantics-evaluatefunctionbody" oldids="sec-function-definitions-runtime-semantics-evaluatebody" type="sdo">
-      <h1>
-        Runtime Semantics: EvaluateFunctionBody (
-          _functionObject_: unknown,
-          _argumentsList_: a List,
-        ): either a normal completion containing an ECMAScript language value or an abrupt completion
-      </h1>
-      <dl class="header">
-      </dl>
-      <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
-      <emu-alg>
-        1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
-        1. <del>Return ? Evaluation of |FunctionStatementList|.</del>
-        1. <ins>Let _result_ be Completion(Evaluation of |FunctionStatementList|).</ins>
-        1. <ins>Let _env_ be the running execution context's LexicalEnvironment.</ins>
-        1. <ins>Return ? DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
-      </emu-alg>
-    </emu-clause>
-
     <emu-clause id="sec-runtime-semantics-instantiateordinaryfunctionexpression" type="sdo">
       <h1>
         Runtime Semantics: InstantiateOrdinaryFunctionExpression (
@@ -3153,6 +3134,43 @@ contributors: Ron Buckton, Ecma International
       <emu-note>
         <p>The |BindingIdentifier| in a |FunctionExpression| can be referenced from inside the |FunctionExpression|'s |FunctionBody| to allow the function to call itself recursively. However, unlike in a |FunctionDeclaration|, the |BindingIdentifier| in a |FunctionExpression| cannot be referenced from and does not affect the scope enclosing the |FunctionExpression|.</p>
       </emu-note>
+    </emu-clause>
+
+    <emu-clause id="sec-function-definitions-runtime-semantics-evaluation" type="sdo">
+      <h1>Runtime Semantics: Evaluation</h1>
+      <emu-grammar>FunctionDeclaration : `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return ~empty~.
+      </emu-alg>
+      <emu-note>
+        <p>An alternative semantics is provided in <emu-xref href="#sec-block-level-function-declarations-web-legacy-compatibility-semantics"></emu-xref>.</p>
+      </emu-note>
+      <emu-grammar>FunctionDeclaration : `function` `(` FormalParameters `)` `{` FunctionBody `}`</emu-grammar>
+      <emu-alg>
+        1. Return ~empty~.
+      </emu-alg>
+      <emu-grammar>
+        FunctionExpression : `function` BindingIdentifier? `(` FormalParameters `)` `{` FunctionBody `}`
+      </emu-grammar>
+      <emu-alg>
+        1. Return InstantiateOrdinaryFunctionExpression of |FunctionExpression|.
+      </emu-alg>
+      <emu-note>
+        <p>A *"prototype"* property is automatically created for every function defined using a |FunctionDeclaration| or |FunctionExpression|, to allow for the possibility that the function will be used as a constructor.</p>
+      </emu-note>
+      <emu-grammar>FunctionStatementList : [empty]</emu-grammar>
+      <emu-alg>
+        1. Return *undefined*.
+      </emu-alg>
+      <ins class="block">
+      <emu-grammar>FunctionStatementList : StatementList</emu-grammar>
+      <emu-alg>
+        1. Let _result_ be Completion(Evaluation of |StatementList|).
+        1. Let _env_ be the running execution context's LexicalEnvironment.
+        1. Assert: _env_ is a Declarative Environment Record.
+        1. Return ? DisposeResources(_env_.[[DisposeCapability]], _result_).
+      </emu-alg>
+      </ins>
     </emu-clause>
   </emu-clause>
 
@@ -4813,138 +4831,6 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
   </ins>
-
-  <emu-clause id="sec-generator-objects">
-    <h1>Generator Objects</h1>
-
-    <emu-clause id="sec-generator-abstract-operations">
-      <h1>Generator Abstract Operations</h1>
-
-      <emu-clause id="sec-generatorstart" type="abstract operation">
-        <h1>
-          GeneratorStart (
-            _generator_: unknown,
-            _generatorBody_: a |FunctionBody| Parse Node or an Abstract Closure with no parameters,
-          ): ~unused~
-        </h1>
-        <dl class="header">
-        </dl>
-        <emu-alg>
-          1. Assert: The value of _generator_.[[GeneratorState]] is *undefined*.
-          1. Let _genContext_ be the running execution context.
-          1. Set the Generator component of _genContext_ to _generator_.
-          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
-            1. If _generatorBody_ is a Parse Node, then
-              1. Let _result_ be the result of evaluating _generatorBody_.
-            1. Else,
-              1. Assert: _generatorBody_ is an Abstract Closure with no parameters.
-              1. Let _result_ be _generatorBody_().
-            1. Assert: If we return here, the generator either threw an exception or performed either an implicit or explicit return.
-            1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. Set _generator_.[[GeneratorState]] to ~completed~.
-            1. Once a generator enters the ~completed~ state it never leaves it and its associated execution context is never resumed. Any execution state associated with _generator_ can be discarded at this point.
-            1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
-            1. If _result_.[[Type]] is ~normal~, let _resultValue_ be *undefined*.
-            1. Else if _result_.[[Type]] is ~return~, let _resultValue_ be _result_.[[Value]].
-            1. Else,
-              1. Assert: _result_.[[Type]] is ~throw~.
-              1. Return ? _result_.
-            1. Return CreateIterResultObject(_resultValue_, *true*).
-          1. Set _generator_.[[GeneratorContext]] to _genContext_.
-          1. Set _generator_.[[GeneratorState]] to ~suspendedStart~.
-          1. Return ~unused~.
-        </emu-alg>
-      </emu-clause>
-    </emu-clause>
-  </emu-clause>
-
-  <emu-clause id="sec-asyncgenerator-objects">
-    <h1>AsyncGenerator Objects</h1>
-
-    <emu-clause id="sec-asyncgenerator-abstract-operations">
-      <h1>AsyncGenerator Abstract Operations</h1>
-
-      <emu-clause id="sec-asyncgeneratorstart" type="abstract operation">
-        <h1>
-          AsyncGeneratorStart (
-            _generator_: an AsyncGenerator,
-            _generatorBody_: a |FunctionBody| Parse Node or an Abstract Closure with no parameters,
-          ): ~unused~
-        </h1>
-        <dl class="header">
-        </dl>
-        <emu-alg>
-          1. Assert: _generator_.[[AsyncGeneratorState]] is *undefined*.
-          1. Let _genContext_ be the running execution context.
-          1. Set the Generator component of _genContext_ to _generator_.
-          1. [fence-effects="user-code"] Set the code evaluation state of _genContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
-            1. If _generatorBody_ is a Parse Node, then
-              1. Let _result_ be the result of evaluating _generatorBody_.
-            1. Else,
-              1. Assert: _generatorBody_ is an Abstract Closure with no parameters.
-              1. Let _result_ be Completion(_generatorBody_()).
-            1. Assert: If we return here, the async generator either threw an exception or performed either an implicit or explicit return.
-            1. Remove _genContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. Set _generator_.[[AsyncGeneratorState]] to ~completed~.
-            1. <ins>Let _env_ be _genContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
-            1. If _result_.[[Type]] is ~normal~, set _result_ to NormalCompletion(*undefined*).
-            1. If _result_.[[Type]] is ~return~, set _result_ to NormalCompletion(_result_.[[Value]]).
-            1. Perform AsyncGeneratorCompleteStep(_generator_, _result_, *true*).
-            1. Perform AsyncGeneratorDrainQueue(_generator_).
-            1. Return *undefined*.
-          1. Set _generator_.[[AsyncGeneratorContext]] to _genContext_.
-          1. Set _generator_.[[AsyncGeneratorState]] to ~suspendedStart~.
-          1. Set _generator_.[[AsyncGeneratorQueue]] to a new empty List.
-          1. Return ~unused~.
-        </emu-alg>
-      </emu-clause>
-    </emu-clause>
-  </emu-clause>
-
-  <emu-clause id="sec-async-function-objects">
-    <h1>AsyncFunction Objects</h1>
-
-    <emu-clause id="sec-async-functions-abstract-operations">
-      <h1>Async Functions Abstract Operations</h1>
-
-      <emu-clause id="sec-asyncblockstart" type="abstract operation">
-        <h1>
-          AsyncBlockStart (
-            _promiseCapability_: a PromiseCapability Record,
-            _asyncBody_: a Parse Node,
-            _asyncContext_: an execution context,
-          ): ~unused~
-        </h1>
-        <dl class="header">
-        </dl>
-        <emu-alg>
-          1. Assert: _promiseCapability_ is a PromiseCapability Record.
-          1. Let _runningContext_ be the running execution context.
-          1. [fence-effects="user-code"] Set the code evaluation state of _asyncContext_ such that when evaluation is resumed for that execution context the following steps will be performed:
-            1. Let _result_ be the result of evaluating _asyncBody_.
-            1. Assert: If we return here, the async function either threw an exception or performed an implicit or explicit return; all awaiting is done.
-            1. Remove _asyncContext_ from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
-            1. <ins>Let _env_ be _asyncContext_'s LexicalEnvironment.</ins>
-            1. <ins>Set _result_ to DisposeResources(_env_.[[DisposeCapability]], _result_).</ins>
-            1. If _result_.[[Type]] is ~normal~, then
-              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; *undefined* &raquo;).
-            1. Else if _result_.[[Type]] is ~return~, then
-              1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, &laquo; _result_.[[Value]] &raquo;).
-            1. Else,
-              1. Assert: _result_.[[Type]] is ~throw~.
-              1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo; _result_.[[Value]] &raquo;).
-            1. [id="step-asyncblockstart-return-undefined"] Return ~unused~.
-          1. Push _asyncContext_ onto the execution context stack; _asyncContext_ is now the running execution context.
-          1. <emu-meta effects="user-code">Resume the suspended evaluation of _asyncContext_</emu-meta>. Let _result_ be the value returned by the resumed computation.
-          1. Assert: When we return here, _asyncContext_ has already been removed from the execution context stack and _runningContext_ is the currently running execution context.
-          1. Assert: _result_ is a normal completion with a value of ~unused~. The possible sources of this value are Await or, if the async function doesn't await anything, step <emu-xref href="#step-asyncblockstart-return-undefined"></emu-xref> above.
-          1. Return ~unused~.
-        </emu-alg>
-      </emu-clause>
-    </emu-clause>
-  </emu-clause>
 </emu-clause>
 
 <emu-annex id="sec-additional-ecmascript-features-for-web-browsers" namespace="annexB" normative>
