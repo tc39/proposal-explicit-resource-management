@@ -1875,6 +1875,7 @@ The following is a high-level list of tasks to progress through each stage of th
 ## Implementations
 
 - Built-ins from this proposal are available in [`core-js`](https://github.com/zloirock/core-js#explicit-resource-management)
+- This proposal is fully implemented in [XS 14](https://github.com/Moddable-OpenSource/moddable/releases/tag/3.9.1). It is available in the `xst` command-line tool (available through [jsvu](https://github.com/GoogleChromeLabs/jsvu)) and behind the `mxExplicitResourceManagement` flag in the Moddable SDK 
 
 <!-- # References -->
 
