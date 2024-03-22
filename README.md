@@ -295,7 +295,7 @@ This proposal is motivated by a number of cases:
 # Definitions
 
 - _Resource_ &mdash; An object with a specific lifetime, at the end of which either a lifetime-sensitive operation
-  should be performed or a non-gargbage-collected reference (such as a file handle, socket, etc.) should be closed or
+  should be performed or a non-garbage-collected reference (such as a file handle, socket, etc.) should be closed or
   freed.
 - _Resource Management_ &mdash; A process whereby "resources" are released, triggering any lifetime-sensitive operations
   or freeing any related non-garbage-collected references.
@@ -666,7 +666,7 @@ This will not dispose resources that are not iterated, such as if iteration is t
 
 ```grammarkdown
 UsingDeclaration :
-  `using` `await` BindingList `;`
+  `await` `using` BindingList `;`
 
 LexicalBinding :
     BindingIdentifier Initializer
@@ -818,10 +818,9 @@ order.
 
 ### `await using` Declarations and `null` or `undefined` Values
 
-This proposal has opted to ignore `null` and `undefined` values provided to `await using` declarations. This is similar
-to the behavior of `using` in the original [Explicit Resource Management][using] proposal, which also
-allows `null` and `undefined`, as well as C#, which also allows `null`,. One primary reason for this behavior is to
-simplify a common case where a resource might be optional, without requiring duplication of work or needless
+This proposal has opted to ignore `null` and `undefined` values provided to `await using` declarations. This is
+consistent with the proposed behavior for the `using` declarations in this proposal. Like in the sync case, this allows
+simplifying a common case where a resource might be optional, without requiring duplication of work or needless
 allocations:
 
 ```js
@@ -896,7 +895,7 @@ async function f() {
 
 It is important that such an implicit interleaving point be adequately indicated within the syntax. We believe that
 the presence of `await using` within such a block is an adequate indicator, since it should be fairly easy to recognize
-a _Block_ containing an `await using` statement in well-formated code.
+a _Block_ containing an `await using` statement in well-formatted code.
 
 It is also feasible for editors to use features such as syntax highlighting, editor decorations, and inlay hints to
 further highlight such transitions, without needing to specify additional syntax.
@@ -1318,7 +1317,7 @@ new SuppressedError(
 
 ### Interoperation and Customization
 
-The `DisposableStack` and `AsyncDisposableStack` classes also provid the ability to create a disposable resource from a
+The `DisposableStack` and `AsyncDisposableStack` classes also provide the ability to create a disposable resource from a
 simple callback. This callback will be executed when the stack's disposal method is executed.
 
 The ability to create a disposable resource from a callback has several benefits:
