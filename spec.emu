@@ -1132,10 +1132,10 @@ contributors: Ron Buckton, Ecma International
                 1. Set _completion_ to ThrowCompletion(_error_).
               1. Else,
                 1. Set _completion_ to _result_.
-            1. Else,
-              1. Assert: _hint_ is ~async-dispose~.
-              1. Set _needsAwait_ to *true*.
-              1. NOTE: This can only indicate a case where either *null* or *undefined* was the initialized value of an `await using` declaration.
+          1. Else,
+            1. Assert: _hint_ is ~async-dispose~.
+            1. Set _needsAwait_ to *true*.
+            1. NOTE: This can only indicate a case where either *null* or *undefined* was the initialized value of an `await using` declaration.
         1. If _needsAwait_ is *true* and _hasAwaited_ is *false*, then
           1. Perform ! Await(*undefined*).
         1. NOTE: After _disposeCapability_ has been disposed, it will never be used again. The contents of _disposeCapability_.[[DisposableResourceStack]] can be discarded in implementations, such as by garbage collection, at this point.
