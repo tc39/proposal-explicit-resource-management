@@ -1110,7 +1110,7 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Let _needsAwait_ be *false*.
         1. Let _hasAwaited_ be *false*.
-        1. For each _resource_ of _disposeCapability_.[[DisposableResourceStack]], in reverse list order, do
+        1. For each element _resource_ of _disposeCapability_.[[DisposableResourceStack]], in reverse list order, do
           1. Let _value_ be _resource_.[[ResourceValue]].
           1. Let _hint_ be _resource_.[[Hint]].
           1. Let _method_ be _resource_.[[DisposeMethod]].
