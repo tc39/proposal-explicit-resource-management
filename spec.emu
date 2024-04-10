@@ -1121,8 +1121,8 @@ contributors: Ron Buckton, Ecma International
           1. If _method_ is not *undefined*, then
             1. Let _result_ be Completion(Call(_method_, _value_)).
             1. If _result_ is a normal completion and _hint_ is ~async-dispose~, then
-                1. Set _result_ to Completion(Await(_result_.[[Value]])).
-                1. Set _hasAwaited_ to *true*.
+              1. Set _result_ to Completion(Await(_result_.[[Value]])).
+              1. Set _hasAwaited_ to *true*.
             1. If _result_ is a throw completion, then
               1. If _completion_ is a throw completion, then
                 1. Set _result_ to _result_.[[Value]].
