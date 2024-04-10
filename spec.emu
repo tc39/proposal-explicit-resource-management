@@ -4047,7 +4047,7 @@ contributors: Ron Buckton, Ecma International
             `export` ExportFromClause FromClause `;`
             `export` NamedExports `;`
             `export` VariableStatement[~Yield, +Await]
-            `export` <ins>[lookahead != `using`]</ins> Declaration[~Yield, +Await]
+            `export` <ins>[lookahead &notin; { `using`, `await` }]</ins> Declaration[~Yield, +Await]
             `export` `default` HoistableDeclaration[~Yield, +Await, +Default]
             `export` `default` ClassDeclaration[~Yield, +Await, +Default]
             `export` `default` [lookahead &notin; {`function`, `async` [no |LineTerminator| here] `function`, `class`}] AssignmentExpression[+In, ~Yield, +Await] `;`
