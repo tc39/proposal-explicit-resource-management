@@ -1117,7 +1117,6 @@ contributors: Ron Buckton, Ecma International
           1. If _hint_ is ~sync-dispose~ and _needsAwait_ is *true* and _hasAwaited_ is *false*, then
             1. Perform ! Await(*undefined*).
             1. Set _needsAwait_ to *false*.
-            1. Set _hasAwaited_ to *false*.
           1. If _method_ is not *undefined*, then
             1. Let _result_ be Completion(Call(_method_, _value_)).
             1. If _result_ is a normal completion and _hint_ is ~async-dispose~, then
