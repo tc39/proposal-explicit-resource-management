@@ -927,7 +927,7 @@ contributors: Ron Buckton, Ecma International
               [[DisposableResourceStack]]
             </td>
             <td>
-              a List of DisposableResource Records
+              A List of DisposableResource Records.
             </td>
             <td>
               The resources to be disposed. Resources are added in the order they are initialized, and are disposed in reverse order.
