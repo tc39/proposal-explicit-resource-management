@@ -1139,6 +1139,8 @@ contributors: Ron Buckton, Ecma International
               1. NOTE: This can only indicate a case where either *null* or *undefined* was the initialized value of an `await using` declaration.
         1. If _needsAwait_ is *true*, then
           1. Perform ! Await(*undefined*).
+        1. NOTE: After _disposeCapability_ has been disposed, it will never be used again. The contents of _disposeCapability_.[[DisposableResourceStack]] can be discarded in implementations, such as by garbage collection, at this point.
+        1. Set _disposeCapability_.[[DisposableResourceStack]] to a new empty List.
         1. Return _completion_.
       </emu-alg>
     </emu-clause>
@@ -2682,7 +2684,7 @@ contributors: Ron Buckton, Ecma International
             It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
           </li>
           <li>
-            It is a Syntax Error if the goal symbol is |Script| and |UsingDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, |ClassStaticBlockBody|, or |ClassBody|.
+            It is a Syntax Error if the goal symbol is |Script| and |UsingDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody|.
           </li>
         </ul>
         <emu-grammar>
@@ -2698,7 +2700,7 @@ contributors: Ron Buckton, Ecma International
             It is a Syntax Error if the BoundNames of |BindingList| contains any duplicate entries.
           </li>
           <li>
-            It is a Syntax Error if the goal symbol is |Script| and |AwaitUsingDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, |ClassStaticBlockBody|, or |ClassBody|.
+            It is a Syntax Error if the goal symbol is |Script| and |AwaitUsingDeclaration| is not contained, either directly or indirectly, within a |Block|, |CaseBlock|, |ForStatement|, |ForInOfStatement|, |FunctionBody|, |GeneratorBody|, |AsyncGeneratorBody|, |AsyncFunctionBody|, or |ClassStaticBlockBody|.
           </li>
         </ul>
         <emu-note>
@@ -4064,7 +4066,7 @@ contributors: Ron Buckton, Ecma International
             `export` ExportFromClause FromClause `;`
             `export` NamedExports `;`
             `export` VariableStatement[~Yield, +Await]
-            `export` <ins>[lookahead != `using`]</ins> Declaration[~Yield, +Await]
+            `export` <ins>[lookahead &notin; { `using`, `await` }]</ins> Declaration[~Yield, +Await]
             `export` `default` HoistableDeclaration[~Yield, +Await, +Default]
             `export` `default` ClassDeclaration[~Yield, +Await, +Default]
             `export` `default` [lookahead &notin; {`function`, `async` [no |LineTerminator| here] `function`, `class`}] AssignmentExpression[+In, ~Yield, +Await] `;`
