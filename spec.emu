@@ -4487,9 +4487,10 @@ contributors: Ron Buckton, Ecma International
         <p>This function performs the following steps when called:</p>
         <emu-alg>
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
-          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]] »).
+          1. Let _disposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]], [[BoundDispose]] »).
           1. Set _disposableStack_.[[DisposableState]] to ~pending~.
           1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
+          1. Set _disposableStack_.[[BoundDispose]] to *undefined*.
           1. Return _disposableStack_.
         </emu-alg>
       </emu-clause>
@@ -4549,15 +4550,20 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-disposablestack.prototype.dispose">
-        <h1>DisposableStack.prototype.dispose ()</h1>
-        <p>This method performs the following steps when called:</p>
+      <emu-clause id="sec-get-disposablestack.prototype.dispose">
+        <h1>get DisposableStack.prototype.dispose</h1>
+        <p>`DisposableStack.prototype.dispose` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
-          1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *undefined*.
-          1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
-          1. Return DisposeResources(_disposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
+          1. If _disposableStack_.[[BoundDispose]] is *undefined*, then
+            1. Let _dispose_ be GetMethod(_disposableStack_, @@dispose).
+            1. If _dispose_ is *undefined*, throw a *TypeError* exception.
+            1. Let _closure_ be a new Abstract Closure with no parameters that captures _disposableStack_ and _dispose_ and performs the following steps when called:
+              1. Return ? Call(_dispose_, _disposableStack_, « »).
+            1. Let _F_ be CreateBuiltinFunction(_closure_, 0, *""*, « »).
+            1. Set _disposableStack_.[[BoundDispose]] to _F_.
+          1. Return _disposableStack_.[[BoundDispose]].
         </emu-alg>
       </emu-clause>
 
@@ -4573,15 +4579,16 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype.move">
-        <h1>DisposableStack.prototype.move()</h1>
+        <h1>DisposableStack.prototype.move ( )</h1>
         <p>This method performs the following steps when called:</p>
         <emu-alg>
           1. Let _disposableStack_ be the *this* value.
           1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
           1. If _disposableStack_.[[DisposableState]] is ~disposed~, throw a *ReferenceError* exception.
-          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]] »).
+          1. Let _newDisposableStack_ be ? OrdinaryCreateFromConstructor(%DisposableStack%, *"%DisposableStack.prototype%"*, « [[DisposableState]], [[DisposeCapability]], [[BoundDispose]] »).
           1. Set _newDisposableStack_.[[DisposableState]] to ~pending~.
           1. Set _newDisposableStack_.[[DisposeCapability]] to _disposableStack_.[[DisposeCapability]].
+          1. Set _newDisposableStack_.[[BoundDispose]] to *undefined*.
           1. Set _disposableStack_.[[DisposeCapability]] to NewDisposeCapability().
           1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
           1. Return _newDisposableStack_.
@@ -4601,8 +4608,15 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype-@@dispose">
-        <h1>DisposableStack.prototype [ @@dispose ] ()</h1>
-        <p>The initial value of the @@dispose property is %DisposableStack.prototype.dispose%, defined in <emu-xref href="#sec-disposablestack.prototype.dispose"></emu-xref>.</p>
+        <h1>DisposableStack.prototype [ @@dispose ] ( )</h1>
+        <p>This method performs the following steps when called:</p>
+        <emu-alg>
+          1. Let _disposableStack_ be the *this* value.
+          1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+          1. If _disposableStack_.[[DisposableState]] is ~disposed~, return *undefined*.
+          1. Set _disposableStack_.[[DisposableState]] to ~disposed~.
+          1. Return ? DisposeResources(_disposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
+        </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-disposablestack.prototype-@@toStringTag">
@@ -4651,6 +4665,17 @@ contributors: Ron Buckton, Ecma International
               Holds the stack of disposable resources.
             </td>
           </tr>
+          <tr>
+            <td>
+              [[BoundDispose]]
+            </td>
+            <td>
+              *undefined* or a function object
+            </td>
+            <td>
+              Caches the function returned by the `DisposableStack.prototype.dispose` accessor (<emu-xref href="#sec-get-disposablestack.prototype.dispose"></emu-xref>).
+            </td>
+          </tr>
           </tbody>
         </table>
       </emu-table>
@@ -4682,9 +4707,10 @@ contributors: Ron Buckton, Ecma International
         <p>This function performs the following steps when called:</p>
         <emu-alg>
           1. If NewTarget is *undefined*, throw a *TypeError* exception.
-          1. Let _asyncDisposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%AsyncDisposableStack.prototype%"*, « [[AsyncDisposableState]], [[DisposeCapability]] »).
+          1. Let _asyncDisposableStack_ be ? OrdinaryCreateFromConstructor(NewTarget, *"%AsyncDisposableStack.prototype%"*, « [[AsyncDisposableState]], [[DisposeCapability]], [[BoundDisposeAsync]] »).
           1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~pending~.
           1. Set _asyncDisposableStack_.[[DisposeCapability]] to NewDisposeCapability().
+          1. Set _asyncDisposableStack_.[[BoundDisposeAsync]] to *undefined*.
           1. Return _asyncDisposableStack_.
         </emu-alg>
       </emu-clause>
@@ -4743,23 +4769,20 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-asyncdisposablestack.prototype.disposeAsync">
-        <h1>AsyncDisposableStack.prototype.disposeAsync()</h1>
-        <p>This method performs the following steps when called:</p>
+      <emu-clause id="sec-get-asyncdisposablestack.prototype.disposeAsync">
+        <h1>get AsyncDisposableStack.prototype.disposeAsync</h1>
+        <p>`AsyncDisposableStack.prototype.disposeAsync` is an accessor property whose set accessor function is *undefined*. Its get accessor function performs the following steps:</p>
         <emu-alg>
           1. Let _asyncDisposableStack_ be the *this* value.
-          1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
-          1. If _asyncDisposableStack_ does not have an [[AsyncDisposableState]] internal slot, then
-            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, « a newly created *TypeError* object »).
-            1. Return _promiseCapability_.[[Promise]].
-          1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, then
-            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « *undefined* »).
-            1. Return _promiseCapability_.[[Promise]].
-          1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
-          1. Let _result_ be DisposeResources(_asyncDisposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*)).
-          1. IfAbruptRejectPromise(_result_, _promiseCapability_).
-          1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « _result_ »).
-          1. Return _promiseCapability_.[[Promise]].
+          1. Perform ? RequireInternalSlot(_disposableStack_, [[DisposableState]]).
+          1. If _asyncDisposableStack_.[[BoundDisposeAsync]] is *undefined*, then
+            1. Let _disposeAsync_ be GetMethod(_asyncDisposableStack_, @@dispose).
+            1. If _disposeAsync_ is *undefined*, throw a *TypeError* exception.
+            1. Let _closure_ be a new Abstract Closure with no parameters that captures _asyncDisposableStack_ and _disposeAsync_ and performs the following steps when called:
+              1. Return ? Call(_disposeAsync_, _asyncDisposableStack_, « »).
+            1. Let _F_ be CreateBuiltinFunction(_closure_, 0, *""*, « »).
+            1. Set _asyncDisposableStack_.[[BoundDisposeAsync]] to _F_.
+          1. Return _asyncDisposableStack_.[[BoundDisposeAsync]].
         </emu-alg>
       </emu-clause>
 
@@ -4803,8 +4826,23 @@ contributors: Ron Buckton, Ecma International
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposablestack.prototype-@@asyncDispose">
-        <h1>AsyncDisposableStack.prototype [ @@asyncDispose ] ()</h1>
-        <p>The initial value of the @@asyncDispose property is %AsyncDisposableStack.prototype.disposeAsync%, defined in <emu-xref href="#sec-asyncdisposablestack.prototype.disposeAsync"></emu-xref>.</p>
+        <h1>AsyncDisposableStack.prototype [ @@asyncDispose ] ( )</h1>
+        <p>This method performs the following steps when called:</p>
+        <emu-alg>
+          1. Let _asyncDisposableStack_ be the *this* value.
+          1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
+          1. If _asyncDisposableStack_ does not have an [[AsyncDisposableState]] internal slot, then
+            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, « a newly created *TypeError* object »).
+            1. Return _promiseCapability_.[[Promise]].
+          1. If _asyncDisposableStack_.[[AsyncDisposableState]] is ~disposed~, then
+            1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « *undefined* »).
+            1. Return _promiseCapability_.[[Promise]].
+          1. Set _asyncDisposableStack_.[[AsyncDisposableState]] to ~disposed~.
+          1. Let _result_ be Completion(DisposeResources(_asyncDisposableStack_.[[DisposeCapability]], NormalCompletion(*undefined*))).
+          1. IfAbruptRejectPromise(_result_, _promiseCapability_).
+          1. Perform ! Call(_promiseCapability_.[[Resolve]], *undefined*, « _result_ »).
+          1. Return _promiseCapability_.[[Promise]].
+        </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-asyncdisposablestack.prototype-@@toStringTag">
@@ -4851,6 +4889,17 @@ contributors: Ron Buckton, Ecma International
             </td>
             <td>
               Resources to be disposed when the disposable stack is disposed.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              [[BoundDisposeAsync]]
+            </td>
+            <td>
+              *undefined* or a function object
+            </td>
+            <td>
+              Caches the function returned by the `AsyncDisposableStack.prototype.disposeAsync` accessor (<emu-xref href="#sec-get-asyncdisposablestack.prototype.disposeAsync"></emu-xref>).
             </td>
           </tr>
           </tbody>
