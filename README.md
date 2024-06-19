@@ -1092,9 +1092,8 @@ class SuppressedError extends Error {
    * @param {*} error The error that resulted in a suppression.
    * @param {*} suppressed The error that was suppressed.
    * @param {string} message The message for the error.
-   * @param {{ cause?: * }} [options] Options for the error.
    */
-  constructor(error, suppressed, message, options);
+  constructor(error, suppressed, message);
 
   /**
    * The name of the error (i.e., `"SuppressedError"`).
@@ -1119,6 +1118,14 @@ class SuppressedError extends Error {
    * @type {*}
    */
   message;
+
+  /**
+   * A SuppressedError can't be constructed with a `cause`. See `error` and
+   * `suppressed` for its related errors.
+   * @type {undefined}
+   * @override
+   */
+  cause;
 }
 ```
 
