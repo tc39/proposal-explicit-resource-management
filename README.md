@@ -395,7 +395,7 @@ using x = res; // ok: `res` has @@dispose
 using x = asyncRes; // throws: `asyncRes` does not have @@dispose
 
 await using x = res; // ok: `res` has @@dispose (fallback)
-await using x = asyncres; // ok: `asyncRes` has @@asyncDispose
+await using x = asyncRes; // ok: `asyncRes` has @@asyncDispose
 ```
 
 This results in a matrix of behaviors based on the presence of each `await` marker:
