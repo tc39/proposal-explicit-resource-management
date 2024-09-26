@@ -5,6 +5,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     if: ${{ github.event.number }}
     steps:
       - uses: actions/checkout@v2

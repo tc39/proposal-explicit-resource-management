@@ -1214,9 +1214,10 @@ class DisposableStack {
   get disposed();
 
   /**
-   * Alias for `[Symbol.dispose]()`.
+   * Gets a bound function that when called invokes `Symbol.dispose` on this object.
+   * @returns {() => void} A function that when called disposes of any resources currently in this stack.
    */
-  dispose();
+  get dispose();
 
   /**
    * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
@@ -1253,6 +1254,60 @@ class DisposableStack {
    * @returns {void}
    */
   [Symbol.dispose]();
+
+  [Symbol.toStringTag];
+}
+
+class AsyncDisposableStack {
+  constructor();
+
+  /**
+   * Gets a value indicating whether the stack has been disposed.
+   * @returns {boolean}
+   */
+  get disposed();
+
+  /**
+   * Gets a bound function that when called invokes `Symbol.asyncDispose` on this object.
+   * @returns {() => Pormise<void>} A function that when called disposes of any resources currently in this stack.
+   */
+  get disposeAsync();
+
+  /**
+   * Adds a resource to the top of the stack. Has no effect if provided `null` or `undefined`.
+   * @template {AsyncDisposable | Disposable | null | undefined} T
+   * @param {T} value - An `AsyncDisposable` object, `null`, or `undefined`.
+   * @returns {T} The provided value.
+   */
+  use(value);
+
+  /**
+   * Adds a non-disposable resource and a disposal callback to the top of the stack.
+   * @template T
+   * @param {T} value - A resource to be disposed.
+   * @param {(value: T) => PromiseLike<void> | void} onDisposeAsync - A callback invoked to dispose the provided value.
+   * @returns {T} The provided value.
+   */
+  adopt(value, onDisposeAsync);
+
+  /**
+   * Adds a disposal callback to the top of the stack.
+   * @param {() => PromiseLike<void> | void} onDisposeAsync - A callback to evaluate when this object is disposed.
+   * @returns {void}
+   */
+  defer(onDisposeAsync);
+
+  /**
+   * Moves all resources currently in this stack into a new `AsyncDisposableStack`.
+   * @returns {AsyncDisposableStack} The new `AsyncDisposableStack`.
+   */
+  move();
+
+  /**
+   * Disposes of resources within this object.
+   * @returns {Promise<void>}
+   */
+  [Symbol.asyncDispose]();
 
   [Symbol.toStringTag];
 }
@@ -1545,6 +1600,65 @@ class DerivedPluginHostWithOwnDisposables extends PluginHost {
 In this example, we can simply add new resources to the `stack` and move its contents into the subclass instance's
 `this.#disposables`. In the subclass `[Symbol.dispose]()` method we don't need to call `super[Symbol.dispose]()` since
 that has already been tracked by the `stack.defer` call in the constructor.
+
+### Bound `dispose`/`disposeAsync`
+
+The `dispose` and `disposeAsync` methods of `DisposableStack` and `AsyncDisposableStack` are getters that produce
+functions bound to the `[Symbol.dispose]()` and `[Symbol.asyncDispose]()` methods of their respective classes to assist
+with lightweight object creation in function-oriented APIs:
+
+```js
+function createPluginHost() {
+  using stack = new DisposableStack();
+  const channel = stack.use(new NodeProcessIpcChannelAdapter(process));
+  const socket = stack.use(new NodePluginHostIpcSocket(channel));
+  return {
+    loadPlugin(file) { ... },
+    [Symbol.dispose]: stack.move().dispose,
+  };
+}
+```
+
+### Subclassing `DisposableStack`/`AsyncDisposableStack`
+
+When subclassing a `DisposableStack` or `AsyncDisposableStack`, it is only necesary to override the respective
+`[Symbol.dispose]()` and `[Symbol.asyncDispose]()` methods, since the more convenient `dispose`/`disposeAsync` methods
+are merely getters:
+
+```js
+class MyDisposableStack extends DisposableStack {
+  [Symbol.dispose]() {
+    super[Symbol.dispose]();
+  }
+}
+```
+
+Since neither `DisposableStack` nor `AsyncDisposableStack` support `Symbol.species`, special care must be taken if you
+wish to return an instance of your subclass as the return value of the `move()` method of each class:
+
+```js
+class MyDisposableStack extends DisposableStack {
+  #state;
+
+  constructor(state) {
+    super();
+    this.#state = state;
+  }
+
+  move() {
+    // `super.move()` returns a `DisposableStack`, not a `MyDisposableStack`. Overwriting the prototype with
+    // `Object.setPrototypeOf` would result in an object without a `#state` field. We can address this by adding the
+    // result of `super.move()` to a new instance of `MyDisposableStack` with the appropriate state, though this is
+    // somewhat inefficient as repeatedly calling `move()` will create a stack with further and further nesting.
+
+    const myStack = new MyDisposableStack(this.#state);
+    myStack.use(super.move());
+    return myStack;
+  }
+
+  ...
+}
+```
 
 # Relation to `Iterator` and `for..of`
 
