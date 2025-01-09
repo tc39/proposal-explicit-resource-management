@@ -43,7 +43,7 @@ async function * g() {
     ...
   }
   finally {
-    await stream.close(); // cleanup
+    await handle.close(); // cleanup
   }
 }
 
