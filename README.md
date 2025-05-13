@@ -918,8 +918,8 @@ The following show examples of using this proposal with various APIs, assuming t
 ### NodeJS FileHandle
 ```js
 {
-  using f1 = await fs.promises.open(s1, constants.O_RDONLY),
-        f2 = await fs.promises.open(s2, constants.O_WRONLY);
+  await using f1 = await fs.promises.open(s1, constants.O_RDONLY),
+              f2 = await fs.promises.open(s2, constants.O_WRONLY);
   const buffer = Buffer.alloc(4092);
   const { bytesRead } = await f1.read(buffer);
   await f2.write(buffer, 0, bytesRead);
