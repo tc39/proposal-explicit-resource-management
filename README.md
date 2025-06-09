@@ -1276,7 +1276,7 @@ These classes provided the following capabilities:
 
 ### Aggregation
 
-The `DisposableStack` and `AsyncDisposableStack` classes provid the ability to aggregate multiple disposable resources
+The `DisposableStack` and `AsyncDisposableStack` classes provide the ability to aggregate multiple disposable resources
 into a single container. When the `DisposableStack` container is disposed, each object in the container is also
 guaranteed to be disposed (barring early termination of the program). If any resource throws an error during dispose,
 it will be collected and rethrown after all resources are disposed. If there were multiple errors, they will be wrapped
