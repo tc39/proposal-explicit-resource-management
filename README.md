@@ -38,7 +38,7 @@ finally {
 ```js
 // async generators
 async function * g() {
-  const handle = acquireStream(); // critical resource
+  const stream = acquireStream(); // critical resource
   try {
     ...
   }
