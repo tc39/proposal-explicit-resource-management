@@ -1840,6 +1840,10 @@ suggestions for consideration. The actual implementation is at the discretion of
   - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2023-03/mar-23.md#conclusion-5)
     - Stage 3, conditionally on final review of cover grammar by Waldemar Horwat.
     - Consensus on normative change to remove `await` identifier restriction for `using` declarations.
+* (other intermediate meetings omitted)
+* [TC39 May 28, 2025](https://github.com/tc39/notes/blob/main/meetings/2025-05/may-28.md#explicit-resource-management-continuation)
+  - [Conclusion](https://github.com/tc39/notes/blob/main/meetings/2025-05/may-28.md#conclusion-13)
+    - Stage 4, conditional on final Test262 and editor sign-off
 
 # TODO
 
